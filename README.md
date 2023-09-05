@@ -25,13 +25,13 @@ For more information about this project.
 Clone source with SSH url:
 
 ```bash
-git clone https://github.com/anhchangvt1994/webpack-project--template-vue-ts__vue-router
+git clone git@github.com:anhchangvt1994/webpack-project-template-vue__seo-web-scraping.git
 ```
 
 Install:
 
 ```bash
-cd webpack-project--template-vue-ts__vue-router
+cd webpack-project-template-vue__seo-web-scraping
 ```
 
 If use npm
