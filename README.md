@@ -62,7 +62,7 @@ Web Scraping for SEO project (Vue WSC-SEO) is a product designed for VueJS devel
 - When run the business code ? (on server side or client side ?)
 
 **What is optimize SEO automation ?** You can see the below example (the top frame I use website with WSC-SEO and the bottom is a website with current project), all of the scores of website is increase when use WSC-SEO for optimize SEO automation.
-![alt text](/src/assets/static/images/development/tiki-lighthouse.jpg 'Title')
+![alt text](/src/assets/static/images/readme/tiki-lighthouse.jpg 'Title')
 
 <h3 id="why">More information</h3>
 As introduced above, Vue WSC-SEO provides VueJS developers with an additional option for easy access and SEO optimization if needed. To provide developers with more information about the product and make a more informed decision about its use, Vue WSC-SEO will provide the following specific advantages and disadvantages:
@@ -109,4 +109,4 @@ Some environment variables are used for definition during the declaration proces
   when you deploy vercel, vercel will ask you name for your project. After that, vercel will use that name and create an domain like this format: https://project-name.vercel.app. All you need to do is set BASE_URL env value like this domain.
 - **ENV** If you want to test the project, please define ENV as "staging". Conversely, ENV will automatically understand that the environment is "production".
 
-![alt text](/src/assets/static/images/development/deploy-vercel.jpg 'Title')
+![alt text](/src/assets/static/images/readme/deploy-vercel.jpg 'Title')
