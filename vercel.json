@@ -1,0 +1,42 @@
+{
+	"version": 2,
+	"env": {
+		"MAX_WORKERS": "2",
+		"DURATION_TIMEOUT": "10000",
+		"DISABLE_COMPRESS_HTML": "true",
+		"POWER_LEVEL": "2",
+		"BANDWIDTH_LEVEL": "1",
+		"SERVER_LESS": "true"
+	},
+	"builds": [
+		{
+			"src": "package.json",
+			"use": "@vercel/node"
+		},
+		{
+			"src": "server/src/puppeteer-ssr/utils/GenerateExecutablePath.js",
+			"use": "@vercel/node"
+		},
+		{
+			"src": "server/dist/index.js",
+			"use": "@vercel/node"
+		}
+	],
+	"rewrites": [
+		{
+			"source": "/(.*)",
+			"destination": "server/dist/index.js"
+		}
+	],
+	"headers": [
+		{
+			"source": "/(.*)",
+			"headers": [
+				{
+					"key": "Cache-Control",
+					"value": "no-cache"
+				}
+			]
+		}
+	]
+}

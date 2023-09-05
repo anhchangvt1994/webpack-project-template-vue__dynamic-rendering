@@ -1,0 +1,5 @@
+# Ignore all HTML files:
+*.html
+confing/**/*.d.ts
+config/auto-imports.d.ts
+config/types/ImportMeta.d.ts
