@@ -61,7 +61,7 @@ Web Scraping for SEO project (Vue WSC-SEO) is a product designed for VueJS devel
 - How to optimize SEO ? (block script, block resource, large image, need some attributes to make tag valid ...)
 - When run the business code ? (on server side or client side ?)
 
-**What is optimize SEO automation ?** You can see the below example (the top frame I use website with WSC-SEO and the bottom is a website with current project), all of the scores of website is increase when use WSC-SEO for optimize SEO automation.
+**What is optimize SEO automation ?** You can see the below example (the top frame I use website with WSC-SEO and the bottom is a website without WSC-SEO), all of the scores of website is increase when use WSC-SEO for optimize SEO automation.
 ![alt text](/src/assets/static/images/readme/tiki-lighthouse.jpg 'Title')
 
 <h3 id="why">More information</h3>
