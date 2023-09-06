@@ -6,7 +6,7 @@
 	"scripts": {},
 	"author": "",
 	"license": "ISC",
-  "overrides": {
+	"overrides": {
 		"isomorphic-fetch@*": "$isomorphic-fetch"
 	},
 	"devDependencies": {
@@ -26,7 +26,6 @@
 		"css-minimizer-webpack-plugin": "^5.0.1",
 		"cz-git": "^1.6.1",
 		"esbuild-loader": "^3.0.1",
-		"html-minifier": "^4.0.0",
 		"html-webpack-plugin": "^5.5.3",
 		"isomorphic-fetch": "^3.0.0",
 		"mini-css-extract-plugin": "^2.7.6",

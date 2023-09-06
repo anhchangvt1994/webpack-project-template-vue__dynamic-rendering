@@ -39,7 +39,6 @@
 		"eslint-plugin-prettier": "^4.2.1",
 		"eslint-plugin-vue": "^9.15.1",
 		"espree": "^9.6.0",
-		"html-minifier": "^4.0.0",
 		"html-webpack-plugin": "^5.5.3",
 		"husky": "^8.0.3",
 		"isomorphic-fetch": "^3.0.0",
