@@ -33,7 +33,6 @@ const puppeteerSSRService = (async () => {
 	let _app
 	const ssrHandlerAuthorization = 'mtr-ssr-handler'
 	const cleanerServiceAuthorization = 'mtr-cleaner-service'
-	const optimizeSEOServiceAuthorization = 'mtr-optimize-seo-service'
 
 	const _setupAppUse = () => {
 		_app
@@ -229,7 +228,10 @@ const puppeteerSSRService = (async () => {
 					'Cache-Control': 'public, max-age: 31556952',
 				})
 				.status(200)
-				.sendFile(_path2.default.resolve(__dirname, '../../../dist/index.html')) // Serve prerendered page as response.
+				.sendFile(
+					req.headers.staticHtmlPath ||
+						_path2.default.resolve(__dirname, '../../../dist/index.html')
+				) // Serve prerendered page as response.
 		})
 
 		// Hàm middleware xử lý lỗi cuối cùng

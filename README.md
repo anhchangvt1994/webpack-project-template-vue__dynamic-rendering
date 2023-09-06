@@ -1,6 +1,6 @@
 ## First and foremost
 
-Vue Web Scraping for SEO project (Vue WSC-SEO) is a project created with the aim of researching and applying the advantages of web scraping to support SEO for Vue projects. It is not intended for commercial purposes and is not allowed to be used for commercialization. Vue WSC-SEO is considered a choice for SEO automation purposes, in addition to providing SSR capabilities for CSR-only frameworks such as VueJS (there is a version for React, see here) and does not require comparison or replacement for current Frontend meta frameworks such as Next, Nuxt, Rmix, SvelteKit, etc.
+Vue Web Scraping for SEO project (Vue WSC-SEO) is a project created with the aim of researching and applying the advantages of web scraping to support SEO for Vue projects. It is not intended for commercial purposes and is not allowed to be used for commercialization. Vue WSC-SEO is considered a choice for SEO automation purposes, in addition to providing SSR capabilities for CSR-only frameworks such as VueJS (there is a version for React, see [here](https://github.com/anhchangvt1994/webpack-project-template-react__seo-web-scraping)) and does not require comparison or replacement for current Frontend meta frameworks such as Next, Nuxt, Rmix, SvelteKit, etc.
 
 ## First start
 
