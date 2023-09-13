@@ -20,9 +20,9 @@ const detectStaticExtension = (req) => {
 		)
 	}
 
-	if (!isStatic && req.headers['sec-fetch-dest']) {
-		isStatic = req.headers['sec-fetch-dest'] !== 'document'
-	}
+	// if (!isStatic && req.headers['sec-fetch-dest']) {
+	// 	isStatic = req.headers['sec-fetch-dest'] !== 'document'
+	// }
 
 	return isStatic
 }

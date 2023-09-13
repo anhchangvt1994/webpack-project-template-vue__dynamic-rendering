@@ -3,6 +3,9 @@ import LazyRoute from 'utils/LazyRoute'
 import BeforeEach from './utils/BeforeEachHandler'
 import PageLoader from 'components/PageLoader.vue'
 import ErrorComponent from 'components/ErrorComponent.vue'
+import { ServerStore } from 'store/ServerStore'
+
+ServerStore.init()
 
 const lazyPage = LazyRoute.init({
 	suspensible: false,

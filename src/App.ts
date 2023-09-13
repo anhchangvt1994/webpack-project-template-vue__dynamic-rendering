@@ -1,5 +1,5 @@
 import { createApp } from 'vue'
-import router from 'config/router'
+import router from 'app/router'
 import 'assets/styles/tailwind.css'
 
 const App = (() => {

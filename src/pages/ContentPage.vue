@@ -1,6 +1,24 @@
 <script setup lang="ts">
 	import ModuleContentSection from 'components/content-page/ModuleContentSection.vue'
 	import CommentSection from 'components/comment-page/CommentSection.vue'
+	setMetaTag({
+		title: 'Trang nội dung',
+		keywords: 'trang chủ, vue 3, wsc-seo',
+		description: 'Trang nội dung Vue 3.x and WSC-SEO',
+		'og:type': 'website',
+		'og:title': 'Trang nội dung',
+		'og:description': 'Trang nội dung Vue 3.x and WSC-SEO',
+		'og:url': window.location.pathname,
+		'og:site_name': 'Vue 3.x and WSC-SEO',
+		'og:image': '',
+		'og:image:width': '1200',
+		'og:image:height': '628',
+	})
+	setRobotsTag({
+		index: false,
+		follow: false,
+	})
+
 	const route = useRoute()
 
 	const commentPageName = import.meta.env.ROUTER_COMMENT_NAME

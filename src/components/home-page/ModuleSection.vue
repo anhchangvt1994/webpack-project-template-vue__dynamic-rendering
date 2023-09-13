@@ -1,5 +1,4 @@
 <script setup lang="ts">
-	import { getSlug } from 'utils/SlugHandler'
 	import ImageItem from 'components/ImageItem.vue'
 	const moduleList: Array<{
 		title: string
@@ -75,3 +74,4 @@
 		}
 	}
 </style>
+utils/StringManager

@@ -43,22 +43,18 @@ const waitResponse = async (page: Page, url: string, duration: number) => {
 
 		return duration > maxDuration ? maxDuration : duration
 	})()
-	const startWaiting = new Date().getMilliseconds()
+	const startWaiting = Date.now()
 	let response
-	let isError = false
 	try {
 		response = await page.goto(url, {
 			waitUntil: 'networkidle2',
 			timeout: timeoutDuration,
 		})
 	} catch (err) {
-		isError = true
 		throw err
-	} finally {
-		if (isError) return response
 	}
 
-	const waitingDuration = new Date().getMilliseconds() - startWaiting
+	const waitingDuration = Date.now() - startWaiting
 	const restOfDuration = timeoutDuration - waitingDuration
 
 	if (restOfDuration <= 0) return response
@@ -71,7 +67,11 @@ const waitResponse = async (page: Page, url: string, duration: number) => {
 				if (responseTimeout) clearTimeout(responseTimeout)
 				res(undefined)
 			},
-			restOfDuration > maxLimitTimeout ? maxLimitTimeout : restOfDuration
+			ENV === 'development'
+				? 5000
+				: restOfDuration > maxLimitTimeout
+				? maxLimitTimeout
+				: restOfDuration
 		)
 		let responseTimeout: NodeJS.Timeout
 		const handleTimeout = () => {
@@ -81,7 +81,7 @@ const waitResponse = async (page: Page, url: string, duration: number) => {
 				res(undefined)
 			}, duration)
 
-			duration = ENV === 'development' ? 500 : 150
+			duration = ENV === 'development' ? 1500 : 150
 		}
 
 		handleTimeout()

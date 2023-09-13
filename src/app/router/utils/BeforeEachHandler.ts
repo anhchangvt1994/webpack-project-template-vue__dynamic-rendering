@@ -26,6 +26,15 @@ const BeforeEach = (function beforeEach() {
 
 	const _init = (router: Router) => {
 		router.beforeEach((to, from) => {
+			if (from && from.path !== to.path) {
+				fetch(to.path, {
+					headers: new Headers({
+						Accept:
+							'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+					}),
+				})
+			}
+
 			if (typeof to.meta.protect === 'function') {
 				const protect = to.meta.protect
 				const navigate: INavigate = {

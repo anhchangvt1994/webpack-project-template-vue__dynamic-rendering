@@ -1,19 +1,5 @@
 <script setup>
-	import { SeoTagHandler } from 'utils/SeoTagHandler'
 	import Header from 'components/Header.vue'
-
-	SeoTagHandler.setup({
-		title: 'Xác nhận thông tin',
-		description: 'Xác nhận thông tin đặt phòng',
-		'og:type': 'website',
-		'og:title': 'Xác nhận thông tin',
-		'og:description': 'Xác nhận thông tin đặt phòng',
-		'og:url': window.location.pathname,
-		'og:site_name': 'Go2Joy',
-		'og:image': '',
-		'og:image:width': '1200',
-		'og:image:height': '628',
-	})
 </script>
 
 <template>
@@ -43,3 +29,4 @@
 		margin: 0 auto;
 	}
 </style>
+utils/SeoManager
