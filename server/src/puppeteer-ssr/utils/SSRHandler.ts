@@ -60,7 +60,7 @@ const waitResponse = async (page: Page, url: string, duration: number) => {
 	if (restOfDuration <= 0) return response
 
 	await new Promise((res) => {
-		let duration = ENV === 'development' ? 1500 : 250
+		let duration = ENV === 'development' ? 3000 : 250
 		const maxLimitTimeout = restOfDuration > 3000 ? 3000 : restOfDuration
 		let limitTimeout = setTimeout(
 			() => {
@@ -68,7 +68,7 @@ const waitResponse = async (page: Page, url: string, duration: number) => {
 				res(undefined)
 			},
 			ENV === 'development'
-				? 5000
+				? 10000
 				: restOfDuration > maxLimitTimeout
 				? maxLimitTimeout
 				: restOfDuration
@@ -81,7 +81,7 @@ const waitResponse = async (page: Page, url: string, duration: number) => {
 				res(undefined)
 			}, duration)
 
-			duration = ENV === 'development' ? 1500 : 150
+			duration = ENV === 'development' ? 3000 : 150
 		}
 
 		handleTimeout()

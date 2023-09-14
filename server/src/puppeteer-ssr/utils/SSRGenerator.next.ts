@@ -80,7 +80,7 @@ const SSRGenerator = async ({
 	result = await cacheManager.achieve(SSRHandlerParams.url)
 
 	if (result) {
-		if (!isSkipWaiting && result.isRaw) {
+		if (result.isRaw) {
 			Console.log('File và nội dung đã tồn tại, đang tiến hành Optimize file')
 			const asyncTmpResult = new Promise<ISSRResult>(async (res) => {
 				const optimizeHTMLContentPool = WorkerPool.pool(

@@ -40,11 +40,19 @@ const RedirectHandler = (req: Request, res: Response, next: NextFunction) => {
 
 		if (statusCode !== 200) return res.redirect(statusCode, redirectUrl)
 
-		if (
-			(req.path.length > 1 && req.path[req.path.length - 1] === '/') ||
-			req.originalUrl.includes('?')
-		)
-			return res.redirect(301, req.path.slice(0, -1))
+		const urlChecked = (() => {
+			if (req.query.urlTesting) return req.originalUrl
+			let tmpUrl = req.originalUrl
+
+			if (tmpUrl.includes('?')) tmpUrl = req.originalUrl.split('?')[0]
+
+			if (tmpUrl.length > 1 && tmpUrl[tmpUrl.length - 1] === '/')
+				tmpUrl = tmpUrl.slice(0, -1)
+
+			return tmpUrl
+		})()
+
+		if (urlChecked !== req.originalUrl) return res.redirect(301, urlChecked)
 		else next()
 	} else {
 		next()

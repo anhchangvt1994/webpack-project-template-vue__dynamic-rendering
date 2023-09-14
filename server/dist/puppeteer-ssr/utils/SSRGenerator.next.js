@@ -98,7 +98,7 @@ const SSRGenerator = async ({ isSkipWaiting = false, ...SSRHandlerParams }) => {
 	result = await cacheManager.achieve(SSRHandlerParams.url)
 
 	if (result) {
-		if (!isSkipWaiting && result.isRaw) {
+		if (result.isRaw) {
 			_ConsoleHandler2.default.log(
 				'File và nội dung đã tồn tại, đang tiến hành Optimize file'
 			)

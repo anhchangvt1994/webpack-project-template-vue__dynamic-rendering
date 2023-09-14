@@ -11,17 +11,21 @@ var _CleanerService = require('../utils/CleanerService')
 var _CleanerService2 = _interopRequireDefault(_CleanerService)
 var _ConsoleHandler = require('../utils/ConsoleHandler')
 var _ConsoleHandler2 = _interopRequireDefault(_ConsoleHandler)
+
 var _constants3 = require('./constants')
 var _ForamatUrl = require('./utils/ForamatUrl')
 var _SSRGeneratornext = require('./utils/SSRGenerator.next')
 var _SSRGeneratornext2 = _interopRequireDefault(_SSRGeneratornext)
 var _SSRHandler = require('./utils/SSRHandler')
 var _SSRHandler2 = _interopRequireDefault(_SSRHandler)
+var _CacheManager = require('./utils/CacheManager')
+var _CacheManager2 = _interopRequireDefault(_CacheManager)
 
 const puppeteerSSRService = (async () => {
 	let _app
 	const ssrHandlerAuthorization = 'mtr-ssr-handler'
 	const cleanerServiceAuthorization = 'mtr-cleaner-service'
+	const cacheManager = _CacheManager2.default.call(void 0)
 
 	const _allRequestHandler = () => {
 		if (_constants.SERVER_LESS) {
@@ -76,15 +80,15 @@ const puppeteerSSRService = (async () => {
 			res.cookie('DeviceInfo', res.getHeader('Device-Info'), {
 				maxAge: 2000,
 			})
+			const url = _ForamatUrl.convertUrlHeaderToQueryString.call(
+				void 0,
+				_ForamatUrl.getUrl.call(void 0, req),
+				res,
+				true
+			)
 
 			if (req.headers.service !== 'puppeteer') {
 				if (botInfo.isBot) {
-					const url = _ForamatUrl.convertUrlHeaderToQueryString.call(
-						void 0,
-						_ForamatUrl.getUrl.call(void 0, req),
-						res
-					)
-
 					try {
 						const result = await _SSRGeneratornext2.default.call(void 0, {
 							url,
@@ -128,17 +132,18 @@ const puppeteerSSRService = (async () => {
 					}
 				}
 
-				const url = _ForamatUrl.convertUrlHeaderToQueryString.call(
-					void 0,
-					_ForamatUrl.getUrl.call(void 0, req),
-					res,
-					true
-				)
 				try {
-					await _SSRGeneratornext2.default.call(void 0, {
-						url,
-						isSkipWaiting: true,
-					})
+					if (_constants.SERVER_LESS) {
+						await _SSRGeneratornext2.default.call(void 0, {
+							url,
+							isSkipWaiting: true,
+						})
+					} else {
+						_SSRGeneratornext2.default.call(void 0, {
+							url,
+							isSkipWaiting: true,
+						})
+					}
 				} catch (err) {
 					_ConsoleHandler2.default.error('url', url)
 					_ConsoleHandler2.default.error(err)

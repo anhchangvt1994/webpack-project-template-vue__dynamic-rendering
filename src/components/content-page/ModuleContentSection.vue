@@ -4,11 +4,14 @@
 		caption: string
 		content: string
 	}>()
+	const isShow = ref(false)
+
+	setTimeout(() => (isShow.value = true), 150)
 </script>
 
 <template>
 	<section class="module-content-section">
-		<ImageItem src="" :caption="props.caption" />
+		<ImageItem src="asdf" :caption="props.caption" />
 		<div class="caption-row">{{ props.caption }}</div>
 		<div class="content-block">
 			{{ props.content }}

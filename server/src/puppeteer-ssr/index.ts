@@ -4,15 +4,21 @@ import { ENV, SERVER_LESS } from '../constants'
 import { IBotInfo } from '../types'
 import CleanerService from '../utils/CleanerService'
 import Console from '../utils/ConsoleHandler'
-import { CACHEABLE_STATUS_CODE } from './constants'
+import {
+	CACHEABLE_STATUS_CODE,
+	POWER_LEVEL,
+	POWER_LEVEL_LIST,
+} from './constants'
 import { convertUrlHeaderToQueryString, getUrl } from './utils/ForamatUrl'
 import SSRGenerator from './utils/SSRGenerator.next'
 import SSRHandler from './utils/SSRHandler'
+import CacheManager from './utils/CacheManager'
 
 const puppeteerSSRService = (async () => {
 	let _app: Express
 	const ssrHandlerAuthorization = 'mtr-ssr-handler'
 	const cleanerServiceAuthorization = 'mtr-cleaner-service'
+	const cacheManager = CacheManager()
 
 	const _allRequestHandler = () => {
 		if (SERVER_LESS) {
@@ -69,11 +75,10 @@ const puppeteerSSRService = (async () => {
 			res.cookie('DeviceInfo', res.getHeader('Device-Info'), {
 				maxAge: 2000,
 			})
+			const url = convertUrlHeaderToQueryString(getUrl(req), res, true)
 
 			if (req.headers.service !== 'puppeteer') {
 				if (botInfo.isBot) {
-					const url = convertUrlHeaderToQueryString(getUrl(req), res)
-
 					try {
 						const result = await SSRGenerator({
 							url,
@@ -114,12 +119,18 @@ const puppeteerSSRService = (async () => {
 					}
 				}
 
-				const url = convertUrlHeaderToQueryString(getUrl(req), res, true)
 				try {
-					await SSRGenerator({
-						url,
-						isSkipWaiting: true,
-					})
+					if (SERVER_LESS) {
+						await SSRGenerator({
+							url,
+							isSkipWaiting: true,
+						})
+					} else {
+						SSRGenerator({
+							url,
+							isSkipWaiting: true,
+						})
+					}
 				} catch (err) {
 					Console.error('url', url)
 					Console.error(err)

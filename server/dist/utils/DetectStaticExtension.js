@@ -14,15 +14,11 @@ const detectStaticExtension = (req) => {
 			url
 		)
 
-	if (!isStatic && req.headers['accept']) {
+	if (!isStatic) {
 		isStatic = /^(?!.*(text\/html|application\/json))/.test(
 			req.headers['accept']
 		)
 	}
-
-	// if (!isStatic && req.headers['sec-fetch-dest']) {
-	// 	isStatic = req.headers['sec-fetch-dest'] !== 'document'
-	// }
 
 	return isStatic
 }
