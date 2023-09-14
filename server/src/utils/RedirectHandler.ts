@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import { IBotInfo } from '../types'
-import { IRedirectInfoItem, REDIRECT_INFO } from '../../app/redirect.config'
+import { IRedirectInfoItem, REDIRECT_INFO } from '../../src/app/redirect.config'
 
 const RedirectHandler = (req: Request, res: Response, next: NextFunction) => {
 	const botInfoStringify = res.getHeader('Bot-Info') as string
