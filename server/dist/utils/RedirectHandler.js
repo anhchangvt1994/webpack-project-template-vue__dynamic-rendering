@@ -1,7 +1,7 @@
 'use strict'
 Object.defineProperty(exports, '__esModule', { value: true })
 
-var _redirectconfig = require('../../src/app/redirect.config')
+var _redirectconfig = require('../app/redirect.config')
 
 const RedirectHandler = (req, res, next) => {
 	const botInfoStringify = res.getHeader('Bot-Info')
