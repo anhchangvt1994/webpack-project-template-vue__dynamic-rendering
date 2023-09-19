@@ -15,13 +15,13 @@ export let DeviceInfo: IDeviceInfo
 
 export const ServerStore = {
 	init() {
-		if (!window['BotInfo'])
+		if (!BotInfo)
 			BotInfo = (() => {
 				const strInfo = getCookie('BotInfo')
 
 				return strInfo ? JSON.parse(strInfo) : { isBot: false }
 			})()
-		if (!window['DeviceInfo'])
+		if (!DeviceInfo)
 			DeviceInfo = (() => {
 				const strInfo = getCookie('DeviceInfo')
 

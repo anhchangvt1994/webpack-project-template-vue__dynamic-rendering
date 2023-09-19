@@ -11,21 +11,17 @@ var _CleanerService = require('../utils/CleanerService')
 var _CleanerService2 = _interopRequireDefault(_CleanerService)
 var _ConsoleHandler = require('../utils/ConsoleHandler')
 var _ConsoleHandler2 = _interopRequireDefault(_ConsoleHandler)
-
 var _constants3 = require('./constants')
 var _ForamatUrl = require('./utils/ForamatUrl')
 var _SSRGeneratornext = require('./utils/SSRGenerator.next')
 var _SSRGeneratornext2 = _interopRequireDefault(_SSRGeneratornext)
 var _SSRHandler = require('./utils/SSRHandler')
 var _SSRHandler2 = _interopRequireDefault(_SSRHandler)
-var _CacheManager = require('./utils/CacheManager')
-var _CacheManager2 = _interopRequireDefault(_CacheManager)
 
 const puppeteerSSRService = (async () => {
 	let _app
 	const ssrHandlerAuthorization = 'mtr-ssr-handler'
 	const cleanerServiceAuthorization = 'mtr-cleaner-service'
-	const cacheManager = _CacheManager2.default.call(void 0)
 
 	const _allRequestHandler = () => {
 		if (_constants.SERVER_LESS) {

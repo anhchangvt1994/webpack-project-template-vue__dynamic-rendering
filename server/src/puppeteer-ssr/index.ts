@@ -1,24 +1,18 @@
 import { Express } from 'express'
 import path from 'path'
-import { ENV, SERVER_LESS } from '../constants'
+import { SERVER_LESS } from '../constants'
 import { IBotInfo } from '../types'
 import CleanerService from '../utils/CleanerService'
 import Console from '../utils/ConsoleHandler'
-import {
-	CACHEABLE_STATUS_CODE,
-	POWER_LEVEL,
-	POWER_LEVEL_LIST,
-} from './constants'
+import { CACHEABLE_STATUS_CODE } from './constants'
 import { convertUrlHeaderToQueryString, getUrl } from './utils/ForamatUrl'
 import SSRGenerator from './utils/SSRGenerator.next'
 import SSRHandler from './utils/SSRHandler'
-import CacheManager from './utils/CacheManager'
 
 const puppeteerSSRService = (async () => {
 	let _app: Express
 	const ssrHandlerAuthorization = 'mtr-ssr-handler'
 	const cleanerServiceAuthorization = 'mtr-cleaner-service'
-	const cacheManager = CacheManager()
 
 	const _allRequestHandler = () => {
 		if (SERVER_LESS) {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 	import ModuleSection from 'components/home-page/ModuleSection.vue'
-	setMetaTag({
+	setSeoTag({
 		title: 'Trang chủ',
 		keywords: 'trang chủ, vue 3, wsc-seo',
 		description: 'Trang chủ Vue 3.x and WSC-SEO',
@@ -12,10 +12,7 @@
 		'og:image': '',
 		'og:image:width': '1200',
 		'og:image:height': '628',
-	})
-	setRobotsTag({
-		index: true,
-		follow: true,
+		robots: 'index, follow',
 	})
 </script>
 

@@ -8,6 +8,7 @@ declare global {
   const BotInfo: typeof import('store/ServerStore')['BotInfo']
   const DeviceInfo: typeof import('store/ServerStore')['DeviceInfo']
   const EffectScope: typeof import('vue')['EffectScope']
+  const ImportMeta: typeof import('utils/ImportMetaHelper')['default']
   const computed: typeof import('vue')['computed']
   const createApp: typeof import('vue')['createApp']
   const createRouter: typeof import('vue-router')['createRouter']
@@ -26,7 +27,6 @@ declare global {
   const getSlugWithoutDash: typeof import('utils/StringHelper')['getSlugWithoutDash']
   const getUnsignedLetters: typeof import('utils/StringHelper')['getUnsignedLetters']
   const h: typeof import('vue')['h']
-  const initAlternateTag: typeof import('utils/SeoHelper')['initAlternateTag']
   const inject: typeof import('vue')['inject']
   const isProxy: typeof import('vue')['isProxy']
   const isReactive: typeof import('vue')['isReactive']
@@ -51,15 +51,36 @@ declare global {
   const reactive: typeof import('vue')['reactive']
   const readonly: typeof import('vue')['readonly']
   const ref: typeof import('vue')['ref']
-  const removeCanonicalTag: typeof import('utils/SeoHelper')['removeCanonicalTag']
-  const removeMetaTag: typeof import('utils/SeoHelper')['removeMetaTag']
-  const removeRobotsTag: typeof import('utils/SeoHelper')['removeRobotsTag']
   const resolveComponent: typeof import('vue')['resolveComponent']
-  const setAlternateTag: typeof import('utils/SeoHelper')['setAlternateTag']
-  const setCanonicalTag: typeof import('utils/SeoHelper')['setCanonicalTag']
   const setCookie: typeof import('utils/CookieHelper')['setCookie']
-  const setMetaTag: typeof import('utils/SeoHelper')['setMetaTag']
-  const setRobotsTag: typeof import('utils/SeoHelper')['setRobotsTag']
+  const setLinkAlternateTag: typeof import('utils/SeoHelper/index')['setLinkAlternateTag']
+  const setLinkAmphtmlTag: typeof import('utils/SeoHelper/index')['setLinkAmphtmlTag']
+  const setLinkAuthorTag: typeof import('utils/SeoHelper/index')['setLinkAuthorTag']
+  const setLinkCanonicalTag: typeof import('utils/SeoHelper/index')['setLinkCanonicalTag']
+  const setLinkNextTag: typeof import('utils/SeoHelper/index')['setLinkNextTag']
+  const setLinkPrevTag: typeof import('utils/SeoHelper/index')['setLinkPrevTag']
+  const setLinkTwitterTitleTag: typeof import('utils/SeoHelper/index')['setLinkTwitterTitleTag']
+  const setMetaAuthorTag: typeof import('utils/SeoHelper/index')['setMetaAuthorTag']
+  const setMetaDescriptionTag: typeof import('utils/SeoHelper/index')['setMetaDescriptionTag']
+  const setMetaGeoPositionTag: typeof import('utils/SeoHelper/index')['setMetaGeoPositionTag']
+  const setMetaGeoRegionTag: typeof import('utils/SeoHelper/index')['setMetaGeoRegionTag']
+  const setMetaGoogleBotTag: typeof import('utils/SeoHelper/index')['setMetaGoogleBotTag']
+  const setMetaGoogleSiteVerificationTag: typeof import('utils/SeoHelper/index')['setMetaGoogleSiteVerificationTag']
+  const setMetaICBMTag: typeof import('utils/SeoHelper/index')['setMetaICBMTag']
+  const setMetaKeywordsTag: typeof import('utils/SeoHelper/index')['setMetaKeywordsTag']
+  const setMetaOgDescriptionTag: typeof import('utils/SeoHelper/index')['setMetaOgDescriptionTag']
+  const setMetaOgImageTag: typeof import('utils/SeoHelper/index')['setMetaOgImageTag']
+  const setMetaOgSiteNameTag: typeof import('utils/SeoHelper/index')['setMetaOgSiteNameTag']
+  const setMetaOgTitleTag: typeof import('utils/SeoHelper/index')['setMetaOgTitleTag']
+  const setMetaOgTypeTag: typeof import('utils/SeoHelper/index')['setMetaOgTypeTag']
+  const setMetaOgUrlTag: typeof import('utils/SeoHelper/index')['setMetaOgUrlTag']
+  const setMetaRobotsTag: typeof import('utils/SeoHelper/index')['setMetaRobotsTag']
+  const setMetaTwitterCardTag: typeof import('utils/SeoHelper/index')['setMetaTwitterCardTag']
+  const setMetaTwitterDescriptionTag: typeof import('utils/SeoHelper/index')['setMetaTwitterDescriptionTag']
+  const setMetaTwitterImageTag: typeof import('utils/SeoHelper/index')['setMetaTwitterImageTag']
+  const setMetaViewportTag: typeof import('utils/SeoHelper/index')['setMetaViewportTag']
+  const setSeoTag: typeof import('utils/SeoHelper/index')['setSeoTag']
+  const setTitleTag: typeof import('utils/SeoHelper/index')['setTitleTag']
   const shallowReactive: typeof import('vue')['shallowReactive']
   const shallowReadonly: typeof import('vue')['shallowReadonly']
   const shallowRef: typeof import('vue')['shallowRef']
@@ -115,7 +136,6 @@ declare module 'vue' {
     readonly getSlugWithoutDash: UnwrapRef<typeof import('utils/StringHelper.ts')['getSlugWithoutDash']>
     readonly getUnsignedLetters: UnwrapRef<typeof import('utils/StringHelper.ts')['getUnsignedLetters']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
-    readonly initAlternateTag: UnwrapRef<typeof import('utils/SeoHelper.ts')['initAlternateTag']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
@@ -140,15 +160,36 @@ declare module 'vue' {
     readonly reactive: UnwrapRef<typeof import('vue')['reactive']>
     readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
-    readonly removeCanonicalTag: UnwrapRef<typeof import('utils/SeoHelper.ts')['removeCanonicalTag']>
-    readonly removeMetaTag: UnwrapRef<typeof import('utils/SeoHelper.ts')['removeMetaTag']>
-    readonly removeRobotsTag: UnwrapRef<typeof import('utils/SeoHelper.ts')['removeRobotsTag']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
-    readonly setAlternateTag: UnwrapRef<typeof import('utils/SeoHelper.ts')['setAlternateTag']>
-    readonly setCanonicalTag: UnwrapRef<typeof import('utils/SeoHelper.ts')['setCanonicalTag']>
     readonly setCookie: UnwrapRef<typeof import('utils/CookieHelper.ts')['setCookie']>
-    readonly setMetaTag: UnwrapRef<typeof import('utils/SeoHelper.ts')['setMetaTag']>
-    readonly setRobotsTag: UnwrapRef<typeof import('utils/SeoHelper.ts')['setRobotsTag']>
+    readonly setLinkAlternateTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setLinkAlternateTag']>
+    readonly setLinkAmphtmlTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setLinkAmphtmlTag']>
+    readonly setLinkAuthorTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setLinkAuthorTag']>
+    readonly setLinkCanonicalTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setLinkCanonicalTag']>
+    readonly setLinkNextTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setLinkNextTag']>
+    readonly setLinkPrevTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setLinkPrevTag']>
+    readonly setLinkTwitterTitleTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setLinkTwitterTitleTag']>
+    readonly setMetaAuthorTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaAuthorTag']>
+    readonly setMetaDescriptionTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaDescriptionTag']>
+    readonly setMetaGeoPositionTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaGeoPositionTag']>
+    readonly setMetaGeoRegionTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaGeoRegionTag']>
+    readonly setMetaGoogleBotTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaGoogleBotTag']>
+    readonly setMetaGoogleSiteVerificationTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaGoogleSiteVerificationTag']>
+    readonly setMetaICBMTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaICBMTag']>
+    readonly setMetaKeywordsTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaKeywordsTag']>
+    readonly setMetaOgDescriptionTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaOgDescriptionTag']>
+    readonly setMetaOgImageTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaOgImageTag']>
+    readonly setMetaOgSiteNameTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaOgSiteNameTag']>
+    readonly setMetaOgTitleTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaOgTitleTag']>
+    readonly setMetaOgTypeTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaOgTypeTag']>
+    readonly setMetaOgUrlTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaOgUrlTag']>
+    readonly setMetaRobotsTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaRobotsTag']>
+    readonly setMetaTwitterCardTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaTwitterCardTag']>
+    readonly setMetaTwitterDescriptionTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaTwitterDescriptionTag']>
+    readonly setMetaTwitterImageTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaTwitterImageTag']>
+    readonly setMetaViewportTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaViewportTag']>
+    readonly setSeoTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setSeoTag']>
+    readonly setTitleTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setTitleTag']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
@@ -198,7 +239,6 @@ declare module '@vue/runtime-core' {
     readonly getSlugWithoutDash: UnwrapRef<typeof import('utils/StringHelper.ts')['getSlugWithoutDash']>
     readonly getUnsignedLetters: UnwrapRef<typeof import('utils/StringHelper.ts')['getUnsignedLetters']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
-    readonly initAlternateTag: UnwrapRef<typeof import('utils/SeoHelper.ts')['initAlternateTag']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
@@ -223,15 +263,36 @@ declare module '@vue/runtime-core' {
     readonly reactive: UnwrapRef<typeof import('vue')['reactive']>
     readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
-    readonly removeCanonicalTag: UnwrapRef<typeof import('utils/SeoHelper.ts')['removeCanonicalTag']>
-    readonly removeMetaTag: UnwrapRef<typeof import('utils/SeoHelper.ts')['removeMetaTag']>
-    readonly removeRobotsTag: UnwrapRef<typeof import('utils/SeoHelper.ts')['removeRobotsTag']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
-    readonly setAlternateTag: UnwrapRef<typeof import('utils/SeoHelper.ts')['setAlternateTag']>
-    readonly setCanonicalTag: UnwrapRef<typeof import('utils/SeoHelper.ts')['setCanonicalTag']>
     readonly setCookie: UnwrapRef<typeof import('utils/CookieHelper.ts')['setCookie']>
-    readonly setMetaTag: UnwrapRef<typeof import('utils/SeoHelper.ts')['setMetaTag']>
-    readonly setRobotsTag: UnwrapRef<typeof import('utils/SeoHelper.ts')['setRobotsTag']>
+    readonly setLinkAlternateTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setLinkAlternateTag']>
+    readonly setLinkAmphtmlTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setLinkAmphtmlTag']>
+    readonly setLinkAuthorTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setLinkAuthorTag']>
+    readonly setLinkCanonicalTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setLinkCanonicalTag']>
+    readonly setLinkNextTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setLinkNextTag']>
+    readonly setLinkPrevTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setLinkPrevTag']>
+    readonly setLinkTwitterTitleTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setLinkTwitterTitleTag']>
+    readonly setMetaAuthorTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaAuthorTag']>
+    readonly setMetaDescriptionTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaDescriptionTag']>
+    readonly setMetaGeoPositionTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaGeoPositionTag']>
+    readonly setMetaGeoRegionTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaGeoRegionTag']>
+    readonly setMetaGoogleBotTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaGoogleBotTag']>
+    readonly setMetaGoogleSiteVerificationTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaGoogleSiteVerificationTag']>
+    readonly setMetaICBMTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaICBMTag']>
+    readonly setMetaKeywordsTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaKeywordsTag']>
+    readonly setMetaOgDescriptionTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaOgDescriptionTag']>
+    readonly setMetaOgImageTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaOgImageTag']>
+    readonly setMetaOgSiteNameTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaOgSiteNameTag']>
+    readonly setMetaOgTitleTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaOgTitleTag']>
+    readonly setMetaOgTypeTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaOgTypeTag']>
+    readonly setMetaOgUrlTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaOgUrlTag']>
+    readonly setMetaRobotsTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaRobotsTag']>
+    readonly setMetaTwitterCardTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaTwitterCardTag']>
+    readonly setMetaTwitterDescriptionTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaTwitterDescriptionTag']>
+    readonly setMetaTwitterImageTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaTwitterImageTag']>
+    readonly setMetaViewportTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setMetaViewportTag']>
+    readonly setSeoTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setSeoTag']>
+    readonly setTitleTag: UnwrapRef<typeof import('utils/SeoHelper/index.ts')['setTitleTag']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>

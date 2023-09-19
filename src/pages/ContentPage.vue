@@ -1,7 +1,7 @@
 <script setup lang="ts">
 	import ModuleContentSection from 'components/content-page/ModuleContentSection.vue'
 	import CommentSection from 'components/comment-page/CommentSection.vue'
-	setMetaTag({
+	setSeoTag({
 		title: 'Trang nội dung',
 		keywords: 'trang chủ, vue 3, wsc-seo',
 		description: 'Trang nội dung Vue 3.x and WSC-SEO',
@@ -13,15 +13,12 @@
 		'og:image': '',
 		'og:image:width': '1200',
 		'og:image:height': '628',
-	})
-	setRobotsTag({
-		index: false,
-		follow: false,
+		robots: 'noindex, nofollow',
 	})
 
 	const route = useRoute()
 
-	const commentPageName = import.meta.env.ROUTER_COMMENT_NAME
+	const { ROUTER_COMMENT_NAME } = import.meta.env
 
 	const response: {
 		[key: string | number]: {
@@ -60,7 +57,7 @@
 </script>
 
 <template>
-	<div v-if="route.name !== commentPageName" class="content-page">
+	<div v-if="route.name !== ROUTER_COMMENT_NAME" class="content-page">
 		<div>
 			<router-link
 				:to="{

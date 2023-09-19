@@ -1,6 +1,7 @@
 import type { Router, RouteLocationNormalized } from 'vue-router'
 import type { IUserInfo } from 'store/UserStore'
 import { UserInfoState } from 'store/UserStore'
+import { resetSeoTag } from 'utils/SeoHelper'
 
 interface INavigate {
 	error?: string
@@ -33,6 +34,7 @@ const BeforeEach = (function beforeEach() {
 							'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
 					}),
 				})
+				resetSeoTag()
 			}
 
 			if (typeof to.meta.protect === 'function') {

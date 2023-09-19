@@ -44,7 +44,7 @@
 			>
 				<div class="module-card">
 					<ImageItem src="sadfasdf" :caption="item.title" />
-					<div class="module-card__title">
+					<div v-if="BotInfo.isBot" class="module-card__title">
 						{{ item.title }}
 					</div>
 					<!-- .module-card__title -->
