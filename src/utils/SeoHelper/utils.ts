@@ -32,24 +32,25 @@ export const generateMetaTag = (name, val) => {
 
 	if (el && !/viewport/.test(name)) el.remove()
 	if (!val) return
+	let elMeta
+	if (el) elMeta = el
+	else
+		elMeta = (() => {
+			const tmpElMeta = document.createElement('meta')
+			return tmpElMeta
+		})()
 
-	const elMeta = (() => {
-		const tmpElMeta = document.createElement('meta')
-
+	if (elMeta) {
 		if (
 			/description|keywords|robots|googlebot|google-site-verification|viewport|twitter:|author|geo.|ICBM/.test(
 				name
 			)
 		)
-			tmpElMeta.setAttribute('name', name)
-		else tmpElMeta.setAttribute('property', name)
+			elMeta.setAttribute('name', name)
+		else elMeta.setAttribute('property', name)
 
-		document.head.insertBefore(tmpElMeta, seoHelperComment)
-
-		return tmpElMeta
-	})()
-
-	if (!elMeta) return
+		document.head.insertBefore(elMeta, seoHelperComment)
+	} else return
 
 	elMeta.setAttribute('content', val)
 } // generateMetaTag
