@@ -1,5 +1,8 @@
 <script setup>
 	import Header from 'components/Header.vue'
+	setMetaViewportTag(
+		'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no'
+	)
 </script>
 
 <template>

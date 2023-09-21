@@ -30,7 +30,7 @@ export const generateMetaTag = (name, val) => {
 		document.head.querySelector(`meta[name="${name}"]`) ||
 		document.head.querySelector(`meta[property="${name}"]`)
 
-	if (el) el.remove()
+	if (el && !/viewport/.test(name)) el.remove()
 	if (!val) return
 
 	const elMeta = (() => {
