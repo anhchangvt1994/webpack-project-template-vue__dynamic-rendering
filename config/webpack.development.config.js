@@ -43,6 +43,7 @@ const WebpackDevelopmentConfiguration = async () => {
 			},
 		},
 		// devtool: 'inline-source-map', // NOTE - BAD Performance, GOOD debugging
+		// devtool: 'eval-source-map', // NOTE - BAD Performance, GOOD debugging
 		// devtool: 'eval-cheap-module-source-map', // NOTE - SLOW Performance, GOOD debugging
 		// devtool: 'eval', // NOTE - GOOD Performance, BAD debugging
 		devtool: 'eval-cheap-source-map',
@@ -94,7 +95,7 @@ const WebpackDevelopmentConfiguration = async () => {
 							target: 'esnext',
 						},
 					},
-					exclude: /node_modules/,
+					exclude: /node_modules|dist/,
 				},
 				{
 					test: /libs[\\/]socket.io.min.js/,

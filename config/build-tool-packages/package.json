@@ -10,7 +10,7 @@
 		"isomorphic-fetch@*": "$isomorphic-fetch",
 		"@babel/types@*": "$@babel/types"
 	},
-	"devDependencies": {
+	"dependencies": {
 		"@babel/core": "7.22.15",
 		"@babel/types": "7.22.15",
 		"@babel/plugin-transform-classes": "7.22.15",
@@ -46,6 +46,7 @@
 		"unplugin-auto-import": "^0.16.5",
 		"webpack-dev-server": "^4.15.1",
 		"vue-loader": "^17.2.2",
-		"webpack": "^5.88.2"
+		"webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4"
 	}
 }

@@ -284,7 +284,7 @@ function resolveTsconfigPathsToAlias(tsconfigPath = './tsconfig.json') {
 
 	return {
 		alias: {
-			src: path.resolve(__dirname, '../' + baseUrl),
+			src: path.resolve(__dirname, baseUrl),
 			...alias,
 		},
 		modules,
