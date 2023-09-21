@@ -50,7 +50,9 @@ module.exports = (async () => {
 								'babel-preset-typescript-vue3',
 								'@babel/preset-typescript',
 							],
-							plugins: [['@babel/plugin-transform-classes', { loose: false }]],
+							plugins: [
+								['@babel/plugin-transform-class-properties', { loose: false }],
+							],
 						},
 					},
 				},

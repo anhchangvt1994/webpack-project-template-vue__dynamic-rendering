@@ -13,7 +13,6 @@
 	"dependencies": {
 		"@babel/core": "7.22.15",
 		"@babel/types": "7.22.15",
-		"@babel/plugin-transform-classes": "7.22.15",
 		"@babel/preset-env": "7.22.15",
 		"@babel/preset-typescript": "7.22.15",
 		"autoprefixer": "^10.4.14",
@@ -47,6 +46,6 @@
 		"webpack-dev-server": "^4.15.1",
 		"vue-loader": "^17.2.2",
 		"webpack": "^5.88.2",
-    "webpack-cli": "^5.1.4"
+		"webpack-cli": "^5.1.4"
 	}
 }
