@@ -99,7 +99,7 @@ const BrowserManager = (
 				let tabsClosed = 0
 				const browser: Browser = (await browserLaunch) as Browser
 
-				browser.on('createNewPage', async (page: Page) => {
+				browser.on('createNewPage', (async (page: Page) => {
 					await new Promise((resolveCloseTab) => {
 						const timeoutCloseTab = setTimeout(() => {
 							if (!page.isClosed()) {
@@ -121,7 +121,7 @@ const BrowserManager = (
 						browser.close()
 						deleteUserDataDir(selfUserDataDirPath)
 					}
-				})
+				}) as any)
 			} catch (err) {
 				Console.error(err)
 			}
