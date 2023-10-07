@@ -286,7 +286,7 @@ export interface ILocaleInfo {
 }
 ```
 
-#### <p id="Integrate Fastify option to improve benchmark">Integrate Fastify option to improve the benchmark</p>
+#### <p id="integrate-fastify">Integrate Fastify option to improve the benchmark</p>
 
 <p>Inside <a href="https://expressjs.com/" target="_blank">ExpressJS</a> like the default, I also integrated <a href="https://fastify.dev/" target="_blank">FastifyJS</a> into the project to take advantage of FastifyJS's benchmark processing capability, thereby improving the performance and flexibility of the project.</p>
 <p>You can use it by using the command lines above</p>
