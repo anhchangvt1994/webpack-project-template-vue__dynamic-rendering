@@ -4,21 +4,22 @@ import { SERVER_LESS } from '../constants'
 import { IBotInfo } from '../types'
 import CleanerService from '../utils/CleanerService'
 import Console from '../utils/ConsoleHandler'
+import { getCookieFromResponse } from '../utils/CookieHandler'
 import { CACHEABLE_STATUS_CODE } from './constants'
 import { convertUrlHeaderToQueryString, getUrl } from './utils/ForamatUrl'
-import SSRGenerator from './utils/SSRGenerator.next'
-import SSRHandler from './utils/SSRHandler'
+import ISRGenerator from './utils/ISRGenerator.next'
+import SSRHandler from './utils/ISRHandler'
 
 const puppeteerSSRService = (async () => {
 	let _app: Express
-	const ssrHandlerAuthorization = 'mtr-ssr-handler'
-	const cleanerServiceAuthorization = 'mtr-cleaner-service'
+	const webScrapingService = 'web-scraping-service'
+	const cleanerService = 'cleaner-service'
 
 	const _allRequestHandler = () => {
 		if (SERVER_LESS) {
 			_app
 				.get('/web-scraping', async function (req, res) {
-					if (req.headers.authorization !== ssrHandlerAuthorization)
+					if (req.headers.authorization !== webScrapingService)
 						return res
 							.status(200)
 							.send(
@@ -40,7 +41,7 @@ const puppeteerSSRService = (async () => {
 					res.status(200).send(result || {})
 				})
 				.post('/cleaner-service', async function (req, res) {
-					if (req.headers.authorization !== cleanerServiceAuthorization)
+					if (req.headers.authorization !== cleanerService)
 						return res
 							.status(200)
 							.send(
@@ -61,34 +62,36 @@ const puppeteerSSRService = (async () => {
 				})
 		}
 		_app.get('*', async function (req, res, next) {
-			const botInfoStringify = res.getHeader('Bot-Info') as string
-			const botInfo: IBotInfo = JSON.parse(botInfoStringify)
-			res.cookie('BotInfo', res.getHeader('Bot-Info'), {
-				maxAge: 2000,
+			const cookies = getCookieFromResponse(res)
+			const botInfo: IBotInfo = cookies?.['BotInfo']
+			const headers = req.headers
+
+			res.set({
+				'Content-Type':
+					headers.accept === 'application/json'
+						? 'application/json'
+						: 'text/html; charset=utf-8',
 			})
-			res.cookie('DeviceInfo', res.getHeader('Device-Info'), {
-				maxAge: 2000,
-			})
+
 			const url = convertUrlHeaderToQueryString(getUrl(req), res, true)
 
 			if (req.headers.service !== 'puppeteer') {
 				if (botInfo.isBot) {
 					try {
-						const result = await SSRGenerator({
+						const result = await ISRGenerator({
 							url,
 						})
 
 						if (result) {
 							/**
 							 * NOTE
-							 * Cache-Control max-age is 1 year
 							 * calc by using:
 							 * https://www.inchcalculator.com/convert/year-to-second/
 							 */
 							res.set({
 								'Server-Timing': `Prerender;dur=50;desc="Headless render time (ms)"`,
-								'Content-Type': 'text/html',
-								'Cache-Control': 'public, max-age: 31556952',
+								// 'Cache-Control': 'public, max-age: 31556952',
+								'Cache-Control': 'no-store',
 							})
 
 							res.status(result.status)
@@ -115,12 +118,12 @@ const puppeteerSSRService = (async () => {
 
 				try {
 					if (SERVER_LESS) {
-						await SSRGenerator({
+						await ISRGenerator({
 							url,
 							isSkipWaiting: true,
 						})
 					} else {
-						SSRGenerator({
+						ISRGenerator({
 							url,
 							isSkipWaiting: true,
 						})
@@ -137,16 +140,19 @@ const puppeteerSSRService = (async () => {
 			 * calc by using:
 			 * https://www.inchcalculator.com/convert/year-to-second/
 			 */
-			return res
-				.set({
-					'Content-Type': 'text/html',
-					'Cache-Control': 'public, max-age: 31556952',
-				})
-				.status(200)
-				.sendFile(
-					(req.headers.staticHtmlPath as string) ||
-						path.resolve(__dirname, '../../../dist/index.html')
-				) // Serve prerendered page as response.
+			if (headers.accept === 'application/json') res.send({ statusCode: 200 })
+			else
+				return res
+					.set({
+						// 'Cache-Control': 'public, max-age: 31556952',
+						'Cache-Control': 'no-store',
+					})
+					.status(200)
+					.sendFile(
+						(req.headers.staticHtmlPath as string) ||
+							path.resolve(__dirname, '../../../dist/index.html'),
+						{ etag: false, lastModified: false }
+					) // Serve prerendered page as response.
 		})
 
 		// Hàm middleware xử lý lỗi cuối cùng

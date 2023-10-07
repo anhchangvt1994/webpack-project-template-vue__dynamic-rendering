@@ -1,5 +1,9 @@
 import { IBotInfo } from '../types'
-import { IRedirectInfoItem, REDIRECT_INFO } from '../app/redirect.config'
+import {
+	IRedirectInfoItem,
+	REDIRECT_INFO,
+	REDIRECT_INJECTION,
+} from '../app/redirect.config'
 
 const DetectRedirect: (
 	req: Request,
@@ -71,11 +75,7 @@ const DetectRedirect: (
 			statusCode: 301,
 			redirectUrl: redirectUrl.replace(url.origin, ''),
 		}
-	else
-		return {
-			statusCode: 200,
-			redirectUrl,
-		}
+	else return REDIRECT_INJECTION(url)
 }
 
 export default DetectRedirect

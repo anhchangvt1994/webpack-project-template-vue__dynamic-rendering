@@ -7,7 +7,7 @@ const { getPort, findFreePort } = require('./utils/PortHandler')
 	const port = await findFreePort(process.env.PORT)
 	const serverInitial = new WebpackDevServer(
 		webpack({
-			mode: 'development',
+			mode: 'production',
 			entry: {},
 			output: {},
 		}),

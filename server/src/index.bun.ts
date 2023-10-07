@@ -71,9 +71,10 @@ const startServer = async () => {
 		)
 		.use(
 			app.onBeforeHandle((ctx) => {
-				const url = new URL(ctx.request.url)
-				if (!process.env.BASE_URL)
+				if (!process.env.BASE_URL) {
+					const url = new URL(ctx.request.url)
 					process.env.BASE_URL = `${url.protocol}//${url.host}`
+				}
 			})
 		)
 		.use(

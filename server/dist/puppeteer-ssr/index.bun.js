@@ -76,11 +76,11 @@ const puppeteerSSRService = (async () => {
 
 			cookie['BotInfo'].set({
 				value: ctx.store['Bot-Info'],
-				maxAge: 2000,
+				maxAge: _constants3.COOKIE_EXPIRED,
 			})
 			cookie['DeviceInfo'].set({
 				value: ctx.store['Device-Info'],
-				maxAge: 2000,
+				maxAge: _constants3.COOKIE_EXPIRED,
 			})
 			const url = _ForamatUrlbun.convertUrlHeaderToQueryString.call(
 				void 0,

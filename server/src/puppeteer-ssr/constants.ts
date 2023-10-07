@@ -1,5 +1,5 @@
 import { PuppeteerLaunchOptions } from 'puppeteer-core'
-import { userDataPath } from '../constants'
+import { ENV, userDataPath } from '../constants'
 
 // NOTE - Browser Options
 export const optionArgs = [
@@ -111,3 +111,7 @@ export const regexNotFoundPageID = new RegExp(
 )
 
 export const CACHEABLE_STATUS_CODE = { 200: true, 302: true }
+export const COOKIE_EXPIRED =
+	BANDWIDTH_LEVEL == BANDWIDTH_LEVEL_LIST.TWO && ENV !== 'development'
+		? 2000
+		: 60000

@@ -17,5 +17,7 @@ declare module 'vue-router' {
 	interface RouteMeta {
 		protect?: (certInfo?: ICertInfo) => boolean | string | void
 		reProtect?: () => void
+		lang?: string
+		country?: string
 	}
 }

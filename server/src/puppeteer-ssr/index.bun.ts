@@ -3,9 +3,9 @@ import { SERVER_LESS } from '../constants'
 import { IBotInfo } from '../types'
 import CleanerService from '../utils/CleanerService'
 import Console from '../utils/ConsoleHandler'
-import { CACHEABLE_STATUS_CODE } from './constants'
+import { CACHEABLE_STATUS_CODE, COOKIE_EXPIRED } from './constants'
 import { convertUrlHeaderToQueryString, getUrl } from './utils/ForamatUrl.bun'
-import SSRGenerator from './utils/SSRGenerator.next'
+import ISRGenerator from './utils/SSRGenerator.next'
 import SSRHandler from './utils/SSRHandler'
 import Elysia from 'elysia'
 
@@ -69,11 +69,11 @@ const puppeteerSSRService = (async () => {
 
 			cookie['BotInfo'].set({
 				value: ctx.store['Bot-Info'],
-				maxAge: 2000,
+				maxAge: COOKIE_EXPIRED,
 			})
 			cookie['DeviceInfo'].set({
 				value: ctx.store['Device-Info'],
-				maxAge: 2000,
+				maxAge: COOKIE_EXPIRED,
 			})
 			const url = convertUrlHeaderToQueryString(
 				getUrl(ctx.store['url']),
@@ -84,7 +84,7 @@ const puppeteerSSRService = (async () => {
 			if (req.headers.get('service') !== 'puppeteer') {
 				if (botInfo.isBot) {
 					try {
-						const result = await SSRGenerator({
+						const result = await ISRGenerator({
 							url,
 						})
 
@@ -125,12 +125,12 @@ const puppeteerSSRService = (async () => {
 
 				try {
 					if (SERVER_LESS) {
-						await SSRGenerator({
+						await ISRGenerator({
 							url,
 							isSkipWaiting: true,
 						})
 					} else {
-						SSRGenerator({
+						ISRGenerator({
 							url,
 							isSkipWaiting: true,
 						})

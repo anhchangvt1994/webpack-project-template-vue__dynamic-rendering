@@ -2,6 +2,7 @@ import type { Router, RouteLocationNormalized } from 'vue-router'
 import type { IUserInfo } from 'store/UserStore'
 import { UserInfoState } from 'store/UserStore'
 import { resetSeoTag } from 'utils/SeoHelper'
+import { ServerStore } from 'store/ServerStore'
 
 interface INavigate {
 	error?: string
@@ -26,14 +27,78 @@ const BeforeEach = (function beforeEach() {
 	let WAITING_VERIFY_ROUTER_NAME_LIST: { [key: string]: Array<string> }
 
 	const _init = (router: Router) => {
-		router.beforeEach((to, from) => {
-			if (from && from.path !== to.path) {
-				fetch(to.path, {
+		router.beforeEach(async (to, from) => {
+			let curLocale
+			if (LocaleInfo.langSelected || LocaleInfo.countrySelected) {
+				// NOTE - Handle for change locale case
+				if (
+					from.meta.lang &&
+					to.params.locale &&
+					to.params.locale !== getLocale(from.meta.lang, from.meta.country)
+				) {
+					const [lang, country] = (to.params.locale as string).split('-')
+					setCookie('lang', lang)
+
+					if (LocaleInfo.defaultCountry) setCookie('country', country)
+
+					ServerStore.reInit.LocaleInfo()
+				}
+
+				const defaultLocale = getLocale(
+					LocaleInfo.defaultLang,
+					LocaleInfo.defaultCountry
+				)
+				curLocale = getLocale(
+					LocaleInfo.langSelected,
+					LocaleInfo.countrySelected
+				)
+
+				// NOTE - Handle for hidden default locale params
+				if (to.params.locale && to.params.locale !== curLocale) {
+					router.push({
+						path: `/${curLocale}${to.fullPath}`,
+						replace: true,
+					})
+					return false
+				} else if (
+					LocaleInfo.hideDefaultLocale &&
+					curLocale === defaultLocale &&
+					to.path.includes(`/${curLocale}`)
+				) {
+					const path = to.fullPath.replace(`/${curLocale}`, '')
+					router.push({
+						path: path ? path : '/',
+						name: to.name as string,
+						params: {
+							...to.params,
+							locale: '',
+						},
+						replace: true,
+					})
+					return false
+				}
+			}
+
+			// NOTE - Handle pre-render for bot
+			if (from && from.name && from.path !== to.path) {
+				const data = await fetch(to.path, {
 					headers: new Headers({
-						Accept:
-							'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+						Accept: 'application/json',
 					}),
-				})
+					// credentials: 'omit',
+				}).then(async (res) => res.json())
+
+				if (data && data.statusCode !== 200) {
+					router.push({
+						path: data.redirectUrl,
+						replace: false,
+					})
+
+					return false
+				}
+
+				ServerStore.reInit.LocaleInfo()
+
 				resetSeoTag()
 			}
 
@@ -76,6 +141,9 @@ const BeforeEach = (function beforeEach() {
 						} else {
 							router.push({
 								path: navigate.redirect as string,
+								params: {
+									locale: curLocale,
+								},
 								replace: navigate.status === 301,
 							})
 						}
@@ -98,6 +166,9 @@ const BeforeEach = (function beforeEach() {
 				successID = ''
 				successPath = ''
 			}
+
+			to.meta.lang = LocaleInfo.langSelected
+			to.meta.country = LocaleInfo.countrySelected
 
 			return true
 		})

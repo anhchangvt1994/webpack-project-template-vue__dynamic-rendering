@@ -131,6 +131,11 @@
     "o": true,
     "p": true,
     "r": true,
-    "t": true
+    "t": true,
+    "ExtractDefaultPropTypes": true,
+    "ExtractPropTypes": true,
+    "ExtractPublicPropTypes": true,
+    "LocaleInfo": true,
+    "getLocale": true
   }
 }

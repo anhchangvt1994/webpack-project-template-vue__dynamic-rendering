@@ -3,6 +3,27 @@ Object.defineProperty(exports, '__esModule', { value: true })
 function _interopRequireDefault(obj) {
 	return obj && obj.__esModule ? obj : { default: obj }
 }
+function _optionalChain(ops) {
+	let lastAccessLHS = undefined
+	let value = ops[0]
+	let i = 1
+	while (i < ops.length) {
+		const op = ops[i]
+		const fn = ops[i + 1]
+		i += 2
+		if ((op === 'optionalAccess' || op === 'optionalCall') && value == null) {
+			return undefined
+		}
+		if (op === 'access' || op === 'optionalAccess') {
+			lastAccessLHS = value
+			value = fn(value)
+		} else if (op === 'call' || op === 'optionalCall') {
+			value = fn((...args) => value.call(lastAccessLHS, ...args))
+			lastAccessLHS = undefined
+		}
+	}
+	return value
+}
 var _path = require('path')
 var _path2 = _interopRequireDefault(_path)
 var _constants = require('../constants')
@@ -11,23 +32,24 @@ var _CleanerService = require('../utils/CleanerService')
 var _CleanerService2 = _interopRequireDefault(_CleanerService)
 var _ConsoleHandler = require('../utils/ConsoleHandler')
 var _ConsoleHandler2 = _interopRequireDefault(_ConsoleHandler)
+var _CookieHandler = require('../utils/CookieHandler')
 var _constants3 = require('./constants')
 var _ForamatUrl = require('./utils/ForamatUrl')
-var _SSRGeneratornext = require('./utils/SSRGenerator.next')
-var _SSRGeneratornext2 = _interopRequireDefault(_SSRGeneratornext)
-var _SSRHandler = require('./utils/SSRHandler')
-var _SSRHandler2 = _interopRequireDefault(_SSRHandler)
+var _ISRGeneratornext = require('./utils/ISRGenerator.next')
+var _ISRGeneratornext2 = _interopRequireDefault(_ISRGeneratornext)
+var _ISRHandler = require('./utils/ISRHandler')
+var _ISRHandler2 = _interopRequireDefault(_ISRHandler)
 
 const puppeteerSSRService = (async () => {
 	let _app
-	const ssrHandlerAuthorization = 'mtr-ssr-handler'
-	const cleanerServiceAuthorization = 'mtr-cleaner-service'
+	const webScrapingService = 'web-scraping-service'
+	const cleanerService = 'cleaner-service'
 
 	const _allRequestHandler = () => {
 		if (_constants.SERVER_LESS) {
 			_app
 				.get('/web-scraping', async function (req, res) {
-					if (req.headers.authorization !== ssrHandlerAuthorization)
+					if (req.headers.authorization !== webScrapingService)
 						return res
 							.status(200)
 							.send(
@@ -38,7 +60,7 @@ const puppeteerSSRService = (async () => {
 					const isFirstRequest = !!req.query.isFirstRequest
 					const url = req.query.url ? decodeURIComponent(req.query.url) : ''
 
-					const result = await _SSRHandler2.default.call(void 0, {
+					const result = await _ISRHandler2.default.call(void 0, {
 						startGenerating,
 						isFirstRequest,
 						url,
@@ -47,7 +69,7 @@ const puppeteerSSRService = (async () => {
 					res.status(200).send(result || {})
 				})
 				.post('/cleaner-service', async function (req, res) {
-					if (req.headers.authorization !== cleanerServiceAuthorization)
+					if (req.headers.authorization !== cleanerService)
 						return res
 							.status(200)
 							.send(
@@ -68,14 +90,21 @@ const puppeteerSSRService = (async () => {
 				})
 		}
 		_app.get('*', async function (req, res, next) {
-			const botInfoStringify = res.getHeader('Bot-Info')
-			const botInfo = JSON.parse(botInfoStringify)
-			res.cookie('BotInfo', res.getHeader('Bot-Info'), {
-				maxAge: 2000,
+			const cookies = _CookieHandler.getCookieFromResponse.call(void 0, res)
+			const botInfo = _optionalChain([
+				cookies,
+				'optionalAccess',
+				(_) => _['BotInfo'],
+			])
+			const headers = req.headers
+
+			res.set({
+				'Content-Type':
+					headers.accept === 'application/json'
+						? 'application/json'
+						: 'text/html; charset=utf-8',
 			})
-			res.cookie('DeviceInfo', res.getHeader('Device-Info'), {
-				maxAge: 2000,
-			})
+
 			const url = _ForamatUrl.convertUrlHeaderToQueryString.call(
 				void 0,
 				_ForamatUrl.getUrl.call(void 0, req),
@@ -86,21 +115,20 @@ const puppeteerSSRService = (async () => {
 			if (req.headers.service !== 'puppeteer') {
 				if (botInfo.isBot) {
 					try {
-						const result = await _SSRGeneratornext2.default.call(void 0, {
+						const result = await _ISRGeneratornext2.default.call(void 0, {
 							url,
 						})
 
 						if (result) {
 							/**
 							 * NOTE
-							 * Cache-Control max-age is 1 year
 							 * calc by using:
 							 * https://www.inchcalculator.com/convert/year-to-second/
 							 */
 							res.set({
 								'Server-Timing': `Prerender;dur=50;desc="Headless render time (ms)"`,
-								'Content-Type': 'text/html',
-								'Cache-Control': 'public, max-age: 31556952',
+								// 'Cache-Control': 'public, max-age: 31556952',
+								'Cache-Control': 'no-store',
 							})
 
 							res.status(result.status)
@@ -130,12 +158,12 @@ const puppeteerSSRService = (async () => {
 
 				try {
 					if (_constants.SERVER_LESS) {
-						await _SSRGeneratornext2.default.call(void 0, {
+						await _ISRGeneratornext2.default.call(void 0, {
 							url,
 							isSkipWaiting: true,
 						})
 					} else {
-						_SSRGeneratornext2.default.call(void 0, {
+						_ISRGeneratornext2.default.call(void 0, {
 							url,
 							isSkipWaiting: true,
 						})
@@ -152,16 +180,19 @@ const puppeteerSSRService = (async () => {
 			 * calc by using:
 			 * https://www.inchcalculator.com/convert/year-to-second/
 			 */
-			return res
-				.set({
-					'Content-Type': 'text/html',
-					'Cache-Control': 'public, max-age: 31556952',
-				})
-				.status(200)
-				.sendFile(
-					req.headers.staticHtmlPath ||
-						_path2.default.resolve(__dirname, '../../../dist/index.html')
-				) // Serve prerendered page as response.
+			if (headers.accept === 'application/json') res.send({ statusCode: 200 })
+			else
+				return res
+					.set({
+						// 'Cache-Control': 'public, max-age: 31556952',
+						'Cache-Control': 'no-store',
+					})
+					.status(200)
+					.sendFile(
+						req.headers.staticHtmlPath ||
+							_path2.default.resolve(__dirname, '../../../dist/index.html'),
+						{ etag: false, lastModified: false }
+					) // Serve prerendered page as response.
 		})
 
 		// Hàm middleware xử lý lỗi cuối cùng

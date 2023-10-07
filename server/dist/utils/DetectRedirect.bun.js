@@ -1,5 +1,6 @@
 'use strict'
 Object.defineProperty(exports, '__esModule', { value: true })
+
 var _redirectconfig = require('../app/redirect.config')
 
 const DetectRedirect = (req, botInfo) => {
@@ -65,11 +66,7 @@ const DetectRedirect = (req, botInfo) => {
 			statusCode: 301,
 			redirectUrl: redirectUrl.replace(url.origin, ''),
 		}
-	else
-		return {
-			statusCode: 200,
-			redirectUrl,
-		}
+	else return _redirectconfig.REDIRECT_INJECTION.call(void 0, url)
 }
 
 exports.default = DetectRedirect

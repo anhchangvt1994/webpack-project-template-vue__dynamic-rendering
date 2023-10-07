@@ -1,4 +1,4 @@
-export default {
+const routes = {
 	prefix: 'router',
 	data: {
 		base: {
@@ -30,3 +30,5 @@ export default {
 		},
 	},
 }
+
+export default routes

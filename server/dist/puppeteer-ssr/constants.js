@@ -139,3 +139,9 @@ exports.regexNotFoundPageID = regexNotFoundPageID
 
 const CACHEABLE_STATUS_CODE = { 200: true, 302: true }
 exports.CACHEABLE_STATUS_CODE = CACHEABLE_STATUS_CODE
+const COOKIE_EXPIRED =
+	exports.BANDWIDTH_LEVEL == BANDWIDTH_LEVEL_LIST.TWO &&
+	_constants.ENV !== 'development'
+		? 2000
+		: 60000
+exports.COOKIE_EXPIRED = COOKIE_EXPIRED

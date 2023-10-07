@@ -2,6 +2,13 @@
 function _interopRequireDefault(obj) {
 	return obj && obj.__esModule ? obj : { default: obj }
 }
+function _nullishCoalesce(lhs, rhsFn) {
+	if (lhs != null) {
+		return lhs
+	} else {
+		return rhsFn()
+	}
+}
 function _optionalChain(ops) {
 	let lastAccessLHS = undefined
 	let value = ops[0]
@@ -36,16 +43,24 @@ var _PortHandler = require('../../config/utils/PortHandler')
 var _constants = require('./constants')
 var _puppeteerssr = require('./puppeteer-ssr')
 var _puppeteerssr2 = _interopRequireDefault(_puppeteerssr)
+var _constants3 = require('./puppeteer-ssr/constants')
+var _serverconfig = require('./server.config')
+var _serverconfig2 = _interopRequireDefault(_serverconfig)
 var _ConsoleHandler = require('./utils/ConsoleHandler')
 var _ConsoleHandler2 = _interopRequireDefault(_ConsoleHandler)
+var _CookieHandler = require('./utils/CookieHandler')
 var _DetectBot = require('./utils/DetectBot')
 var _DetectBot2 = _interopRequireDefault(_DetectBot)
 var _DetectDevice = require('./utils/DetectDevice')
 var _DetectDevice2 = _interopRequireDefault(_DetectDevice)
+var _DetectLocale = require('./utils/DetectLocale')
+var _DetectLocale2 = _interopRequireDefault(_DetectLocale)
+var _DetectRedirect = require('./utils/DetectRedirect')
+var _DetectRedirect2 = _interopRequireDefault(_DetectRedirect)
 var _DetectStaticExtension = require('./utils/DetectStaticExtension')
 var _DetectStaticExtension2 = _interopRequireDefault(_DetectStaticExtension)
-var _RedirectHandler = require('./utils/RedirectHandler')
-var _RedirectHandler2 = _interopRequireDefault(_RedirectHandler)
+
+const COOKIE_EXPIRED_SECOND = _constants3.COOKIE_EXPIRED / 1000
 
 require('events').EventEmitter.setMaxListeners(200)
 
@@ -91,13 +106,13 @@ const startServer = async () => {
 			const isStatic = _DetectStaticExtension2.default.call(void 0, req)
 			/**
 			 * NOTE
-			 * Cache-Control max-age is 3 months
+			 * Cache-Control max-age is 1 year
 			 * calc by using:
 			 * https://www.inchcalculator.com/convert/month-to-second/
 			 */
 			if (isStatic) {
 				if (_constants.ENV !== 'development') {
-					res.set('Cache-Control', 'public, max-age=7889238')
+					res.set('Cache-Control', 'public, max-age=31556952')
 				}
 
 				try {
@@ -126,10 +141,75 @@ const startServer = async () => {
 				botInfo = JSON.stringify(_DetectBot2.default.call(void 0, req))
 			}
 
-			res.setHeader('Bot-Info', botInfo)
+			_CookieHandler.setCookie.call(
+				void 0,
+				res,
+				`BotInfo=${botInfo};Max-Age=${COOKIE_EXPIRED_SECOND}`
+			)
 			next()
 		})
-		.use(_RedirectHandler2.default)
+		.use(function (req, res, next) {
+			const localeInfo = _DetectLocale2.default.call(void 0, req)
+
+			_CookieHandler.setCookie.call(
+				void 0,
+				res,
+				`LocaleInfo=${JSON.stringify(
+					localeInfo
+				)};Max-Age=${COOKIE_EXPIRED_SECOND};Path=/`
+			)
+
+			if (_serverconfig2.default.locale.enable) {
+				_CookieHandler.setCookie.call(
+					void 0,
+					res,
+					`lang=${_nullishCoalesce(
+						_optionalChain([
+							localeInfo,
+							'optionalAccess',
+							(_) => _.langSelected,
+						]),
+						() => _serverconfig2.default.locale.defaultLang
+					)};Path=/`
+				)
+
+				if (_serverconfig2.default.locale.defaultCountry) {
+					_CookieHandler.setCookie.call(
+						void 0,
+						res,
+						`country=${_nullishCoalesce(
+							_optionalChain([
+								localeInfo,
+								'optionalAccess',
+								(_2) => _2.countrySelected,
+							]),
+							() => _serverconfig2.default.locale.defaultCountry
+						)};Path=/`
+					)
+				}
+			}
+			next()
+		})
+		.use(function (req, res, next) {
+			const redirectInfo = _DetectRedirect2.default.call(void 0, req, res)
+
+			if (redirectInfo.statusCode !== 200) {
+				if (req.headers.accept === 'application/json') {
+					res.end(JSON.stringify(redirectInfo))
+				} else {
+					if (redirectInfo.redirectUrl.length > 1)
+						redirectInfo.redirectUrl = redirectInfo.redirectUrl.replace(
+							/\/$|\/(\?)/,
+							'$1'
+						)
+					res.writeHead(redirectInfo.statusCode, {
+						Location: redirectInfo.redirectUrl,
+						'cache-control': 'no-store',
+					})
+					res.end()
+				}
+			} else next()
+		})
 		.use(function (req, res, next) {
 			let deviceInfo
 			if (req.headers.service === 'puppeteer') {
@@ -138,7 +218,11 @@ const startServer = async () => {
 				deviceInfo = JSON.stringify(_DetectDevice2.default.call(void 0, req))
 			}
 
-			res.setHeader('Device-Info', deviceInfo)
+			_CookieHandler.setCookie.call(
+				void 0,
+				res,
+				`DeviceInfo=${deviceInfo};Max-Age=${COOKIE_EXPIRED_SECOND}`
+			)
 			next()
 		})
 	;(await _puppeteerssr2.default).init(app)
@@ -148,9 +232,9 @@ const startServer = async () => {
 		_optionalChain([
 			process,
 			'access',
-			(_) => _.send,
+			(_3) => _3.send,
 			'optionalCall',
-			(_2) => _2('ready'),
+			(_4) => _4('ready'),
 		])
 	})
 

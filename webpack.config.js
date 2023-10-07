@@ -179,6 +179,7 @@ module.exports = async (env, arg) => {
 							'getCustomSlug',
 							'generateTitleCase',
 							'generateSentenceCase',
+							'getLocale',
 						],
 						'composable/useStringHelper.ts': [
 							'useSlug',
@@ -217,7 +218,7 @@ module.exports = async (env, arg) => {
 							'setMetaTwitterCardTag',
 							'setSeoTag',
 						],
-						'store/ServerStore.ts': ['BotInfo', 'DeviceInfo'],
+						'store/ServerStore.ts': ['BotInfo', 'DeviceInfo', 'LocaleInfo'],
 						'utils/CookieHelper.ts': ['getCookie', 'setCookie'],
 					},
 				],
