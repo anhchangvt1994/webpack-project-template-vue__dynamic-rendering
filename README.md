@@ -57,16 +57,16 @@ bun install
 ### Table of benefit information that you must know
 
 - [What is Vue Web Scraping for SEO ?](#what)
-- [Why use this project ?](why)
+- [Why use this project ?](#why)
 - [Benefits](#benefits)
-  - [How to setup meta SEO tags ?](meta-seo-tags)
-  - [How to setup link SEO tags ?](link-seo-tags)
-  - [How to config redirect ?](redirect)
-  - [How to config server ?](server-config)
-  - [What is BotInfo variable ?](bot-info)
-  - [What is DeviceInfo variable ?](device-info)
-  - [What is LocaleInfo variable ?](locale-info)
-  - [Integrate Fastify option to improve benchmark](integrate-fastify)
+  - [How to setup meta SEO tags ?](#meta-seo-tags)
+  - [How to setup link SEO tags ?](#link-seo-tags)
+  - [How to config redirect ?](#redirect)
+  - [How to config server ?](#server-config)
+  - [What is BotInfo variable ?](#bot-info)
+  - [What is DeviceInfo variable ?](#device-info)
+  - [What is LocaleInfo variable ?](#locale-info)
+  - [Integrate Fastify option to improve benchmark](#integrate-fastify)
 - [Deploy guide information](#deploy)
 
 <h3 id="what">What is Vue Web Scraping for SEO ?</h3>
