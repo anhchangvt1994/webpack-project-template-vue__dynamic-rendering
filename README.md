@@ -66,6 +66,7 @@ bun install
   - [What is BotInfo variable ?](bot-info)
   - [What is DeviceInfo variable ?](device-info)
   - [What is LocaleInfo variable ?](locale-info)
+  - [Integrate Fastify option to improve benchmark](integrate-fastify)
 - [Deploy guide information](#deploy)
 
 <h3 id="what">What is Vue Web Scraping for SEO ?</h3>
@@ -227,6 +228,7 @@ const ServerConfig = defineServerConfig({
     enable: true, // enable use /:locale dispatcher param (default false)
     defaultLang: 'en', // default language for website
     defaultCountry: 'us', // default country for website (set it empty if you just use language)
+    // hideDefaultLocale: false // hide the default locale or show it such as other locales (default true)
   },
 })
 
@@ -282,6 +284,24 @@ export interface ILocaleInfo {
   metro: number
   area: number
 }
+```
+
+#### <p id="Integrate Fastify option to improve benchmark">Integrate Fastify option to improve the benchmark</p>
+
+<p>Inside <a href="https://expressjs.com/" target="_blank">ExpressJS</a> like the default, I also integrated <a href="https://fastify.dev/" target="_blank">FastifyJS</a> into the project to take advantage of FastifyJS's benchmark processing capability, thereby improving the performance and flexibility of the project.</p>
+<p>You can use it by using the command lines above</p>
+
+```bash
+npm run dev:fastify
+```
+```bash
+npm run preview:fastify
+```
+
+<p>And you can setup it for "start" script to deploy into your server by replace "pm2-puppeteer-ssr" to "pm2-puppeteer-ssr:fastify"</p>
+
+```json
+"start": "cross-env ENV=production MAX_WORKERS=2 CLUSTER_INSTANCES=1 npm run pm2-puppeteer-ssr:fastify",
 ```
 
 <h3 id="deploy">Deploy guide information for testing</h3>
