@@ -57,7 +57,7 @@ bun install
 ### Table of benefit information that you must know
 
 - [What is Vue Web Scraping for SEO ?](#what)
-- [Why use this project ?](#why)
+- [Why use this project ?](#why-use-it)
 - [Benefits](#benefits)
   - [How to setup meta SEO tags ?](#meta-seo-tags)
   - [How to setup link SEO tags ?](#link-seo-tags)
@@ -80,7 +80,7 @@ Web Scraping for SEO project (Vue WSC-SEO) is a product designed for VueJS devel
 
 ![alt text](/src/assets/static/images/readme/tiki-lighthouse.jpg 'Title')
 
-<h3 id="why">Why use this project ?</h3>
+<h3 id="why-use-it">Why use this project ?</h3>
 
 <p>As introduced above, Vue WSC-SEO provides VueJS developers with an additional option for easy access and SEO optimization if needed. To provide developers with more information about the product and make a more informed decision about its use, Vue WSC-SEO will provide the following specific advantages and disadvantages:</p>
 
