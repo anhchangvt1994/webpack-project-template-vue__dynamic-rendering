@@ -444,8 +444,10 @@ const getCustomSlug = _generateSlug
 const getLocale = (lang?: string, country?: string) => {
 	const arrLocale: string[] = []
 
-	if (lang) arrLocale.push(lang)
-	if (country) arrLocale.push(country.toLowerCase())
+	if (lang && LocaleInfo.langSelected) arrLocale.push(lang)
+	if (country && LocaleInfo.countrySelected)
+		arrLocale.push(country.toLowerCase())
+
 	return arrLocale.join('-')
 } // getLocale
 

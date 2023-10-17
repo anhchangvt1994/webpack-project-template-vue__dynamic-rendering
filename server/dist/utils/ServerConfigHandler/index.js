@@ -35,9 +35,7 @@ const defineServerConfig = (options) => {
 
 	for (const key in _constants.defaultServerConfig) {
 		if (key === 'locale') {
-			if (!options[key])
-				serverConfigDefined[key] = _constants.defaultServerConfig[key]
-			else {
+			if (options[key]) {
 				serverConfigDefined[key] = {
 					enable: options.locale && options.locale.enable ? true : false,
 				}
@@ -70,8 +68,91 @@ const defineServerConfig = (options) => {
 							() => true
 						),
 					}
+			} else serverConfigDefined[key] = _constants.defaultServerConfig[key]
+
+			const routes = _optionalChain([
+				options,
+				'access',
+				(_7) => _7[key],
+				'optionalAccess',
+				(_8) => _8.routes,
+			])
+
+			if (routes) {
+				serverConfigDefined[key].routes = {}
+
+				for (const localeRouteKey in routes) {
+					if (routes[localeRouteKey]) {
+						serverConfigDefined[key].routes[localeRouteKey] = {
+							enable:
+								routes[localeRouteKey] && routes[localeRouteKey].enable
+									? true
+									: false,
+						}
+
+						if (serverConfigDefined[key].routes[localeRouteKey].enable)
+							serverConfigDefined[key].routes[localeRouteKey] = {
+								...serverConfigDefined[key].routes[localeRouteKey],
+								defaultLang: _optionalChain([
+									routes,
+									'access',
+									(_9) => _9[localeRouteKey],
+									'optionalAccess',
+									(_10) => _10.defaultLang,
+								]),
+								defaultCountry: _optionalChain([
+									routes,
+									'access',
+									(_11) => _11[localeRouteKey],
+									'optionalAccess',
+									(_12) => _12.defaultCountry,
+								]),
+								hideDefaultLocale: _nullishCoalesce(
+									_optionalChain([
+										routes,
+										'access',
+										(_13) => _13[localeRouteKey],
+										'optionalAccess',
+										(_14) => _14.hideDefaultLocale,
+									]),
+									() => true
+								),
+							}
+					} else serverConfigDefined[key].routes[localeRouteKey] = true
+				}
 			}
 		} // locale
+
+		if (key === 'isr') {
+			if (options[key]) {
+				serverConfigDefined[key] = {
+					enable: options.isr && options.isr.enable ? true : false,
+				}
+
+				const routes = _optionalChain([
+					options,
+					'access',
+					(_15) => _15[key],
+					'optionalAccess',
+					(_16) => _16.routes,
+				])
+
+				if (routes) {
+					serverConfigDefined[key].routes = {}
+
+					for (const localeRouteKey in routes) {
+						if (routes[localeRouteKey]) {
+							serverConfigDefined[key].routes[localeRouteKey] = {
+								enable:
+									routes[localeRouteKey] && routes[localeRouteKey].enable
+										? true
+										: false,
+							}
+						} else serverConfigDefined[key].routes[localeRouteKey] = true
+					}
+				}
+			} else serverConfigDefined[key] = _constants.defaultServerConfig[key]
+		} // isr
 	}
 
 	return serverConfigDefined

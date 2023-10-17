@@ -83,7 +83,9 @@ const routes: Readonly<RouteRecordRaw[]> = [
 
 if (LocaleInfo.langSelected || LocaleInfo.countrySelected) {
 	routes.map((route) => {
-		route.path = `/:locale?${route.path}`
+		if (route.name !== import.meta.env.ROUTER_LOGIN_NAME) {
+			route.path = `/:locale?${route.path}`
+		}
 
 		return route
 	})

@@ -74,4 +74,3 @@
 		}
 	}
 </style>
-utils/StringManager

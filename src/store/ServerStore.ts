@@ -1,3 +1,5 @@
+import { setLocaleState } from './LocaleStore'
+
 export interface IBotInfo {
 	isBot: boolean
 	name: string
@@ -55,6 +57,11 @@ export const ServerStore = {
 
 				const info = strInfo ? JSON.parse(strInfo) : {}
 
+				setLocaleState({
+					lang: info.langSelected,
+					country: info.countrySelected,
+				})
+
 				return info
 			})()
 	},
@@ -64,6 +71,11 @@ export const ServerStore = {
 				const strInfo = getCookie('LocaleInfo')
 
 				const info = strInfo ? JSON.parse(strInfo) : {}
+
+				setLocaleState({
+					lang: info.langSelected,
+					country: info.countrySelected,
+				})
 
 				return info
 			})()

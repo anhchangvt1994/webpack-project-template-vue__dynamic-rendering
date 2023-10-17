@@ -3,6 +3,8 @@ Object.defineProperty(exports, '__esModule', { value: true })
 function _interopRequireDefault(obj) {
 	return obj && obj.__esModule ? obj : { default: obj }
 }
+var _serverconfig = require('../server.config')
+var _serverconfig2 = _interopRequireDefault(_serverconfig)
 var _ValidateLocaleCode = require('./services/ValidateLocaleCode')
 var _ValidateLocaleCode2 = _interopRequireDefault(_ValidateLocaleCode)
 
@@ -27,16 +29,26 @@ const REDIRECT_INJECTION = (redirectUrl, req, res) => {
 		redirectUrl = redirectUrl.replace(/(0|1|2)$/, '3')
 	}
 
-	const localeCodeValidationResult = _ValidateLocaleCode2.default.call(
-		void 0,
-		redirectUrl,
-		res
-	)
+	const enableLocale =
+		_serverconfig2.default.locale.enable &&
+		Boolean(
+			!_serverconfig2.default.locale.routes ||
+				!_serverconfig2.default.locale.routes[req.url] ||
+				_serverconfig2.default.locale.routes[req.url].enable
+		)
 
-	if (localeCodeValidationResult.statusCode !== 200) {
-		statusCode =
-			statusCode === 301 ? statusCode : localeCodeValidationResult.statusCode
-		redirectUrl = localeCodeValidationResult.redirectUrl
+	if (enableLocale) {
+		const localeCodeValidationResult = _ValidateLocaleCode2.default.call(
+			void 0,
+			redirectUrl,
+			res
+		)
+
+		if (localeCodeValidationResult.statusCode !== 200) {
+			statusCode =
+				statusCode === 301 ? statusCode : localeCodeValidationResult.statusCode
+			redirectUrl = localeCodeValidationResult.redirectUrl
+		}
 	}
 
 	return {

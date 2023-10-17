@@ -14,7 +14,6 @@
 		'og:image:height': '628',
 		robots: 'index, follow',
 	})
-	const route = useRoute()
 </script>
 
 <template>

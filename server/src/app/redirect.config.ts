@@ -1,3 +1,4 @@
+import ServerConfig from '../server.config'
 import ValidateLocaleCode from './services/ValidateLocaleCode'
 
 export interface IRedirectResult {
@@ -30,12 +31,22 @@ export const REDIRECT_INJECTION = (redirectUrl, req, res): IRedirectResult => {
 		redirectUrl = redirectUrl.replace(/(0|1|2)$/, '3')
 	}
 
-	const localeCodeValidationResult = ValidateLocaleCode(redirectUrl, res)
+	const enableLocale =
+		ServerConfig.locale.enable &&
+		Boolean(
+			!ServerConfig.locale.routes ||
+				!ServerConfig.locale.routes[req.url] ||
+				ServerConfig.locale.routes[req.url].enable
+		)
 
-	if (localeCodeValidationResult.statusCode !== 200) {
-		statusCode =
-			statusCode === 301 ? statusCode : localeCodeValidationResult.statusCode
-		redirectUrl = localeCodeValidationResult.redirectUrl
+	if (enableLocale) {
+		const localeCodeValidationResult = ValidateLocaleCode(redirectUrl, res)
+
+		if (localeCodeValidationResult.statusCode !== 200) {
+			statusCode =
+				statusCode === 301 ? statusCode : localeCodeValidationResult.statusCode
+			redirectUrl = localeCodeValidationResult.redirectUrl
+		}
 	}
 
 	return {

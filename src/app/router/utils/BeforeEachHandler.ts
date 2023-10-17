@@ -1,8 +1,8 @@
-import type { Router, RouteLocationNormalized } from 'vue-router'
 import type { IUserInfo } from 'store/UserStore'
 import { UserInfoState } from 'store/UserStore'
 import { resetSeoTag } from 'utils/SeoHelper'
-import { ServerStore } from 'store/ServerStore'
+import type { RouteLocationNormalized, Router } from 'vue-router'
+import LocaleHandler from './LocaleHandler'
 
 interface INavigate {
 	error?: string
@@ -21,6 +21,36 @@ export interface ICertInfo {
 	successPath: string
 }
 
+const fetchOnRoute = (() => {
+	let controller
+
+	return async (
+		to: RouteLocationNormalized,
+		init?: RequestInit | undefined
+	): Promise<undefined | { statusCode: number; redirectUrl?: string }> => {
+		if (!to) return
+
+		controller?.abort('reject')
+		controller = new AbortController()
+
+		const data = await new Promise(async (res) => {
+			setTimeout(res, 1000)
+			const response = await fetch(to.path, {
+				...init,
+				signal: controller.signal,
+			}).then((res) => res.text())
+
+			res(/^{(.|[\r\n])*?}$/.test(response) ? JSON.parse(response) : {})
+		})
+
+		return data as { statusCode: number; redirectUrl?: string }
+	}
+})() // fetchOnRoute
+
+const VALID_CODE_LIST = [200]
+const REDIRECT_CODE_LIST = [301, 302]
+const ERROR_CODE_LIST = [404, 500, 502, 504]
+
 const BeforeEach = (function beforeEach() {
 	let successPath: string
 	let successID: string
@@ -28,79 +58,44 @@ const BeforeEach = (function beforeEach() {
 
 	const _init = (router: Router) => {
 		router.beforeEach(async (to, from) => {
-			let curLocale
-			if (LocaleInfo.langSelected || LocaleInfo.countrySelected) {
-				// NOTE - Handle for change locale case
-				if (
-					from.meta.lang &&
-					to.params.locale &&
-					to.params.locale !== getLocale(from.meta.lang, from.meta.country)
-				) {
-					const [lang, country] = (to.params.locale as string).split('-')
-					setCookie('lang', lang)
+			const enableLocale =
+				to.params.locale !== undefined &&
+				(LocaleInfo.langSelected || LocaleInfo.countrySelected)
 
-					if (LocaleInfo.defaultCountry) setCookie('country', country)
+			if (enableLocale) {
+				const isSuccess = await LocaleHandler(router, to, from)
 
-					ServerStore.reInit.LocaleInfo()
-				}
-
-				const defaultLocale = getLocale(
-					LocaleInfo.defaultLang,
-					LocaleInfo.defaultCountry
-				)
-				curLocale = getLocale(
-					LocaleInfo.langSelected,
-					LocaleInfo.countrySelected
-				)
-
-				// NOTE - Handle for hidden default locale params
-				if (to.params.locale && to.params.locale !== curLocale) {
-					router.push({
-						path: `/${curLocale}${to.fullPath}`,
-						replace: true,
-					})
-					return false
-				} else if (
-					LocaleInfo.hideDefaultLocale &&
-					curLocale === defaultLocale &&
-					to.path.includes(`/${curLocale}`)
-				) {
-					const path = to.fullPath.replace(`/${curLocale}`, '')
-					router.push({
-						path: path ? path : '/',
-						name: to.name as string,
-						params: {
-							...to.params,
-							locale: '',
-						},
-						replace: true,
-					})
-					return false
-				}
-			}
-
-			// NOTE - Handle pre-render for bot
-			if (from && from.name && from.path !== to.path) {
-				const data = await fetch(to.path, {
+				if (!isSuccess) return false
+			} else if (window.location.pathname !== to.path) {
+				// NOTE - Handle pre-render for bot with locale options turned off
+				const data = await fetchOnRoute(to, {
+					method: 'GET',
 					headers: new Headers({
 						Accept: 'application/json',
 					}),
-					// credentials: 'omit',
-				}).then(async (res) => res.json())
+				})
 
-				if (data && data.statusCode !== 200) {
-					router.push({
-						path: data.redirectUrl,
-						replace: false,
-					})
+				if (data) {
+					if (REDIRECT_CODE_LIST.includes(data.statusCode)) {
+						router.push({
+							path: data.redirectUrl,
+							replace: true,
+						})
 
-					return false
+						return false
+					} else if (ERROR_CODE_LIST.includes(data.statusCode)) return false
 				}
-
-				ServerStore.reInit.LocaleInfo()
-
-				resetSeoTag()
 			}
+
+			to.meta.lang = LocaleInfo.langSelected
+			to.meta.country = LocaleInfo.countrySelected
+
+			const curLocale = getLocale(
+				LocaleInfo.langSelected,
+				LocaleInfo.countrySelected
+			)
+
+			resetSeoTag()
 
 			if (typeof to.meta.protect === 'function') {
 				const protect = to.meta.protect
@@ -166,9 +161,6 @@ const BeforeEach = (function beforeEach() {
 				successID = ''
 				successPath = ''
 			}
-
-			to.meta.lang = LocaleInfo.langSelected
-			to.meta.country = LocaleInfo.countrySelected
 
 			return true
 		})

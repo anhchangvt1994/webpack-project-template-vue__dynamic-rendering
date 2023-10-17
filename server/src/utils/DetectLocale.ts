@@ -105,53 +105,30 @@ export default function detectLocale(req): ILocaleInfo {
 	const pathSplitted = req.originalUrl.split('/')
 	const firstDispatcherParam = pathSplitted[1]
 
-	const isLocaleCodeIdFormatValid =
-		_checkLocaleCodeIdFormatValid(firstDispatcherParam)
-
 	let langSelected
 	let countrySelected
 
 	if (ServerConfig.locale.enable) {
-		if (isLocaleCodeIdFormatValid) {
-			const arrLocale = firstDispatcherParam.toLowerCase().split('-')
-
-			langSelected = (() => {
-				if (!defaultLang) return
-				let lang
-
-				if (LOCALE_LIST_WITH_LANGUAGE[arrLocale[0]]) lang = arrLocale[0]
-				else if (LOCALE_LIST_WITH_LANGUAGE[arrLocale[1]]) lang = arrLocale[1]
-				else lang = defaultLang
-
-				return lang
-			})()
-			countrySelected = (() => {
-				if (!defaultCountry) return
-				let country
-
-				if (LOCALE_LIST_WITH_COUNTRY[arrLocale[0]]) country = arrLocale[0]
-				else if (LOCALE_LIST_WITH_COUNTRY[arrLocale[1]]) country = arrLocale[1]
-				else country = defaultCountry
-
-				return country
-			})()
+		if (
+			ServerConfig.locale.routes &&
+			ServerConfig.locale.routes[req.url] &&
+			!ServerConfig.locale.routes[req.url].enable
+		) {
+			const cookies = getCookieFromRequest(req)
+			if (cookies && (cookies['lang'] || cookies['country'])) {
+				;[langSelected, countrySelected] = [
+					cookies['lang'] || defaultLang,
+					cookies['country'] || defaultCountry,
+				]
+			}
 		} else {
-			langSelected = (() => {
-				if (!defaultLang) return
-				let lang = cookies?.['lang']
-
-				if (!LOCALE_LIST_WITH_LANGUAGE[lang]) lang = defaultLang
-
-				return lang
-			})()
-			countrySelected = (() => {
-				if (!defaultCountry) return
-				let country = cookies?.['country']
-
-				if (!LOCALE_LIST_WITH_COUNTRY[country]) country = defaultCountry
-
-				return country.toUpperCase()
-			})()
+			;[langSelected, countrySelected] = _getArrLocaleSelected(
+				firstDispatcherParam,
+				{
+					defaultLang,
+					defaultCountry,
+				}
+			)
 		}
 	}
 
@@ -166,32 +143,36 @@ export default function detectLocale(req): ILocaleInfo {
 	} as ILocaleInfo
 }
 
-const _checkLocaleCodeIdFormatValid = (firstDispatcherParam) => {
+const _getArrLocaleSelected = (
+	firstDispatcherParam,
+	params: {
+		defaultLang: string | undefined
+		defaultCountry: string | undefined
+	}
+) => {
 	if (
 		!firstDispatcherParam ||
-		typeof firstDispatcherParam !== 'string' ||
 		!/^[a-z-0-9]{2}(|-[A-Za-z]{2})(?:$)/.test(firstDispatcherParam)
-	) {
-		return false
-	}
+	)
+		return [params.defaultLang, params.defaultCountry]
 
 	const arrLocale = firstDispatcherParam.toLowerCase().split('-')
 
-	if (arrLocale[0]) {
-		if (
-			!LOCALE_LIST_WITH_LANGUAGE[arrLocale[0]] &&
-			!LOCALE_LIST_WITH_COUNTRY[arrLocale[0]]
-		)
-			return false
-	}
+	if (!params.defaultLang) arrLocale[0] = undefined
+	else if (
+		arrLocale[0] &&
+		!LOCALE_LIST_WITH_LANGUAGE[arrLocale[0]] &&
+		!LOCALE_LIST_WITH_COUNTRY[arrLocale[0]]
+	)
+		arrLocale[0] = params.defaultLang
 
-	if (arrLocale[1]) {
-		if (
-			!LOCALE_LIST_WITH_LANGUAGE[arrLocale[1]] &&
-			!LOCALE_LIST_WITH_COUNTRY[arrLocale[1]]
-		)
-			return false
-	}
+	if (!params.defaultCountry) arrLocale[1] = undefined
+	else if (
+		arrLocale[1] &&
+		!LOCALE_LIST_WITH_LANGUAGE[arrLocale[1]] &&
+		!LOCALE_LIST_WITH_COUNTRY[arrLocale[1]]
+	)
+		arrLocale[1] = params.defaultCountry
 
-	return true
-} // _checkLocaleCodeIdFormatValid()
+	return arrLocale
+} // _getArrLocaleSelected

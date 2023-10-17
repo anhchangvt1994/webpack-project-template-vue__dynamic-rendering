@@ -150,6 +150,13 @@ const startServer = async () => {
 		})
 		.use(function (req, res, next) {
 			const localeInfo = _DetectLocale2.default.call(void 0, req)
+			const enableLocale =
+				_serverconfig2.default.locale.enable &&
+				Boolean(
+					!_serverconfig2.default.locale.routes ||
+						!_serverconfig2.default.locale.routes[req.url] ||
+						_serverconfig2.default.locale.routes[req.url].enable
+				)
 
 			_CookieHandler.setCookie.call(
 				void 0,
@@ -159,7 +166,7 @@ const startServer = async () => {
 				)};Max-Age=${COOKIE_EXPIRED_SECOND};Path=/`
 			)
 
-			if (_serverconfig2.default.locale.enable) {
+			if (enableLocale) {
 				_CookieHandler.setCookie.call(
 					void 0,
 					res,

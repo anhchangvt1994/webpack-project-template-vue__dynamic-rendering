@@ -92,6 +92,13 @@ const startServer = async () => {
 		})
 		.use(function (req, res, next) {
 			const localeInfo = detectLocale(req)
+			const enableLocale =
+				ServerConfig.locale.enable &&
+				Boolean(
+					!ServerConfig.locale.routes ||
+						!ServerConfig.locale.routes[req.url as string] ||
+						ServerConfig.locale.routes[req.url as string].enable
+				)
 
 			setCookie(
 				res,
@@ -100,7 +107,7 @@ const startServer = async () => {
 				)};Max-Age=${COOKIE_EXPIRED_SECOND};Path=/`
 			)
 
-			if (ServerConfig.locale.enable) {
+			if (enableLocale) {
 				setCookie(
 					res,
 					`lang=${

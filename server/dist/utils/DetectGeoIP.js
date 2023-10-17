@@ -25,9 +25,6 @@ function generateIPInfo(req) {
 		.toString()
 		.replace(/::ffff:|::1/, '')
 
-	console.log(req.headers['x-forwarded-for'])
-	console.log(req.connection.remoteAddress)
-
 	const ipInfo = _geoiplite.lookup.call(void 0, clientIp) || IP_INFO_DEFAULT
 	return ipInfo
 }

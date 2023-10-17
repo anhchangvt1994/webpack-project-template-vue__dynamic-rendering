@@ -10,6 +10,7 @@ import { CACHEABLE_STATUS_CODE } from './constants'
 import { convertUrlHeaderToQueryString, getUrl } from './utils/ForamatUrl'
 import ISRGenerator from './utils/ISRGenerator.next'
 import ISRHandler from './utils/ISRHandler'
+import ServerConfig from '../server.config'
 
 const puppeteerSSRService = (async () => {
 	let _app: FastifyInstance
@@ -65,6 +66,13 @@ const puppeteerSSRService = (async () => {
 		_app.get('*', async function (req, res) {
 			const cookies = getCookieFromResponse(res)
 			const botInfo: IBotInfo = cookies?.['BotInfo']
+			const enableISR =
+				ServerConfig.isr.enable &&
+				Boolean(
+					!ServerConfig.isr.routes ||
+						!ServerConfig.isr.routes[req.url] ||
+						ServerConfig.isr.routes[req.url].enable
+				)
 			const headers = req.headers
 
 			res.raw.setHeader(
@@ -76,7 +84,7 @@ const puppeteerSSRService = (async () => {
 
 			const url = convertUrlHeaderToQueryString(getUrl(req), res as any, true)
 
-			if (headers.service !== 'puppeteer') {
+			if (enableISR && headers.service !== 'puppeteer') {
 				if (botInfo.isBot) {
 					try {
 						const result = await ISRGenerator({
@@ -138,7 +146,8 @@ const puppeteerSSRService = (async () => {
 			 * calc by using:
 			 * https://www.inchcalculator.com/convert/year-to-second/
 			 */
-			if (headers.accept === 'application/json') res.send({ statusCode: 200 })
+			if (headers.accept === 'application/json')
+				res.header('Cache-Control', 'no-store').send({ statusCode: 200 })
 			else {
 				res.raw.setHeader('Cache-Control', 'no-store')
 				return sendFile(

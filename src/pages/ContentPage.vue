@@ -68,21 +68,13 @@
 		</div>
 		<ModuleContentSection :caption="data.title" :content="data.content" />
 		<router-link
-			v-slot="{ isActive, href, navigate }"
+			class="comment-extension-label"
 			:to="{
 				name: 'ContentComment',
 				params: route.params,
 			}"
-			custom
 		>
-			<a
-				:href="href"
-				class="comment-extension-label"
-				:class="isActive ? '--is-active' : ''"
-				@click="navigate"
-			>
-				View Comment
-			</a>
+			View Comment
 		</router-link>
 		<router-view v-slot="{ Component }">
 			<CommentSection>

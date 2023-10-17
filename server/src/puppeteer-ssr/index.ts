@@ -9,6 +9,7 @@ import { CACHEABLE_STATUS_CODE } from './constants'
 import { convertUrlHeaderToQueryString, getUrl } from './utils/ForamatUrl'
 import ISRGenerator from './utils/ISRGenerator.next'
 import SSRHandler from './utils/ISRHandler'
+import ServerConfig from '../server.config'
 
 const puppeteerSSRService = (async () => {
 	let _app: Express
@@ -64,6 +65,13 @@ const puppeteerSSRService = (async () => {
 		_app.get('*', async function (req, res, next) {
 			const cookies = getCookieFromResponse(res)
 			const botInfo: IBotInfo = cookies?.['BotInfo']
+			const enableISR =
+				ServerConfig.isr.enable &&
+				Boolean(
+					!ServerConfig.isr.routes ||
+						!ServerConfig.isr.routes[req.url] ||
+						ServerConfig.isr.routes[req.url].enable
+				)
 			const headers = req.headers
 
 			res.set({
@@ -75,7 +83,7 @@ const puppeteerSSRService = (async () => {
 
 			const url = convertUrlHeaderToQueryString(getUrl(req), res, true)
 
-			if (req.headers.service !== 'puppeteer') {
+			if (enableISR && req.headers.service !== 'puppeteer') {
 				if (botInfo.isBot) {
 					try {
 						const result = await ISRGenerator({

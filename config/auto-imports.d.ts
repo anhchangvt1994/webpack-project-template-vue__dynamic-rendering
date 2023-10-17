@@ -9,6 +9,7 @@ declare global {
   const DeviceInfo: typeof import('store/ServerStore')['DeviceInfo']
   const EffectScope: typeof import('vue')['EffectScope']
   const LocaleInfo: typeof import('store/ServerStore')['LocaleInfo']
+  const LocaleState: typeof import('store/LocaleStore')['LocaleState']
   const computed: typeof import('vue')['computed']
   const createApp: typeof import('vue')['createApp']
   const createRouter: typeof import('vue-router')['createRouter']
@@ -120,6 +121,7 @@ declare module 'vue' {
     readonly DeviceInfo: UnwrapRef<typeof import('store/ServerStore.ts')['DeviceInfo']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly LocaleInfo: UnwrapRef<typeof import('store/ServerStore.ts')['LocaleInfo']>
+    readonly LocaleState: UnwrapRef<typeof import('store/LocaleStore.ts')['LocaleState']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
     readonly createRouter: UnwrapRef<typeof import('vue-router')['createRouter']>
@@ -225,6 +227,7 @@ declare module '@vue/runtime-core' {
     readonly DeviceInfo: UnwrapRef<typeof import('store/ServerStore.ts')['DeviceInfo']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly LocaleInfo: UnwrapRef<typeof import('store/ServerStore.ts')['LocaleInfo']>
+    readonly LocaleState: UnwrapRef<typeof import('store/LocaleStore.ts')['LocaleState']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
     readonly createRouter: UnwrapRef<typeof import('vue-router')['createRouter']>

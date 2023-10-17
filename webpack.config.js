@@ -219,6 +219,7 @@ module.exports = async (env, arg) => {
 							'setSeoTag',
 						],
 						'store/ServerStore.ts': ['BotInfo', 'DeviceInfo', 'LocaleInfo'],
+						'store/LocaleStore.ts': ['LocaleState'],
 						'utils/CookieHelper.ts': ['getCookie', 'setCookie'],
 					},
 				],

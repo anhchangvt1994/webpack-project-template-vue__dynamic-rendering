@@ -136,6 +136,18 @@
     "ExtractPropTypes": true,
     "ExtractPublicPropTypes": true,
     "LocaleInfo": true,
-    "getLocale": true
+    "getLocale": true,
+    "router-link": true,
+    "RouterLink": true,
+    "L": true,
+    "R": true,
+    "i": true,
+    "k": true,
+    "n": true,
+    "u": true,
+    "RouterLinkTest": true,
+    "RouterLinkDefaultParams": true,
+    "RouterView": true,
+    "LocaleState": true
   }
 }

@@ -5,6 +5,11 @@ const ServerConfig = defineServerConfig({
 		enable: true,
 		defaultLang: 'vi',
 		// defaultCountry: 'vn',
+		routes: {
+			'/login': {
+				enable: false,
+			},
+		},
 	},
 })
 

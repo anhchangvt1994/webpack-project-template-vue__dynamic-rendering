@@ -7,25 +7,12 @@
 			'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no'
 		)
 	}
-	const route = useRoute()
 </script>
 
 <template>
 	<div class="layout">
 		<div class="main-container">
 			<Header />
-			<router-link
-				:to="{
-					params: {
-						...route.params,
-						locale: 'en-us',
-					},
-					replace: true,
-				}"
-			>
-				en-us
-			</router-link>
-			{{ route.meta.lang }}
 			<RouterView v-slot="{ Component }">
 				<template v-if="Component">
 					<Suspense>
@@ -49,4 +36,3 @@
 		margin: 0 auto;
 	}
 </style>
-utils/SeoManager

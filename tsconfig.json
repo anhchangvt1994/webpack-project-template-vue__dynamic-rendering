@@ -13,7 +13,7 @@
 		"src/shim-vue.d.ts",
 		"src/static.d.ts"
 	],
-	"include": ["src/**/*.js", "src/**/*.ts", "src/**/*.vue"],
+	"include": ["src/**/*.js", "src/**/*.ts", "src/**/*.vue", "src/components/RouterLink.tsx"],
 	"compilerOptions": {
 		// NOTE - Set what module will be built for project (es, commonjs) (what is compile way will be chosen for import / export syntax)
 		// https://www.typescriptlang.org/tsconfig#module

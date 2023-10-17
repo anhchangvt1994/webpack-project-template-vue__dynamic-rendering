@@ -41,6 +41,8 @@ var _ISRGeneratornext = require('./utils/ISRGenerator.next')
 var _ISRGeneratornext2 = _interopRequireDefault(_ISRGeneratornext)
 var _ISRHandler = require('./utils/ISRHandler')
 var _ISRHandler2 = _interopRequireDefault(_ISRHandler)
+var _serverconfig = require('../server.config')
+var _serverconfig2 = _interopRequireDefault(_serverconfig)
 
 const puppeteerSSRService = (async () => {
 	let _app
@@ -128,6 +130,13 @@ const puppeteerSSRService = (async () => {
 				'optionalAccess',
 				(_9) => _9['BotInfo'],
 			])
+			const enableISR =
+				_serverconfig2.default.isr.enable &&
+				Boolean(
+					!_serverconfig2.default.isr.routes ||
+						!_serverconfig2.default.isr.routes[req.url] ||
+						_serverconfig2.default.isr.routes[req.url].enable
+				)
 			const headers = req.headers
 
 			res.raw.setHeader(
@@ -144,7 +153,7 @@ const puppeteerSSRService = (async () => {
 				true
 			)
 
-			if (headers.service !== 'puppeteer') {
+			if (enableISR && headers.service !== 'puppeteer') {
 				if (botInfo.isBot) {
 					try {
 						const result = await _ISRGeneratornext2.default.call(void 0, {
@@ -209,7 +218,8 @@ const puppeteerSSRService = (async () => {
 			 * calc by using:
 			 * https://www.inchcalculator.com/convert/year-to-second/
 			 */
-			if (headers.accept === 'application/json') res.send({ statusCode: 200 })
+			if (headers.accept === 'application/json')
+				res.header('Cache-Control', 'no-store').send({ statusCode: 200 })
 			else {
 				res.raw.setHeader('Cache-Control', 'no-store')
 				return _SendFile2.default.call(

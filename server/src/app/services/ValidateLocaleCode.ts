@@ -88,21 +88,18 @@ const _checkLocaleCodeIdFormatValid = (firstDispatcherParam) => {
 
 	const arrLocale = firstDispatcherParam.toLowerCase().split('-')
 
-	if (arrLocale[0]) {
-		if (
-			!LOCALE_LIST_WITH_LANGUAGE[arrLocale[0]] &&
-			!LOCALE_LIST_WITH_COUNTRY[arrLocale[0]]
-		)
-			return false
-	}
-
-	if (arrLocale[1]) {
-		if (
-			!LOCALE_LIST_WITH_LANGUAGE[arrLocale[1]] &&
-			!LOCALE_LIST_WITH_COUNTRY[arrLocale[1]]
-		)
-			return false
-	}
+	if (
+		arrLocale[0] &&
+		!LOCALE_LIST_WITH_LANGUAGE[arrLocale[0]] &&
+		!LOCALE_LIST_WITH_COUNTRY[arrLocale[0]]
+	)
+		return false
+	else if (
+		arrLocale[1] &&
+		!LOCALE_LIST_WITH_LANGUAGE[arrLocale[1]] &&
+		!LOCALE_LIST_WITH_COUNTRY[arrLocale[1]]
+	)
+		return false
 
 	return true
 } // _checkLocaleCodeIdFormatValid()

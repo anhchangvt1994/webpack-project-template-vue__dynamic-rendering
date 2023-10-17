@@ -4,4 +4,7 @@ export const defaultServerConfig: IServerConfig = {
 	locale: {
 		enable: false,
 	},
+	isr: {
+		enable: true,
+	},
 }

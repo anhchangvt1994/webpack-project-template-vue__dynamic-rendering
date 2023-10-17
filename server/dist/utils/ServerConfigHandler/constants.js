@@ -5,5 +5,8 @@ const defaultServerConfig = {
 	locale: {
 		enable: false,
 	},
+	isr: {
+		enable: true,
+	},
 }
 exports.defaultServerConfig = defaultServerConfig
