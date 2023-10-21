@@ -121,7 +121,11 @@ const puppeteerSSRService = (async () => {
 				true
 			)
 
-			if (enableISR && req.headers.service !== 'puppeteer') {
+			if (
+				_constants.ENV !== 'development' &&
+				enableISR &&
+				req.headers.service !== 'puppeteer'
+			) {
 				if (botInfo.isBot) {
 					try {
 						const result = await _ISRGeneratornext2.default.call(void 0, {
@@ -198,7 +202,7 @@ const puppeteerSSRService = (async () => {
 					})
 					.status(200)
 					.sendFile(
-						req.headers.staticHtmlPath ||
+						req.headers['static-html-path'] ||
 							_path2.default.resolve(__dirname, '../../../dist/index.html'),
 						{ etag: false, lastModified: false }
 					) // Serve prerendered page as response.

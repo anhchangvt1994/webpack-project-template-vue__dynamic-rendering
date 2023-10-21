@@ -63,9 +63,12 @@ const BeforeEach = (function beforeEach() {
 				(LocaleInfo.langSelected || LocaleInfo.countrySelected)
 
 			if (enableLocale) {
-				const isSuccess = await LocaleHandler(router, to, from)
+				const redirect = await LocaleHandler(router, to, from)
 
-				if (!isSuccess) return false
+				if (redirect) {
+					router.push(redirect)
+					return true
+				}
 			} else if (window.location.pathname !== to.path) {
 				// NOTE - Handle pre-render for bot with locale options turned off
 				const data = await fetchOnRoute(to, {
@@ -79,16 +82,13 @@ const BeforeEach = (function beforeEach() {
 					if (REDIRECT_CODE_LIST.includes(data.statusCode)) {
 						router.push({
 							path: data.redirectUrl,
-							replace: true,
+							replace: false,
 						})
 
 						return false
 					} else if (ERROR_CODE_LIST.includes(data.statusCode)) return false
 				}
 			}
-
-			to.meta.lang = LocaleInfo.langSelected
-			to.meta.country = LocaleInfo.countrySelected
 
 			const curLocale = getLocale(
 				LocaleInfo.langSelected,
@@ -112,7 +112,7 @@ const BeforeEach = (function beforeEach() {
 					successPath,
 				}
 
-				const checkProtection = () => {
+				const checkProtection = (isReProtect = false) => {
 					const protectInfo = protect(certificateInfo)
 
 					if (!protectInfo) {
@@ -139,7 +139,8 @@ const BeforeEach = (function beforeEach() {
 								params: {
 									locale: curLocale,
 								},
-								replace: navigate.status === 301,
+								// replace: navigate.status === 301,
+								replace: isReProtect,
 							})
 						}
 
@@ -149,7 +150,7 @@ const BeforeEach = (function beforeEach() {
 					return true
 				}
 
-				to.meta.reProtect = checkProtection
+				to.meta.reProtect = () => checkProtection(true)
 
 				if (!checkProtection()) return false
 			}

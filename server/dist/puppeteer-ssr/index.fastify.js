@@ -153,7 +153,11 @@ const puppeteerSSRService = (async () => {
 				true
 			)
 
-			if (enableISR && headers.service !== 'puppeteer') {
+			if (
+				_constants.ENV !== 'development' &&
+				enableISR &&
+				headers.service !== 'puppeteer'
+			) {
 				if (botInfo.isBot) {
 					try {
 						const result = await _ISRGeneratornext2.default.call(void 0, {
@@ -224,7 +228,7 @@ const puppeteerSSRService = (async () => {
 				res.raw.setHeader('Cache-Control', 'no-store')
 				return _SendFile2.default.call(
 					void 0,
-					req.headers.staticHtmlPath ||
+					req.headers['static-html-path'] ||
 						_path2.default.resolve(__dirname, '../../../dist/index.html'),
 					res.raw
 				)

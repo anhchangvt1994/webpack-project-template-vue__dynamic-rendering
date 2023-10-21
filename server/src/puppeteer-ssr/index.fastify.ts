@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import path from 'path'
-import { SERVER_LESS } from '../constants'
+import { ENV, SERVER_LESS } from '../constants'
 import { IBotInfo } from '../types'
 import CleanerService from '../utils/CleanerService'
 import Console from '../utils/ConsoleHandler'
@@ -84,7 +84,11 @@ const puppeteerSSRService = (async () => {
 
 			const url = convertUrlHeaderToQueryString(getUrl(req), res as any, true)
 
-			if (enableISR && headers.service !== 'puppeteer') {
+			if (
+				ENV !== 'development' &&
+				enableISR &&
+				headers.service !== 'puppeteer'
+			) {
 				if (botInfo.isBot) {
 					try {
 						const result = await ISRGenerator({
@@ -151,7 +155,7 @@ const puppeteerSSRService = (async () => {
 			else {
 				res.raw.setHeader('Cache-Control', 'no-store')
 				return sendFile(
-					(req.headers.staticHtmlPath as string) ||
+					(req.headers['static-html-path'] as string) ||
 						path.resolve(__dirname, '../../../dist/index.html'),
 					res.raw
 				)

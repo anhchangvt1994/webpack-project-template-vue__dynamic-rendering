@@ -14,7 +14,10 @@ const fetchOnRoute = (() => {
 		controller = new AbortController()
 
 		const data = await new Promise(async (res) => {
-			setTimeout(res, 1000)
+			setTimeout(() => {
+				controller?.abort('reject')
+				res(null)
+			}, 1000)
 			const response = await fetch(to.path, {
 				...init,
 				signal: controller.signal,
@@ -33,7 +36,7 @@ const ERROR_CODE_LIST = [404, 500, 502, 504]
 
 const LocaleHandler = (() => {
 	let curLocale: string
-	let isFinishServerChecking: boolean = false
+	let isAlreadyServerRedirect = false
 
 	return async (
 		router: Router,
@@ -47,7 +50,8 @@ const LocaleHandler = (() => {
 		curLocale = getLocale(LocaleInfo.langSelected, LocaleInfo.countrySelected)
 
 		if (
-			!isFinishServerChecking &&
+			// !isFinishServerChecking &&
+			!isAlreadyServerRedirect &&
 			window.location.pathname.replace(`/${curLocale}`, '') !==
 				to.path.replace(`/${curLocale}`, '')
 		) {
@@ -61,29 +65,34 @@ const LocaleHandler = (() => {
 
 			if (data) {
 				if (REDIRECT_CODE_LIST.includes(data.statusCode)) {
-					router.push({
+					return {
 						path: data.redirectUrl,
-						replace: true,
-					})
-
-					return false
+					}
 				} else if (ERROR_CODE_LIST.includes(data.statusCode)) return false
-			}
-		}
 
-		ServerStore.reInit.LocaleInfo()
+				isAlreadyServerRedirect = true
+			}
+
+			ServerStore.reInit.LocaleInfo()
+		}
 
 		curLocale = getLocale(LocaleInfo.langSelected, LocaleInfo.countrySelected)
 
-		isFinishServerChecking = true
+		console.log(!isAlreadyServerRedirect)
 
 		// NOTE - Handle for hidden default locale params
 		if (to.params.locale && curLocale !== to.params.locale) {
-			router.push({
+			// router.push({
+			// 	path: `/${curLocale}${to.fullPath}`,
+			// 	replace: !!window.history.state.forward,
+			// })
+
+			// return !!window.history.state.forward
+
+			return {
 				path: `/${curLocale}${to.fullPath}`,
-				replace: false,
-			})
-			return false
+				replace: !isAlreadyServerRedirect,
+			}
 		} else if (
 			curLocale === defaultLocale &&
 			to.params.locale &&
@@ -91,25 +100,20 @@ const LocaleHandler = (() => {
 		) {
 			const path = to.fullPath.replace(`/${curLocale}`, '')
 
-			if (path === window.location.pathname) {
-				isFinishServerChecking = false
-			}
-
-			router.push({
+			return {
 				path: path ? path : '/',
 				name: to.name as string,
 				params: {
 					...to.params,
 					locale: '',
 				},
-				replace: false,
-			})
-			return false
+				replace: !isAlreadyServerRedirect,
+			}
 		}
 
-		isFinishServerChecking = false
+		isAlreadyServerRedirect = false
 
-		return true
+		return
 	}
 })()
 

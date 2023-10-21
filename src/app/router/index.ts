@@ -2,7 +2,7 @@ import ErrorComponent from 'components/ErrorComponent.vue'
 import PageLoader from 'components/PageLoader.vue'
 import { ServerStore } from 'store/ServerStore'
 import LazyRoute from 'utils/LazyRoute'
-import type { RouteRecordRaw } from 'vue-router'
+import { createWebHashHistory, type RouteRecordRaw } from 'vue-router'
 import BeforeEach from './utils/BeforeEachHandler'
 
 ServerStore.init()
@@ -92,7 +92,7 @@ if (LocaleInfo.langSelected || LocaleInfo.countrySelected) {
 }
 
 const router = createRouter({
-	history: createWebHistory(import.meta.env.ROUTER_BASE_PATH),
+	history: createWebHistory(),
 	routes,
 	sensitive: true,
 })
