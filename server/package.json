@@ -15,6 +15,7 @@
 		"geoip-lite": "^1.4.7",
 		"pm2": "^5.3.0",
 		"workerpool": "^6.4.0",
+		"fs-extra": "^11.1.1",
 		"puppeteer-ssr": "file:./src/puppeteer-ssr"
 	}
 }
