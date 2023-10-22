@@ -1,7 +1,7 @@
 {
 	"private": true,
 	"scripts": {
-		"start": "cross-env ENV=production MAX_WORKERS=2 CLUSTER_INSTANCES=1 npm run pm2-puppeteer-ssr",
+		"start": "cross-env ENV=production MAX_WORKERS=2 CLUSTER_INSTANCES=1 npm run pm2-puppeteer-ssr:fastify",
 		"dev": "cross-env ENV=development npm run start-dev",
 		"dev:fastify": "cross-env ENV=development npm run start-dev:fastify",
 		"build": "npx vue-tsc && npx webpack --mode=production",
