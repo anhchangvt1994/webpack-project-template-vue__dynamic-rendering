@@ -26,8 +26,6 @@ const deleteResource = (path, WorkerPool) => {
 				if (WorkerPool) {
 					WorkerPool.pool().terminate()
 				}
-
-				throw err
 			}
 		})
 }
