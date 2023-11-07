@@ -33,10 +33,12 @@ export const convertUrlHeaderToQueryString = (
 export const getUrl = (req) => {
 	if (!req) return ''
 
+	const pathname = req.url?.split('?')[0]
+
 	return (
 		req.query.urlTesting ||
 		(process.env.BASE_URL
-			? process.env.BASE_URL + req.originalUrl
-			: req.protocol + '://' + req.get('host') + req.originalUrl)
+			? process.env.BASE_URL + pathname
+			: req.protocol + '://' + req.get('host') + pathname)
 	).trim()
 } // getUrl

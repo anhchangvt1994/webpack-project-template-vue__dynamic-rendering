@@ -8,7 +8,7 @@ export const defineServerConfig = (options: IServerConfigOptional) => {
 		if (key === 'locale') {
 			if (options[key]) {
 				serverConfigDefined[key] = {
-					enable: options.locale && options.locale.enable ? true : false,
+					enable: !!options[key]?.enable,
 				}
 
 				if (serverConfigDefined[key].enable)
@@ -16,7 +16,7 @@ export const defineServerConfig = (options: IServerConfigOptional) => {
 						...serverConfigDefined[key],
 						defaultLang: options[key]?.defaultLang,
 						defaultCountry: options[key]?.defaultCountry,
-						hideDefaultLocale: options[key]?.hideDefaultLocale ?? true,
+						hideDefaultLocale: !!options[key]?.hideDefaultLocale,
 					}
 			} else serverConfigDefined[key] = defaultServerConfig[key]
 

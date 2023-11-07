@@ -19,41 +19,31 @@ const REDIRECT_INFO = [
 exports.REDIRECT_INFO = REDIRECT_INFO
 
 // NOTE - Declare redirect middleware
-const REDIRECT_INJECTION = (redirectUrl, req, res) => {
-	let statusCode = 200
-
-	const pathSplitted = redirectUrl.split('/')
-
-	if (pathSplitted.length === 2 && /(0|1|2)$/.test(redirectUrl)) {
-		statusCode = 302
-		redirectUrl = redirectUrl.replace(/(0|1|2)$/, '3')
-	}
-
+const REDIRECT_INJECTION = (redirectResult, req, res) => {
 	const enableLocale =
 		_serverconfig2.default.locale.enable &&
 		Boolean(
 			!_serverconfig2.default.locale.routes ||
-				!_serverconfig2.default.locale.routes[req.url] ||
-				_serverconfig2.default.locale.routes[req.url].enable
+				!_serverconfig2.default.locale.routes[redirectResult.originPath] ||
+				_serverconfig2.default.locale.routes[redirectResult.originPath].enable
 		)
 
 	if (enableLocale) {
 		const localeCodeValidationResult = _ValidateLocaleCode2.default.call(
 			void 0,
-			redirectUrl,
+			redirectResult,
 			res
 		)
 
-		if (localeCodeValidationResult.statusCode !== 200) {
-			statusCode =
-				statusCode === 301 ? statusCode : localeCodeValidationResult.statusCode
-			redirectUrl = localeCodeValidationResult.redirectUrl
+		if (localeCodeValidationResult.status !== 200) {
+			redirectResult.status =
+				redirectResult.status === 301
+					? redirectResult.status
+					: localeCodeValidationResult.status
+			redirectResult.path = localeCodeValidationResult.path
 		}
 	}
 
-	return {
-		statusCode,
-		redirectUrl,
-	}
+	return redirectResult
 }
 exports.REDIRECT_INJECTION = REDIRECT_INJECTION // REDIRECT_INJECTION

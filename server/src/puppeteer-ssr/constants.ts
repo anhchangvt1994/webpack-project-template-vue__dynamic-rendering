@@ -80,7 +80,7 @@ export const regexHandleAttrsImageTag: RegExp = /<(source|img)([^>]*)(\/|)>/g
 export const regexHandleAttrsInteractiveTag: RegExp =
 	/<(a|button|input)(?![^>]*rel="nofollow")([^>]*)(\/|)>([\s\S]*?)<\/(a|button)>/g
 export const regexQueryStringSpecialInfo =
-	/botInfo=(?<bot_info>[^&]*)&deviceInfo=(?<device_info>[^&]*)/
+	/botInfo=(?<botInfo>[^&]*)&deviceInfo=(?<deviceInfo>[^&]*)/
 
 export const MAX_WORKERS = process.env.MAX_WORKERS
 	? Number(process.env.MAX_WORKERS)

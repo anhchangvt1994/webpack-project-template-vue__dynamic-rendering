@@ -88,7 +88,7 @@ const regexHandleAttrsInteractiveTag =
 	/<(a|button|input)(?![^>]*rel="nofollow")([^>]*)(\/|)>([\s\S]*?)<\/(a|button)>/g
 exports.regexHandleAttrsInteractiveTag = regexHandleAttrsInteractiveTag
 const regexQueryStringSpecialInfo =
-	/botInfo=(?<bot_info>[^&]*)&deviceInfo=(?<device_info>[^&]*)/
+	/botInfo=(?<botInfo>[^&]*)&deviceInfo=(?<deviceInfo>[^&]*)/
 exports.regexQueryStringSpecialInfo = regexQueryStringSpecialInfo
 
 const MAX_WORKERS = process.env.MAX_WORKERS

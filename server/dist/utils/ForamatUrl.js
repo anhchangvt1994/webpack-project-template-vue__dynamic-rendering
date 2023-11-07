@@ -27,7 +27,7 @@ var _CookieHandler = require('./CookieHandler')
 const convertUrlHeaderToQueryString = (url, res, simulateBot = false) => {
 	if (!url) return ''
 
-	const cookies = _CookieHandler.getCookie.call(void 0, res)
+	const cookies = _CookieHandler.getCookieFromResponse.call(void 0, res)
 	let botInfoStringify
 
 	if (simulateBot) {

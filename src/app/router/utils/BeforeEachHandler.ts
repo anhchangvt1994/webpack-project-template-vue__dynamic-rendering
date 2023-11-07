@@ -2,7 +2,8 @@ import type { IUserInfo } from 'store/UserStore'
 import { UserInfoState } from 'store/UserStore'
 import { resetSeoTag } from 'utils/SeoHelper'
 import type { RouteLocationNormalized, Router } from 'vue-router'
-import LocaleHandler from './LocaleHandler'
+import LocaleHandler from './ServerRouterHandler'
+import ServerRouterHandler from './ServerRouterHandler'
 
 interface INavigate {
 	error?: string
@@ -62,40 +63,21 @@ const BeforeEach = (function beforeEach() {
 				to.params.locale !== undefined &&
 				(LocaleInfo.langSelected || LocaleInfo.countrySelected)
 
-			if (enableLocale) {
-				const redirect = await LocaleHandler(router, to, from)
+			const result = await ServerRouterHandler(router, to, from)
 
-				if (redirect) {
-					router.push(redirect)
-					return true
-				}
-			} else if (window.location.pathname !== to.path) {
-				// NOTE - Handle pre-render for bot with locale options turned off
-				const data = await fetchOnRoute(to, {
-					method: 'GET',
-					headers: new Headers({
-						Accept: 'application/json',
-					}),
+			if (result.status === 404) return false
+			else if (result.status !== 200) {
+				router.push({
+					path: result.redirectPath,
+					replace: result.status === 301,
 				})
-
-				if (data) {
-					if (REDIRECT_CODE_LIST.includes(data.statusCode)) {
-						router.push({
-							path: data.redirectUrl,
-							replace: false,
-						})
-
-						return false
-					} else if (ERROR_CODE_LIST.includes(data.statusCode)) return false
-				}
+				return true
 			}
 
 			const curLocale = getLocale(
 				LocaleInfo.langSelected,
 				LocaleInfo.countrySelected
 			)
-
-			resetSeoTag()
 
 			if (typeof to.meta.protect === 'function') {
 				const protect = to.meta.protect

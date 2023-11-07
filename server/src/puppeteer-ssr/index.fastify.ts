@@ -64,14 +64,15 @@ const puppeteerSSRService = (async () => {
 				})
 		}
 		_app.get('*', async function (req, res) {
+			const pathname = req.url?.split('?')[0]
 			const cookies = getCookieFromResponse(res)
 			const botInfo: IBotInfo = cookies?.['BotInfo']
 			const enableISR =
 				ServerConfig.isr.enable &&
 				Boolean(
 					!ServerConfig.isr.routes ||
-						!ServerConfig.isr.routes[req.url] ||
-						ServerConfig.isr.routes[req.url].enable
+						!ServerConfig.isr.routes[pathname] ||
+						ServerConfig.isr.routes[pathname].enable
 				)
 			const headers = req.headers
 
@@ -82,13 +83,16 @@ const puppeteerSSRService = (async () => {
 					: 'text/html; charset=utf-8'
 			)
 
-			const url = convertUrlHeaderToQueryString(getUrl(req), res as any, true)
-
 			if (
 				ENV !== 'development' &&
 				enableISR &&
 				headers.service !== 'puppeteer'
 			) {
+				const url = convertUrlHeaderToQueryString(
+					getUrl(req),
+					res as any,
+					!botInfo.isBot
+				)
 				if (botInfo.isBot) {
 					try {
 						const result = await ISRGenerator({
@@ -124,23 +128,23 @@ const puppeteerSSRService = (async () => {
 					}
 
 					return
-				}
-
-				try {
-					if (SERVER_LESS) {
-						await ISRGenerator({
-							url,
-							isSkipWaiting: true,
-						})
-					} else {
-						ISRGenerator({
-							url,
-							isSkipWaiting: true,
-						})
+				} else {
+					try {
+						if (SERVER_LESS) {
+							await ISRGenerator({
+								url,
+								isSkipWaiting: true,
+							})
+						} else {
+							ISRGenerator({
+								url,
+								isSkipWaiting: true,
+							})
+						}
+					} catch (err) {
+						Console.error('url', url)
+						Console.error(err)
 					}
-				} catch (err) {
-					Console.error('url', url)
-					Console.error(err)
 				}
 			}
 
@@ -151,14 +155,15 @@ const puppeteerSSRService = (async () => {
 			 * https://www.inchcalculator.com/convert/year-to-second/
 			 */
 			if (headers.accept === 'application/json')
-				res.header('Cache-Control', 'no-store').send({ statusCode: 200 })
+				res
+					.header('Cache-Control', 'no-store')
+					.send({ status: 200, originPath: pathname, path: pathname })
 			else {
-				res.raw.setHeader('Cache-Control', 'no-store')
-				return sendFile(
+				const filePath =
 					(req.headers['static-html-path'] as string) ||
-						path.resolve(__dirname, '../../../dist/index.html'),
-					res.raw
-				)
+					path.resolve(__dirname, '../../../dist/index.html')
+				res.raw.setHeader('Cache-Control', 'no-store')
+				return sendFile(filePath, res.raw)
 			}
 		})
 	}

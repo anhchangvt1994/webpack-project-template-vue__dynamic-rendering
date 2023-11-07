@@ -15,10 +15,11 @@ import {
 } from '../constants'
 import { ENV } from '../../constants'
 import { ISSRResult } from '../types'
-import BrowserManager from './BrowserManager'
+import BrowserManager, { IBrowser } from './BrowserManager'
 import CacheManager from './CacheManager'
 
 const browserManager = (() => {
+	if (ENV === 'development') return undefined as unknown as IBrowser
 	if (POWER_LEVEL === POWER_LEVEL_LIST.THREE)
 		return BrowserManager(() => `${userDataPath}/user_data_${Date.now()}`)
 	return BrowserManager()
@@ -39,14 +40,14 @@ const getRestOfDuration = (startGenerating, gapDuration = 0) => {
 const waitResponse = async (page: Page, url: string, duration: number) => {
 	const timeoutDuration = (() => {
 		const maxDuration =
-			BANDWIDTH_LEVEL === BANDWIDTH_LEVEL_LIST.TWO ? 3000 : DURATION_TIMEOUT
+			BANDWIDTH_LEVEL === BANDWIDTH_LEVEL_LIST.TWO ? 2000 : DURATION_TIMEOUT
 
 		return duration > maxDuration ? maxDuration : duration
 	})()
 	const startWaiting = Date.now()
 	let response
 	try {
-		response = await page.goto(url, {
+		response = await page.goto(url.split('?')[0], {
 			waitUntil: 'networkidle2',
 			timeout: timeoutDuration,
 		})

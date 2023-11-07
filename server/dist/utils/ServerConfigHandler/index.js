@@ -37,7 +37,13 @@ const defineServerConfig = (options) => {
 		if (key === 'locale') {
 			if (options[key]) {
 				serverConfigDefined[key] = {
-					enable: options.locale && options.locale.enable ? true : false,
+					enable: !!_optionalChain([
+						options,
+						'access',
+						(_) => _[key],
+						'optionalAccess',
+						(_2) => _2.enable,
+					]),
 				}
 
 				if (serverConfigDefined[key].enable)
@@ -46,36 +52,33 @@ const defineServerConfig = (options) => {
 						defaultLang: _optionalChain([
 							options,
 							'access',
-							(_) => _[key],
+							(_3) => _3[key],
 							'optionalAccess',
-							(_2) => _2.defaultLang,
+							(_4) => _4.defaultLang,
 						]),
 						defaultCountry: _optionalChain([
 							options,
 							'access',
-							(_3) => _3[key],
+							(_5) => _5[key],
 							'optionalAccess',
-							(_4) => _4.defaultCountry,
+							(_6) => _6.defaultCountry,
 						]),
-						hideDefaultLocale: _nullishCoalesce(
-							_optionalChain([
-								options,
-								'access',
-								(_5) => _5[key],
-								'optionalAccess',
-								(_6) => _6.hideDefaultLocale,
-							]),
-							() => true
-						),
+						hideDefaultLocale: !!_optionalChain([
+							options,
+							'access',
+							(_7) => _7[key],
+							'optionalAccess',
+							(_8) => _8.hideDefaultLocale,
+						]),
 					}
 			} else serverConfigDefined[key] = _constants.defaultServerConfig[key]
 
 			const routes = _optionalChain([
 				options,
 				'access',
-				(_7) => _7[key],
+				(_9) => _9[key],
 				'optionalAccess',
-				(_8) => _8.routes,
+				(_10) => _10.routes,
 			])
 
 			if (routes) {
@@ -96,24 +99,24 @@ const defineServerConfig = (options) => {
 								defaultLang: _optionalChain([
 									routes,
 									'access',
-									(_9) => _9[localeRouteKey],
+									(_11) => _11[localeRouteKey],
 									'optionalAccess',
-									(_10) => _10.defaultLang,
+									(_12) => _12.defaultLang,
 								]),
 								defaultCountry: _optionalChain([
 									routes,
 									'access',
-									(_11) => _11[localeRouteKey],
+									(_13) => _13[localeRouteKey],
 									'optionalAccess',
-									(_12) => _12.defaultCountry,
+									(_14) => _14.defaultCountry,
 								]),
 								hideDefaultLocale: _nullishCoalesce(
 									_optionalChain([
 										routes,
 										'access',
-										(_13) => _13[localeRouteKey],
+										(_15) => _15[localeRouteKey],
 										'optionalAccess',
-										(_14) => _14.hideDefaultLocale,
+										(_16) => _16.hideDefaultLocale,
 									]),
 									() => true
 								),
@@ -132,9 +135,9 @@ const defineServerConfig = (options) => {
 				const routes = _optionalChain([
 					options,
 					'access',
-					(_15) => _15[key],
+					(_17) => _17[key],
 					'optionalAccess',
-					(_16) => _16.routes,
+					(_18) => _18.routes,
 				])
 
 				if (routes) {

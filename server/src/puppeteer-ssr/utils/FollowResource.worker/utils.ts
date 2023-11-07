@@ -7,6 +7,7 @@ type TWorkerPool = ReturnType<typeof WorkerPool & ((...args: any[]) => any)>
 export const deleteResource = (path: string, WorkerPool?: TWorkerPool) => {
 	if (!path || !fs.existsSync(path)) return Console.log('Path can not empty!')
 
+	fs.emptyDirSync(path)
 	fs.remove(path)
 		.then(() => {
 			if (WorkerPool) {

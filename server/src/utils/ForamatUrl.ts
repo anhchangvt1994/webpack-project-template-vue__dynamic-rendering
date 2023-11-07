@@ -1,6 +1,6 @@
 import { Response } from 'express'
 import { IBotInfo } from '../types'
-import { getCookie } from './CookieHandler'
+import { getCookieFromResponse } from './CookieHandler'
 
 export const convertUrlHeaderToQueryString = (
 	url: string,
@@ -9,7 +9,7 @@ export const convertUrlHeaderToQueryString = (
 ) => {
 	if (!url) return ''
 
-	const cookies = getCookie(res)
+	const cookies = getCookieFromResponse(res)
 	let botInfoStringify
 
 	if (simulateBot) {

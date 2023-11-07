@@ -30,6 +30,8 @@ function _optionalChain(ops) {
 	}
 	return value
 }
+var _middie = require('@fastify/middie')
+var _middie2 = _interopRequireDefault(_middie)
 var _child_process = require('child_process')
 var _chokidar = require('chokidar')
 var _chokidar2 = _interopRequireDefault(_chokidar)
@@ -37,34 +39,32 @@ var _cors = require('cors')
 var _cors2 = _interopRequireDefault(_cors)
 var _fastify = require('fastify')
 var _fastify2 = _interopRequireDefault(_fastify)
-var _middie = require('@fastify/middie')
-var _middie2 = _interopRequireDefault(_middie)
-var _servestatic = require('serve-static')
-var _servestatic2 = _interopRequireDefault(_servestatic)
 var _path = require('path')
 var _path2 = _interopRequireDefault(_path)
+var _servestatic = require('serve-static')
+var _servestatic2 = _interopRequireDefault(_servestatic)
 var _PortHandler = require('../../config/utils/PortHandler')
 var _constants = require('./constants')
+var _constants3 = require('./puppeteer-ssr/constants')
 var _indexfastify = require('./puppeteer-ssr/index.fastify')
 var _indexfastify2 = _interopRequireDefault(_indexfastify)
+var _serverconfig = require('./server.config')
+var _serverconfig2 = _interopRequireDefault(_serverconfig)
 var _ConsoleHandler = require('./utils/ConsoleHandler')
 var _ConsoleHandler2 = _interopRequireDefault(_ConsoleHandler)
+var _CookieHandler = require('./utils/CookieHandler')
 var _DetectBot = require('./utils/DetectBot')
 var _DetectBot2 = _interopRequireDefault(_DetectBot)
 var _DetectDevice = require('./utils/DetectDevice')
 var _DetectDevice2 = _interopRequireDefault(_DetectDevice)
-var _DetectStaticExtension = require('./utils/DetectStaticExtension')
-var _DetectStaticExtension2 = _interopRequireDefault(_DetectStaticExtension)
-var _DetectRedirect = require('./utils/DetectRedirect')
-var _DetectRedirect2 = _interopRequireDefault(_DetectRedirect)
-var _SendFile = require('./utils/SendFile')
-var _SendFile2 = _interopRequireDefault(_SendFile)
-var _constants3 = require('./puppeteer-ssr/constants')
-var _CookieHandler = require('./utils/CookieHandler')
 var _DetectLocale = require('./utils/DetectLocale')
 var _DetectLocale2 = _interopRequireDefault(_DetectLocale)
-var _serverconfig = require('./server.config')
-var _serverconfig2 = _interopRequireDefault(_serverconfig)
+var _DetectRedirect = require('./utils/DetectRedirect')
+var _DetectRedirect2 = _interopRequireDefault(_DetectRedirect)
+var _DetectStaticExtension = require('./utils/DetectStaticExtension')
+var _DetectStaticExtension2 = _interopRequireDefault(_DetectStaticExtension)
+var _SendFile = require('./utils/SendFile')
+var _SendFile2 = _interopRequireDefault(_SendFile)
 
 const COOKIE_EXPIRED_SECOND = _constants3.COOKIE_EXPIRED / 1000
 
@@ -112,7 +112,7 @@ const startServer = async () => {
 				_path2.default.resolve(__dirname, '../robots.txt')
 			)
 		)
-		.use(async function (req, res, next) {
+		.use(function (req, res, next) {
 			const isStatic = _DetectStaticExtension2.default.call(void 0, req)
 			/**
 			 * NOTE
@@ -144,7 +144,7 @@ const startServer = async () => {
 		.use(function (req, res, next) {
 			let botInfo
 			if (req.headers.service === 'puppeteer') {
-				botInfo = req.headers['bot_info'] || ''
+				botInfo = req.headers['botInfo'] || ''
 			} else {
 				botInfo = JSON.stringify(_DetectBot2.default.call(void 0, req))
 			}
@@ -206,31 +206,34 @@ const startServer = async () => {
 			next()
 		})
 		.use(function (req, res, next) {
-			const redirectInfo = _DetectRedirect2.default.call(void 0, req, res)
+			const redirectResult = _DetectRedirect2.default.call(void 0, req, res)
 
-			if (redirectInfo.statusCode !== 200) {
+			if (redirectResult.status !== 200) {
 				if (req.headers.accept === 'application/json') {
+					req.url = redirectResult.path
 					res
 						.setHeader('Cache-Control', 'no-store')
-						.end(JSON.stringify(redirectInfo))
+						.end(JSON.stringify(redirectResult))
 				} else {
-					if (redirectInfo.redirectUrl.length > 1)
-						redirectInfo.redirectUrl = redirectInfo.redirectUrl.replace(
+					if (redirectResult.path.length > 1)
+						redirectResult.path = redirectResult.path.replace(
 							/\/$|\/(\?)/,
 							'$1'
 						)
-					res.writeHead(redirectInfo.statusCode, {
-						Location: redirectInfo.redirectUrl,
+					res.writeHead(redirectResult.status, {
+						Location: `${redirectResult.path}${
+							redirectResult.search ? redirectResult.search : ''
+						}`,
 						'cache-control': 'no-store',
 					})
-					res.end()
+					return res.end()
 				}
 			} else next()
 		})
 		.use(function (req, res, next) {
 			let deviceInfo
 			if (req.headers.service === 'puppeteer') {
-				deviceInfo = req.headers['device_info'] || ''
+				deviceInfo = req.headers['deviceInfo'] || ''
 			} else {
 				deviceInfo = JSON.stringify(_DetectDevice2.default.call(void 0, req))
 			}
@@ -287,24 +290,23 @@ const startServer = async () => {
 			)
 		}
 
-		watcher.on('change', async (path) => {
-			_ConsoleHandler2.default.log(`File ${path} has been changed`)
-			await app.close()
-			setTimeout(() => {
-				_child_process.spawn.call(
-					void 0,
-					'node',
-					[
-						'cross-env REFRESH_SERVER=1 --require sucrase/register server/src/index.ts',
-					],
-					{
-						stdio: 'inherit',
-						shell: true,
-					}
-				)
-			})
-			process.exit(0)
-		})
+		// watcher.on('change', async (path) => {
+		// 	Console.log(`File ${path} has been changed`)
+		// 	await app.close()
+		// 	setTimeout(() => {
+		// 		spawn(
+		// 			'node',
+		// 			[
+		// 				'cross-env REFRESH_SERVER=1 --require sucrase/register server/src/index.ts',
+		// 			],
+		// 			{
+		// 				stdio: 'inherit',
+		// 				shell: true,
+		// 			}
+		// 		)
+		// 	})
+		// 	process.exit(0)
+		// })
 	} else {
 		_child_process.spawn.call(
 			void 0,

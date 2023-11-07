@@ -6,7 +6,7 @@ const ServerConfig = _ServerConfigHandler.defineServerConfig.call(void 0, {
 	locale: {
 		enable: true,
 		defaultLang: 'vi',
-		// defaultCountry: 'vn',
+		defaultCountry: 'vn',
 		routes: {
 			'/login': {
 				enable: false,

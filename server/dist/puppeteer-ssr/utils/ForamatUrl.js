@@ -56,11 +56,23 @@ exports.convertUrlHeaderToQueryString = convertUrlHeaderToQueryString // formatU
 const getUrl = (req) => {
 	if (!req) return ''
 
+	const pathname = _optionalChain([
+		req,
+		'access',
+		(_3) => _3.url,
+		'optionalAccess',
+		(_4) => _4.split,
+		'call',
+		(_5) => _5('?'),
+		'access',
+		(_6) => _6[0],
+	])
+
 	return (
 		req.query.urlTesting ||
 		(process.env.BASE_URL
-			? process.env.BASE_URL + req.originalUrl
-			: req.protocol + '://' + req.get('host') + req.originalUrl)
+			? process.env.BASE_URL + pathname
+			: req.protocol + '://' + req.get('host') + pathname)
 	).trim()
 }
 exports.getUrl = getUrl // getUrl

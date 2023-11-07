@@ -13,6 +13,7 @@ const deleteResource = (path, WorkerPool) => {
 	if (!path || !_fsextra2.default.existsSync(path))
 		return _ConsoleHandler2.default.log('Path can not empty!')
 
+	_fsextra2.default.emptyDirSync(path)
 	_fsextra2.default
 		.remove(path)
 		.then(() => {

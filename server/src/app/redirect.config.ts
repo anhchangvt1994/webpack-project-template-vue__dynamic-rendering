@@ -2,8 +2,10 @@ import ServerConfig from '../server.config'
 import ValidateLocaleCode from './services/ValidateLocaleCode'
 
 export interface IRedirectResult {
-	statusCode: number
-	redirectUrl: string
+	originPath: string
+	path: string
+	search: string | undefined
+	status: number
 }
 export interface IRedirectInfoItem {
 	statusCode: number
@@ -21,36 +23,30 @@ export const REDIRECT_INFO: IRedirectInfoItem[] = [
 ]
 
 // NOTE - Declare redirect middleware
-export const REDIRECT_INJECTION = (redirectUrl, req, res): IRedirectResult => {
-	let statusCode = 200
-
-	const pathSplitted = redirectUrl.split('/')
-
-	if (pathSplitted.length === 2 && /(0|1|2)$/.test(redirectUrl)) {
-		statusCode = 302
-		redirectUrl = redirectUrl.replace(/(0|1|2)$/, '3')
-	}
-
+export const REDIRECT_INJECTION = (
+	redirectResult,
+	req,
+	res
+): IRedirectResult => {
 	const enableLocale =
 		ServerConfig.locale.enable &&
 		Boolean(
 			!ServerConfig.locale.routes ||
-				!ServerConfig.locale.routes[req.url] ||
-				ServerConfig.locale.routes[req.url].enable
+				!ServerConfig.locale.routes[redirectResult.originPath] ||
+				ServerConfig.locale.routes[redirectResult.originPath].enable
 		)
 
 	if (enableLocale) {
-		const localeCodeValidationResult = ValidateLocaleCode(redirectUrl, res)
+		const localeCodeValidationResult = ValidateLocaleCode(redirectResult, res)
 
-		if (localeCodeValidationResult.statusCode !== 200) {
-			statusCode =
-				statusCode === 301 ? statusCode : localeCodeValidationResult.statusCode
-			redirectUrl = localeCodeValidationResult.redirectUrl
+		if (localeCodeValidationResult.status !== 200) {
+			redirectResult.status =
+				redirectResult.status === 301
+					? redirectResult.status
+					: localeCodeValidationResult.status
+			redirectResult.path = localeCodeValidationResult.path
 		}
 	}
 
-	return {
-		statusCode,
-		redirectUrl,
-	}
+	return redirectResult
 } // REDIRECT_INJECTION

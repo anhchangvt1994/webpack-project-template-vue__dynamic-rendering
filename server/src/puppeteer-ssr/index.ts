@@ -63,14 +63,15 @@ const puppeteerSSRService = (async () => {
 				})
 		}
 		_app.get('*', async function (req, res, next) {
+			const pathname = req.url?.split('?')[0]
 			const cookies = getCookieFromResponse(res)
 			const botInfo: IBotInfo = cookies?.['BotInfo']
 			const enableISR =
 				ServerConfig.isr.enable &&
 				Boolean(
 					!ServerConfig.isr.routes ||
-						!ServerConfig.isr.routes[req.url] ||
-						ServerConfig.isr.routes[req.url].enable
+						!ServerConfig.isr.routes[pathname] ||
+						ServerConfig.isr.routes[pathname].enable
 				)
 			const headers = req.headers
 
@@ -81,13 +82,17 @@ const puppeteerSSRService = (async () => {
 						: 'text/html; charset=utf-8',
 			})
 
-			const url = convertUrlHeaderToQueryString(getUrl(req), res, true)
-
 			if (
 				ENV !== 'development' &&
 				enableISR &&
 				req.headers.service !== 'puppeteer'
 			) {
+				const url = convertUrlHeaderToQueryString(
+					getUrl(req),
+					res,
+					!botInfo.isBot
+				)
+
 				if (botInfo.isBot) {
 					try {
 						const result = await ISRGenerator({
@@ -123,26 +128,26 @@ const puppeteerSSRService = (async () => {
 						Console.error('url', url)
 						Console.error(err)
 						next(err)
-					} finally {
-						return
 					}
-				}
 
-				try {
-					if (SERVER_LESS) {
-						await ISRGenerator({
-							url,
-							isSkipWaiting: true,
-						})
-					} else {
-						ISRGenerator({
-							url,
-							isSkipWaiting: true,
-						})
+					return
+				} else {
+					try {
+						if (SERVER_LESS) {
+							await ISRGenerator({
+								url,
+								isSkipWaiting: true,
+							})
+						} else {
+							ISRGenerator({
+								url,
+								isSkipWaiting: true,
+							})
+						}
+					} catch (err) {
+						Console.error('url', url)
+						Console.error(err)
 					}
-				} catch (err) {
-					Console.error('url', url)
-					Console.error(err)
 				}
 			}
 
@@ -152,19 +157,21 @@ const puppeteerSSRService = (async () => {
 			 * calc by using:
 			 * https://www.inchcalculator.com/convert/year-to-second/
 			 */
-			if (headers.accept === 'application/json') res.send({ statusCode: 200 })
-			else
-				return res
+			if (headers.accept === 'application/json')
+				res.send({ status: 200, originPath: pathname, path: pathname })
+			else {
+				const filePath =
+					(req.headers['static-html-path'] as string) ||
+					path.resolve(__dirname, '../../../dist/index.html')
+
+				res
 					.set({
 						// 'Cache-Control': 'public, max-age: 31556952',
 						'Cache-Control': 'no-store',
 					})
 					.status(200)
-					.sendFile(
-						(req.headers['static-html-path'] as string) ||
-							path.resolve(__dirname, '../../../dist/index.html'),
-						{ etag: false, lastModified: false }
-					) // Serve prerendered page as response.
+					.sendFile(filePath, { etag: false, lastModified: false }) // Serve prerendered page as response.
+			}
 		})
 
 		// Hàm middleware xử lý lỗi cuối cùng

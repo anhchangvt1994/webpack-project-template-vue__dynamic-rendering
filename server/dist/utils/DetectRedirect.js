@@ -4,8 +4,16 @@ Object.defineProperty(exports, '__esModule', { value: true })
 var _redirectconfig = require('../app/redirect.config')
 
 const DetectRedirect = (req, res) => {
-	let statusCode = 200
-	let redirectUrl = ''
+	const urlInfo = new URL(`${process.env.BASE_URL}${req.originalUrl}`)
+	const redirectResult = {
+		originPath: urlInfo.pathname,
+		path: urlInfo.pathname,
+		search: urlInfo.search
+			.replace(/key=([^&]*)/, '')
+			.replace(/&{2,}/, '&')
+			.replace('?|?&', ''),
+		status: 200,
+	}
 
 	const headers = req.headers
 
@@ -14,10 +22,7 @@ const DetectRedirect = (req, res) => {
 			headers['service']
 		)
 	)
-		return {
-			statusCode,
-			redirectUrl,
-		}
+		return redirectResult
 
 	const REDIRECT_INFO_FORMATTED = (() => {
 		if (!_redirectconfig.REDIRECT_INFO || !_redirectconfig.REDIRECT_INFO.length)
@@ -35,49 +40,45 @@ const DetectRedirect = (req, res) => {
 		return tmpRedirectInfoFormatted
 	})()
 
-	const urlInfo = new URL(`${process.env.BASE_URL}${req.originalUrl}`)
-	const originalUrl = urlInfo.href.replace(urlInfo.origin, '')
-
 	for (const redirectInfoItem of REDIRECT_INFO_FORMATTED) {
 		if (redirectInfoItem.pathRegex.test(urlInfo.pathname)) {
-			statusCode = redirectInfoItem.statusCode
-			redirectUrl = originalUrl.replace(
-				redirectInfoItem.path,
-				redirectInfoItem.targetPath
-			)
+			redirectResult.status = redirectInfoItem.statusCode
+			redirectResult.path = redirectInfoItem.targetPath
 			break
 		}
 	}
 
-	redirectUrl = (() => {
+	redirectResult.path = (() => {
 		const query = urlInfo.searchParams
 
-		if (query.get('urlTesting')) return originalUrl
+		if (query.get('urlTesting')) return redirectResult.path
 
-		return /\/$/.test(urlInfo.pathname)
-			? urlInfo.pathname.slice(0, -1)
-			: urlInfo.pathname
+		const redirectPath = /\/$/.test(redirectResult.path)
+			? redirectResult.path.slice(0, -1)
+			: redirectResult.path
+
+		return redirectPath
 	})()
 
-	if (redirectUrl && redirectUrl !== originalUrl) statusCode = 301
+	if (redirectResult.path && redirectResult.path !== redirectResult.originPath)
+		redirectResult.status = 301
 
 	const redirectInjectionResult = _redirectconfig.REDIRECT_INJECTION.call(
 		void 0,
-		redirectUrl || originalUrl,
+		redirectResult,
 		req,
 		res
 	)
 
-	if (redirectInjectionResult.statusCode !== 200) {
-		statusCode =
-			statusCode === 301 ? statusCode : redirectInjectionResult.statusCode
-		redirectUrl = redirectInjectionResult.redirectUrl
+	if (redirectInjectionResult.status !== 200) {
+		redirectResult.status =
+			redirectResult.status === 301
+				? redirectResult.status
+				: redirectInjectionResult.status
+		redirectResult.path = redirectInjectionResult.path
 	}
 
-	return {
-		statusCode,
-		redirectUrl,
-	}
+	return redirectResult
 }
 
 exports.default = DetectRedirect

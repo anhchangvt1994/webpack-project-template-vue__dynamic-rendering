@@ -44,6 +44,7 @@ var _CacheManager = require('./CacheManager')
 var _CacheManager2 = _interopRequireDefault(_CacheManager)
 
 const browserManager = (() => {
+	if (_constants.ENV === 'development') return undefined
 	if (_constants3.POWER_LEVEL === _constants3.POWER_LEVEL_LIST.THREE)
 		return _BrowserManager2.default.call(
 			void 0,
@@ -64,7 +65,7 @@ const waitResponse = async (page, url, duration) => {
 	const timeoutDuration = (() => {
 		const maxDuration =
 			_constants3.BANDWIDTH_LEVEL === _constants3.BANDWIDTH_LEVEL_LIST.TWO
-				? 3000
+				? 2000
 				: _constants3.DURATION_TIMEOUT
 
 		return duration > maxDuration ? maxDuration : duration
@@ -72,7 +73,7 @@ const waitResponse = async (page, url, duration) => {
 	const startWaiting = Date.now()
 	let response
 	try {
-		response = await page.goto(url, {
+		response = await page.goto(url.split('?')[0], {
 			waitUntil: 'networkidle2',
 			timeout: timeoutDuration,
 		})

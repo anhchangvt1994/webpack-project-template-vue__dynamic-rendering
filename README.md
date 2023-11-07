@@ -20,7 +20,7 @@ For more information about this project.
 
 <h2>Install</h2>
 
-##### Expect Node 18.x or higher
+##### Expect Node 18.18.x or higher
 
 Clone source with SSH url:
 
@@ -67,6 +67,7 @@ bun install
   - [What is DeviceInfo variable ?](#device-info)
   - [What is LocaleInfo variable ?](#locale-info)
   - [Integrate Fastify option to improve benchmark](#integrate-fastify)
+  - [Integrate uWebSockets option to improve benchmark](#integrate-uws)
 - [Deploy guide information](#deploy)
 
 <h3 id="what">What is Vue Web Scraping for SEO ?</h3>
@@ -96,7 +97,7 @@ Disadvantages:
 
 <h3 id="benefits">Benefits</h3>
 
-#### <p id="meta-seo-tags">How to setup meta SEO tags ?</p>
+#### <span id="meta-seo-tags">How to setup meta SEO tags ?</span>
 
 I already created utils for this necessary, you just type **setSeoTag** for all setup or **setMeta[X]** for each meta seo tag
 
@@ -123,7 +124,7 @@ setMetaRobotsTag('index, follow')
 setMetaDescriptionTag('Home page Vue 3.x and WSC-SEO')
 ```
 
-#### <p id="link-seo-tags">How to setup link SEO tags ?</p>
+#### <span id="link-seo-tags">How to setup link SEO tags ?</span>
 
 I already created utils for this necessary, you just type **setSeoTag** for all setup or **setLink[X]** for each meta seo tag
 
@@ -148,7 +149,7 @@ setSeoTag({
 setLinkTwitterTitleTag('Home page')
 ```
 
-#### <p id="redirect">How to setup redirect ?</p>
+#### <span id="redirect">How to setup redirect ?</span>
 
 I already prepared a configuration file to support for redirect case, this configuration file placed in **./server/src/app/redirect.config.ts**
 
@@ -167,7 +168,7 @@ export interface IRedirectInfoItem {
 
 // NOTE - Declare redirects
 export const REDIRECT_INFO: IRedirectInfoItem[] = [
-	// NOTE - redirect from pathname /test to pathname / with status code 302
+  // NOTE - redirect from pathname /test to pathname / with status code 302
   {
     path: '/test',
     targetPath: '/',
@@ -181,42 +182,36 @@ export const REDIRECT_INFO: IRedirectInfoItem[] = [
 Use it when you need handle more logics before redirect.
 
 ```typescript
-import { Request } from 'express'
+export const REDIRECT_INJECTION = (
+  redirectResult,
+  req,
+  res
+): IRedirectResult => {
+  const enableLocale =
+  ServerConfig.locale.enable &&
+  Boolean(
+    !ServerConfig.locale.routes ||
+    !ServerConfig.locale.routes[redirectResult.originPath] ||
+    ServerConfig.locale.routes[redirectResult.originPath].enable
+  )
 
-// NOTE - Declare redirect middleware
-export const REDIRECT_INJECTION = (redirectUrl, req, res): IRedirectResult => {
-  let statusCode = 200
+  if (enableLocale) {
+    const localeCodeValidationResult = ValidateLocaleCode(redirectResult, res)
 
-  const pathSplitted = redirectUrl.split('/')
-
-  if (pathSplitted.length === 2 && /(0|1|2)$/.test(redirectUrl)) {
-    statusCode = 302
-    redirectUrl = redirectUrl.replace(/(0|1|2)$/, '3')
+    if (localeCodeValidationResult.status !== 200) {
+    redirectResult.status =
+    redirectResult.status === 301
+      ? redirectResult.status
+      : localeCodeValidationResult.status
+    redirectResult.path = localeCodeValidationResult.path
+    }
   }
 
-  const localeCodeValidationResult = ValidateLocaleCode(redirectUrl, res)
-
-  if (localeCodeValidationResult.statusCode !== 200) {
-    // NOTE - 301 is the priority status code
-    /*
-    * We just need redirect one time for all case
-    * "one redirect for all redirect case
-    * not one redirect for one case"
-    * If the prev case have 301 status -> it will be
-    * statusCode for all next case
-    */
-    statusCode = statusCode === 301 ? statusCode : localeCodeValidationResult.statusCode
-    redirectUrl = localeCodeValidationResult.redirectUrl
-  }
-
-  return {
-    statusCode,
-    redirectUrl,
-  }
+  return redirectResult
 } // REDIRECT_INJECTION
 ```
 
-#### <p id="server-config">How to config server ?</p>
+#### <span id="server-config">How to config server ?</span>
 
 You can config some behavior for server to match with your necessary, to do it you just open the <b>server/server.config.ts</b> file and config into it.
 
@@ -228,15 +223,14 @@ const ServerConfig = defineServerConfig({
     enable: true, // enable use /:locale dispatcher param (default false)
     defaultLang: 'en', // default language for website
     defaultCountry: 'us', // default country for website (set it empty if you just use language)
-    // hideDefaultLocale: false // hide the default locale or show it such as other locales (default true)
+    // hideDefaultLocale: false // hide the default locale or show it such as other locales (default false)
   },
 })
 
 export default ServerConfig
-
 ```
 
-#### <p id="bot-info">What is BotInfo variable ?</p>
+#### <span id="bot-info">What is BotInfo variable ?</span>
 
 <p><b>BotInfo</b> is a variable contains the Bot information which sent from server to client. You can use it to decide render / none render component if it is Bot / not Bot.</p>
 
@@ -247,7 +241,7 @@ interface IBotInfo {
 }
 ```
 
-#### <p id="device-info">What is DeviceInfo variable ?</p>
+#### <span id="device-info">What is DeviceInfo variable ?</span>
 
 <p><b>DeviceInfo</b> is a variable contains the Device information which sent from server to client. You can use it to create adaptive website.</p>
 
@@ -259,7 +253,7 @@ interface IDeviceInfo {
 }
 ```
 
-#### <p id="locale-info">What is LocaleInfo variable ?</p>
+#### <span id="locale-info">What is LocaleInfo variable ?</span>
 
 <p><b>LocaleInfo</b> is a variable contains some information about the locale. You can use it for more cases need to check "Where user's request from ?", "What language in user's country or user's client use ?"</p>
 <p>The <b>/:locale</b> dispatcher param is the practice case to use LocaleInfo and I already integrate that case in this project. Enable it in <b>server/server.config.ts</b> is all you need to do to use it feature.</p>
@@ -286,7 +280,11 @@ export interface ILocaleInfo {
 }
 ```
 
-#### <p id="integrate-fastify">Integrate Fastify option to improve the benchmark</p>
+<p>NOTE:</p>
+
+Beside the `LocaleInfo` used such as a normal variable to get more information about locale, this project also provide for you a state called `LocaleState` which help you get and watch the information about `lang` (language) and `country` that you using.
+
+#### <span id="integrate-fastify">Integrate Fastify option to improve the benchmark</span>
 
 <p>Inside <a href="https://expressjs.com/" target="_blank">ExpressJS</a> like the default, I also integrated <a href="https://fastify.dev/" target="_blank">FastifyJS</a> into the project to take advantage of FastifyJS's benchmark processing capability, thereby improving the performance and flexibility of the project.</p>
 <p>You can use it by using the command lines above</p>
@@ -294,6 +292,7 @@ export interface ILocaleInfo {
 ```bash
 npm run dev:fastify
 ```
+
 ```bash
 npm run preview:fastify
 ```
@@ -302,6 +301,25 @@ npm run preview:fastify
 
 ```json
 "start": "cross-env ENV=production MAX_WORKERS=2 CLUSTER_INSTANCES=1 npm run pm2-puppeteer-ssr:fastify",
+```
+
+#### <span id="integrate-uws">Integrate uWebSockets option to improve the benchmark</span>
+
+<p>Inside <a href="https://expressjs.com/" target="_blank">ExpressJS</a> like the default and <a href="https://fastify.dev/" target="_blank">FastifyJS</a> like an option, I also integrated <a href="https://github.com/uNetworking/uWebSockets" target="_blank">uWebSockets</a> into the project to take advantage of uWebSockets's benchmark processing capability, thereby improving the performance and flexibility of the project.</p>
+<p>You can use it by using the command lines above</p>
+
+```bash
+npm run dev:uws
+```
+
+```bash
+npm run preview:uws
+```
+
+<p>And you can setup it for "start" script to deploy into your server by replace "pm2-puppeteer-ssr" to "pm2-puppeteer-ssr:uws"</p>
+
+```json
+"start": "cross-env ENV=production MAX_WORKERS=2 CLUSTER_INSTANCES=1 npm run pm2-puppeteer-ssr:uws",
 ```
 
 <h3 id="deploy">Deploy guide information for testing</h3>

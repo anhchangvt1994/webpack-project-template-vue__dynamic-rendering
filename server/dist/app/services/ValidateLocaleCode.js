@@ -3,6 +3,13 @@ Object.defineProperty(exports, '__esModule', { value: true })
 function _interopRequireDefault(obj) {
 	return obj && obj.__esModule ? obj : { default: obj }
 }
+function _nullishCoalesce(lhs, rhsFn) {
+	if (lhs != null) {
+		return lhs
+	} else {
+		return rhsFn()
+	}
+}
 function _optionalChain(ops) {
 	let lastAccessLHS = undefined
 	let value = ops[0]
@@ -32,38 +39,42 @@ var _serverconfig2 = _interopRequireDefault(_serverconfig)
 var _CookieHandler = require('../../utils/CookieHandler')
 var _StringHelper = require('../../utils/StringHelper')
 
-const ValidateLocaleCode = (redirectUrl, res) => {
-	let statusCode = 200
+const ValidateLocaleCode = (redirectResult, res) => {
+	if (!_serverconfig2.default.locale.enable) return redirectResult
 
-	if (!_serverconfig2.default.locale.enable)
-		return {
-			statusCode,
-			redirectUrl,
-		}
+	const LocaleInfo = _nullishCoalesce(
+		_optionalChain([
+			res,
+			'access',
+			(_) => _.cookies,
+			'optionalAccess',
+			(_2) => _2.localeInfo,
+		]),
+		() =>
+			_optionalChain([
+				_CookieHandler.getCookieFromResponse.call(void 0, res),
+				'optionalAccess',
+				(_3) => _3['LocaleInfo'],
+			])
+	)
 
-	const LocaleInfo = _optionalChain([
-		_CookieHandler.getCookieFromResponse.call(void 0, res),
-		'optionalAccess',
-		(_) => _['LocaleInfo'],
-	])
 	const defaultLocale = _StringHelper.getLocale.call(
 		void 0,
 		LocaleInfo.defaultLang,
 		LocaleInfo.defaultCountry
 	)
 
-	const pathSplitted = redirectUrl.split('/')
+	const pathSplitted = redirectResult.path.split('/')
 	const firstDispatcherParam = pathSplitted[1]
 
+	// NOTE - Handle hide the default of locale
 	if (
 		_serverconfig2.default.locale.hideDefaultLocale &&
 		firstDispatcherParam === defaultLocale
 	) {
-		const tmpRedirectUrl = redirectUrl.replace(`/${defaultLocale}`, '')
-		return {
-			statusCode: 301,
-			redirectUrl: tmpRedirectUrl ? tmpRedirectUrl : '/',
-		}
+		redirectResult.path = redirectResult.path.replace(`/${defaultLocale}`, '')
+		redirectResult.status = 301
+		return redirectResult
 	}
 
 	// NOTE - Check valid locale code id format
@@ -87,25 +98,25 @@ const ValidateLocaleCode = (redirectUrl, res) => {
 		LocaleInfo.countrySelected
 	)
 
-	if (isLocaleCodeIdFormatValid && localeSelected !== firstDispatcherParam)
-		return {
-			statusCode: 301,
-			redirectUrl: redirectUrl.replace(firstDispatcherParam, localeSelected),
-		}
-	else if (
+	if (isLocaleCodeIdFormatValid && localeSelected !== firstDispatcherParam) {
+		redirectResult.path = redirectResult.path.replace(
+			firstDispatcherParam,
+			localeSelected
+		)
+		redirectResult.status = 301
+		return redirectResult
+	} else if (
 		!isLocaleCodeIdFormatValid &&
 		(!_serverconfig2.default.locale.hideDefaultLocale ||
 			localeSelected !== defaultLocale)
-	)
-		return {
-			statusCode: 301,
-			redirectUrl: `/${localeSelected}${redirectUrl}`,
-		}
+	) {
+		redirectResult.path = `/${localeSelected}${redirectResult.path}`
+		redirectResult.status = 301
 
-	return {
-		statusCode,
-		redirectUrl,
+		return redirectResult
 	}
+
+	return redirectResult
 }
 
 const _checkLocaleCodeIdFormatValid = (firstDispatcherParam) => {
@@ -125,7 +136,7 @@ const _checkLocaleCodeIdFormatValid = (firstDispatcherParam) => {
 		!_constants.LOCALE_LIST_WITH_COUNTRY[arrLocale[0]]
 	)
 		return false
-	else if (
+	if (
 		arrLocale[1] &&
 		!_constants.LOCALE_LIST_WITH_LANGUAGE[arrLocale[1]] &&
 		!_constants.LOCALE_LIST_WITH_COUNTRY[arrLocale[1]]

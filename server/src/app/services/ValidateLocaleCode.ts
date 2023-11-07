@@ -8,33 +8,32 @@ import { getCookieFromResponse } from '../../utils/CookieHandler'
 import { getLocale } from '../../utils/StringHelper'
 import { IRedirectResult } from '../redirect.config'
 
-const ValidateLocaleCode = (redirectUrl: string, res): IRedirectResult => {
-	let statusCode = 200
+const ValidateLocaleCode = (
+	redirectResult: IRedirectResult,
+	res
+): IRedirectResult => {
+	if (!ServerConfig.locale.enable) return redirectResult
 
-	if (!ServerConfig.locale.enable)
-		return {
-			statusCode,
-			redirectUrl,
-		}
+	const LocaleInfo =
+		res.cookies?.localeInfo ??
+		(getCookieFromResponse(res)?.['LocaleInfo'] as ILocaleInfo)
 
-	const LocaleInfo = getCookieFromResponse(res)?.['LocaleInfo'] as ILocaleInfo
 	const defaultLocale = getLocale(
 		LocaleInfo.defaultLang,
 		LocaleInfo.defaultCountry
 	)
 
-	const pathSplitted = redirectUrl.split('/')
+	const pathSplitted = redirectResult.path.split('/')
 	const firstDispatcherParam = pathSplitted[1]
 
+	// NOTE - Handle hide the default of locale
 	if (
 		ServerConfig.locale.hideDefaultLocale &&
 		firstDispatcherParam === defaultLocale
 	) {
-		const tmpRedirectUrl = redirectUrl.replace(`/${defaultLocale}`, '')
-		return {
-			statusCode: 301,
-			redirectUrl: tmpRedirectUrl ? tmpRedirectUrl : '/',
-		}
+		redirectResult.path = redirectResult.path.replace(`/${defaultLocale}`, '')
+		redirectResult.status = 301
+		return redirectResult
 	}
 
 	// NOTE - Check valid locale code id format
@@ -57,24 +56,24 @@ const ValidateLocaleCode = (redirectUrl: string, res): IRedirectResult => {
 		LocaleInfo.countrySelected
 	)
 
-	if (isLocaleCodeIdFormatValid && localeSelected !== firstDispatcherParam)
-		return {
-			statusCode: 301,
-			redirectUrl: redirectUrl.replace(firstDispatcherParam, localeSelected),
-		}
-	else if (
+	if (isLocaleCodeIdFormatValid && localeSelected !== firstDispatcherParam) {
+		redirectResult.path = redirectResult.path.replace(
+			firstDispatcherParam,
+			localeSelected
+		)
+		redirectResult.status = 301
+		return redirectResult
+	} else if (
 		!isLocaleCodeIdFormatValid &&
 		(!ServerConfig.locale.hideDefaultLocale || localeSelected !== defaultLocale)
-	)
-		return {
-			statusCode: 301,
-			redirectUrl: `/${localeSelected}${redirectUrl}`,
-		}
+	) {
+		redirectResult.path = `/${localeSelected}${redirectResult.path}`
+		redirectResult.status = 301
 
-	return {
-		statusCode,
-		redirectUrl,
+		return redirectResult
 	}
+
+	return redirectResult
 }
 
 const _checkLocaleCodeIdFormatValid = (firstDispatcherParam) => {
@@ -94,7 +93,7 @@ const _checkLocaleCodeIdFormatValid = (firstDispatcherParam) => {
 		!LOCALE_LIST_WITH_COUNTRY[arrLocale[0]]
 	)
 		return false
-	else if (
+	if (
 		arrLocale[1] &&
 		!LOCALE_LIST_WITH_LANGUAGE[arrLocale[1]] &&
 		!LOCALE_LIST_WITH_COUNTRY[arrLocale[1]]

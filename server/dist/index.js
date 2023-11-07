@@ -136,7 +136,7 @@ const startServer = async () => {
 		.use(function (req, res, next) {
 			let botInfo
 			if (req.headers.service === 'puppeteer') {
-				botInfo = req.headers['bot_info'] || ''
+				botInfo = req.headers['botInfo'] || ''
 			} else {
 				botInfo = JSON.stringify(_DetectBot2.default.call(void 0, req))
 			}
@@ -198,29 +198,32 @@ const startServer = async () => {
 			next()
 		})
 		.use(function (req, res, next) {
-			const redirectInfo = _DetectRedirect2.default.call(void 0, req, res)
+			const redirectResult = _DetectRedirect2.default.call(void 0, req, res)
 
-			if (redirectInfo.statusCode !== 200) {
+			if (redirectResult.status !== 200) {
 				if (req.headers.accept === 'application/json') {
-					res.end(JSON.stringify(redirectInfo))
+					req.url = `${redirectResult.path}${redirectResult.search}`
+					res.end(JSON.stringify(redirectResult))
 				} else {
-					if (redirectInfo.redirectUrl.length > 1)
-						redirectInfo.redirectUrl = redirectInfo.redirectUrl.replace(
+					if (redirectResult.path.length > 1)
+						redirectResult.path = redirectResult.path.replace(
 							/\/$|\/(\?)/,
 							'$1'
 						)
-					res.writeHead(redirectInfo.statusCode, {
-						Location: redirectInfo.redirectUrl,
+					res.writeHead(redirectResult.status, {
+						Location: `${redirectResult.path}${
+							redirectResult.search ? redirectResult.search : ''
+						}`,
 						'cache-control': 'no-store',
 					})
-					res.end()
+					return res.end()
 				}
 			} else next()
 		})
 		.use(function (req, res, next) {
 			let deviceInfo
 			if (req.headers.service === 'puppeteer') {
-				deviceInfo = req.headers['device_info'] || ''
+				deviceInfo = req.headers['deviceInfo'] || ''
 			} else {
 				deviceInfo = JSON.stringify(_DetectDevice2.default.call(void 0, req))
 			}
@@ -272,22 +275,21 @@ const startServer = async () => {
 			)
 		}
 
-		watcher.on('change', async (path) => {
-			_ConsoleHandler2.default.log(`File ${path} has been changed`)
-			await server.close()
-			_child_process.spawn.call(
-				void 0,
-				'node',
-				[
-					'cross-env REFRESH_SERVER=1 --require sucrase/register server/src/index.ts',
-				],
-				{
-					stdio: 'inherit',
-					shell: true,
-				}
-			)
-			process.exit(0)
-		})
+		// watcher.on('change', async (path) => {
+		// 	Console.log(`File ${path} has been changed`)
+		// 	await server.close()
+		// 	spawn(
+		// 		'node',
+		// 		[
+		// 			'cross-env REFRESH_SERVER=1 --require sucrase/register server/src/index.ts',
+		// 		],
+		// 		{
+		// 			stdio: 'inherit',
+		// 			shell: true,
+		// 		}
+		// 	)
+		// 	process.exit(0)
+		// })
 	} else {
 		_child_process.spawn.call(
 			void 0,

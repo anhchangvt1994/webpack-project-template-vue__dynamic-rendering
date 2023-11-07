@@ -1,23 +1,23 @@
+import middie from '@fastify/middie'
 import { spawn } from 'child_process'
 import chokidar from 'chokidar'
 import cors from 'cors'
 import fastify from 'fastify'
-import middie from '@fastify/middie'
-import serveStatic from 'serve-static'
 import path from 'path'
+import serveStatic from 'serve-static'
 import { findFreePort, getPort, setPort } from '../../config/utils/PortHandler'
 import { ENV, pagesPath } from './constants'
+import { COOKIE_EXPIRED } from './puppeteer-ssr/constants'
 import puppeteerSSRService from './puppeteer-ssr/index.fastify'
+import ServerConfig from './server.config'
 import Console from './utils/ConsoleHandler'
+import { setCookie } from './utils/CookieHandler'
 import detectBot from './utils/DetectBot'
 import detectDevice from './utils/DetectDevice'
-import detectStaticExtension from './utils/DetectStaticExtension'
-import DetectRedirect from './utils/DetectRedirect'
-import sendFile from './utils/SendFile'
-import { COOKIE_EXPIRED } from './puppeteer-ssr/constants'
-import { setCookie } from './utils/CookieHandler'
 import detectLocale from './utils/DetectLocale'
-import ServerConfig from './server.config'
+import DetectRedirect from './utils/DetectRedirect'
+import detectStaticExtension from './utils/DetectStaticExtension'
+import sendFile from './utils/SendFile'
 
 const COOKIE_EXPIRED_SECOND = COOKIE_EXPIRED / 1000
 
@@ -53,7 +53,7 @@ const startServer = async () => {
 	app
 		.use(cors())
 		.use('/robots.txt', serveStatic(path.resolve(__dirname, '../robots.txt')))
-		.use(async function (req, res, next) {
+		.use(function (req, res, next) {
 			const isStatic = detectStaticExtension(req as any)
 			/**
 			 * NOTE
@@ -82,7 +82,7 @@ const startServer = async () => {
 		.use(function (req, res, next) {
 			let botInfo
 			if (req.headers.service === 'puppeteer') {
-				botInfo = req.headers['bot_info'] || ''
+				botInfo = req.headers['botInfo'] || ''
 			} else {
 				botInfo = JSON.stringify(detectBot(req as any))
 			}
@@ -130,31 +130,34 @@ const startServer = async () => {
 			next()
 		})
 		.use(function (req, res, next) {
-			const redirectInfo = DetectRedirect(req, res)
+			const redirectResult = DetectRedirect(req, res)
 
-			if (redirectInfo.statusCode !== 200) {
+			if (redirectResult.status !== 200) {
 				if (req.headers.accept === 'application/json') {
+					req.url = redirectResult.path
 					res
 						.setHeader('Cache-Control', 'no-store')
-						.end(JSON.stringify(redirectInfo))
+						.end(JSON.stringify(redirectResult))
 				} else {
-					if (redirectInfo.redirectUrl.length > 1)
-						redirectInfo.redirectUrl = redirectInfo.redirectUrl.replace(
+					if (redirectResult.path.length > 1)
+						redirectResult.path = redirectResult.path.replace(
 							/\/$|\/(\?)/,
 							'$1'
 						)
-					res.writeHead(redirectInfo.statusCode, {
-						Location: redirectInfo.redirectUrl,
+					res.writeHead(redirectResult.status, {
+						Location: `${redirectResult.path}${
+							redirectResult.search ? redirectResult.search : ''
+						}`,
 						'cache-control': 'no-store',
 					})
-					res.end()
+					return res.end()
 				}
 			} else next()
 		})
 		.use(function (req, res, next) {
 			let deviceInfo
 			if (req.headers.service === 'puppeteer') {
-				deviceInfo = req.headers['device_info'] || ''
+				deviceInfo = req.headers['deviceInfo'] || ''
 			} else {
 				deviceInfo = JSON.stringify(detectDevice(req as any))
 			}
@@ -200,23 +203,23 @@ const startServer = async () => {
 			)
 		}
 
-		watcher.on('change', async (path) => {
-			Console.log(`File ${path} has been changed`)
-			await app.close()
-			setTimeout(() => {
-				spawn(
-					'node',
-					[
-						'cross-env REFRESH_SERVER=1 --require sucrase/register server/src/index.ts',
-					],
-					{
-						stdio: 'inherit',
-						shell: true,
-					}
-				)
-			})
-			process.exit(0)
-		})
+		// watcher.on('change', async (path) => {
+		// 	Console.log(`File ${path} has been changed`)
+		// 	await app.close()
+		// 	setTimeout(() => {
+		// 		spawn(
+		// 			'node',
+		// 			[
+		// 				'cross-env REFRESH_SERVER=1 --require sucrase/register server/src/index.ts',
+		// 			],
+		// 			{
+		// 				stdio: 'inherit',
+		// 				shell: true,
+		// 			}
+		// 		)
+		// 	})
+		// 	process.exit(0)
+		// })
 	} else {
 		spawn(
 			'cross-env',

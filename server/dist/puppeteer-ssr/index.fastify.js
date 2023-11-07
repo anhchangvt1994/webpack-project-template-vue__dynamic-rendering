@@ -124,18 +124,29 @@ const puppeteerSSRService = (async () => {
 				})
 		}
 		_app.get('*', async function (req, res) {
+			const pathname = _optionalChain([
+				req,
+				'access',
+				(_9) => _9.url,
+				'optionalAccess',
+				(_10) => _10.split,
+				'call',
+				(_11) => _11('?'),
+				'access',
+				(_12) => _12[0],
+			])
 			const cookies = _CookieHandler.getCookieFromResponse.call(void 0, res)
 			const botInfo = _optionalChain([
 				cookies,
 				'optionalAccess',
-				(_9) => _9['BotInfo'],
+				(_13) => _13['BotInfo'],
 			])
 			const enableISR =
 				_serverconfig2.default.isr.enable &&
 				Boolean(
 					!_serverconfig2.default.isr.routes ||
-						!_serverconfig2.default.isr.routes[req.url] ||
-						_serverconfig2.default.isr.routes[req.url].enable
+						!_serverconfig2.default.isr.routes[pathname] ||
+						_serverconfig2.default.isr.routes[pathname].enable
 				)
 			const headers = req.headers
 
@@ -146,18 +157,17 @@ const puppeteerSSRService = (async () => {
 					: 'text/html; charset=utf-8'
 			)
 
-			const url = _ForamatUrl.convertUrlHeaderToQueryString.call(
-				void 0,
-				_ForamatUrl.getUrl.call(void 0, req),
-				res,
-				true
-			)
-
 			if (
 				_constants.ENV !== 'development' &&
 				enableISR &&
 				headers.service !== 'puppeteer'
 			) {
+				const url = _ForamatUrl.convertUrlHeaderToQueryString.call(
+					void 0,
+					_ForamatUrl.getUrl.call(void 0, req),
+					res,
+					!botInfo.isBot
+				)
 				if (botInfo.isBot) {
 					try {
 						const result = await _ISRGeneratornext2.default.call(void 0, {
@@ -196,23 +206,23 @@ const puppeteerSSRService = (async () => {
 					}
 
 					return
-				}
-
-				try {
-					if (_constants.SERVER_LESS) {
-						await _ISRGeneratornext2.default.call(void 0, {
-							url,
-							isSkipWaiting: true,
-						})
-					} else {
-						_ISRGeneratornext2.default.call(void 0, {
-							url,
-							isSkipWaiting: true,
-						})
+				} else {
+					try {
+						if (_constants.SERVER_LESS) {
+							await _ISRGeneratornext2.default.call(void 0, {
+								url,
+								isSkipWaiting: true,
+							})
+						} else {
+							_ISRGeneratornext2.default.call(void 0, {
+								url,
+								isSkipWaiting: true,
+							})
+						}
+					} catch (err) {
+						_ConsoleHandler2.default.error('url', url)
+						_ConsoleHandler2.default.error(err)
 					}
-				} catch (err) {
-					_ConsoleHandler2.default.error('url', url)
-					_ConsoleHandler2.default.error(err)
 				}
 			}
 
@@ -223,15 +233,15 @@ const puppeteerSSRService = (async () => {
 			 * https://www.inchcalculator.com/convert/year-to-second/
 			 */
 			if (headers.accept === 'application/json')
-				res.header('Cache-Control', 'no-store').send({ statusCode: 200 })
+				res
+					.header('Cache-Control', 'no-store')
+					.send({ status: 200, originPath: pathname, path: pathname })
 			else {
-				res.raw.setHeader('Cache-Control', 'no-store')
-				return _SendFile2.default.call(
-					void 0,
+				const filePath =
 					req.headers['static-html-path'] ||
-						_path2.default.resolve(__dirname, '../../../dist/index.html'),
-					res.raw
-				)
+					_path2.default.resolve(__dirname, '../../../dist/index.html')
+				res.raw.setHeader('Cache-Control', 'no-store')
+				return _SendFile2.default.call(void 0, filePath, res.raw)
 			}
 		})
 	}

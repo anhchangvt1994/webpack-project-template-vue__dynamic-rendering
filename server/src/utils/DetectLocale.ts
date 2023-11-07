@@ -5,9 +5,9 @@ import {
 	LOCALE_LIST_WITH_COUNTRY,
 	LOCALE_LIST_WITH_LANGUAGE,
 } from '../constants'
+import ServerConfig from '../server.config'
 import { ILocaleInfo } from '../types'
 import { getCookieFromRequest } from './CookieHandler'
-import ServerConfig from '../server.config'
 
 const LOCALE_INFO_DEFAULT: ILocaleInfo = {
 	lang: LANGUAGE_CODE_DEFAULT,
@@ -39,8 +39,6 @@ export default function detectLocale(req): ILocaleInfo {
 	)
 		.toString()
 		.replace(/::ffff:|::1/, '')
-
-	const cookies = getCookieFromRequest(req)
 
 	const localInfo = lookup(clientIp) || LOCALE_INFO_DEFAULT
 
@@ -109,12 +107,14 @@ export default function detectLocale(req): ILocaleInfo {
 	let countrySelected
 
 	if (ServerConfig.locale.enable) {
+		const cookies = getCookieFromRequest(req)
+		const path = req.url?.split?.('?')[0]
+
 		if (
 			ServerConfig.locale.routes &&
-			ServerConfig.locale.routes[req.url] &&
-			!ServerConfig.locale.routes[req.url].enable
+			ServerConfig.locale.routes[path] &&
+			!ServerConfig.locale.routes[path].enable
 		) {
-			const cookies = getCookieFromRequest(req)
 			if (cookies && (cookies['lang'] || cookies['country'])) {
 				;[langSelected, countrySelected] = [
 					cookies['lang'] || defaultLang,
@@ -127,7 +127,8 @@ export default function detectLocale(req): ILocaleInfo {
 				{
 					defaultLang,
 					defaultCountry,
-				}
+				},
+				cookies
 			)
 		}
 	}
@@ -148,31 +149,53 @@ const _getArrLocaleSelected = (
 	params: {
 		defaultLang: string | undefined
 		defaultCountry: string | undefined
-	}
+	},
+	cookies?: { [key: string]: any }
 ) => {
 	if (
 		!firstDispatcherParam ||
 		!/^[a-z-0-9]{2}(|-[A-Za-z]{2})(?:$)/.test(firstDispatcherParam)
 	)
-		return [params.defaultLang, params.defaultCountry]
+		return [
+			params.defaultLang
+				? cookies && cookies['lang']
+					? cookies['lang']
+					: params.defaultLang
+				: undefined,
+			params.defaultCountry
+				? cookies && cookies['country']
+					? cookies['country']
+					: params.defaultCountry
+				: undefined,
+		]
 
 	const arrLocale = firstDispatcherParam.toLowerCase().split('-')
 
-	if (!params.defaultLang) arrLocale[0] = undefined
-	else if (
-		arrLocale[0] &&
-		!LOCALE_LIST_WITH_LANGUAGE[arrLocale[0]] &&
-		!LOCALE_LIST_WITH_COUNTRY[arrLocale[0]]
-	)
-		arrLocale[0] = params.defaultLang
+	const tmpArrLocale: (string | undefined)[] = [undefined, undefined]
 
-	if (!params.defaultCountry) arrLocale[1] = undefined
-	else if (
-		arrLocale[1] &&
-		!LOCALE_LIST_WITH_LANGUAGE[arrLocale[1]] &&
-		!LOCALE_LIST_WITH_COUNTRY[arrLocale[1]]
-	)
-		arrLocale[1] = params.defaultCountry
+	if (!params.defaultLang) tmpArrLocale[0] = undefined
+	else if (!arrLocale[0])
+		tmpArrLocale[0] =
+			cookies && cookies['lang'] ? cookies['lang'] : params.defaultLang
+	else if (LOCALE_LIST_WITH_LANGUAGE[arrLocale[0]])
+		tmpArrLocale[0] = arrLocale[0]
+	else if (LOCALE_LIST_WITH_COUNTRY[arrLocale[0]])
+		tmpArrLocale[1] = arrLocale[0]
+	else
+		tmpArrLocale[0] =
+			cookies && cookies['lang'] ? cookies['lang'] : params.defaultLang
 
-	return arrLocale
+	if (!params.defaultCountry) tmpArrLocale[1] = undefined
+	else if (!arrLocale[1])
+		tmpArrLocale[1] =
+			cookies && cookies['country'] ? cookies['country'] : params.defaultCountry
+	else if (LOCALE_LIST_WITH_LANGUAGE[arrLocale[1]])
+		tmpArrLocale[0] = arrLocale[1]
+	else if (LOCALE_LIST_WITH_COUNTRY[arrLocale[1]])
+		tmpArrLocale[1] = arrLocale[1]
+	else
+		tmpArrLocale[1] =
+			cookies && cookies['country'] ? cookies['country'] : params.defaultCountry
+
+	return tmpArrLocale
 } // _getArrLocaleSelected
