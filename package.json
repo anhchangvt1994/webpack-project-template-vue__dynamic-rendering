@@ -1,8 +1,8 @@
 {
 	"private": true,
 	"scripts": {
-		"start": "cross-env MAX_WORKERS=7 node -r sucrase/register server/src/index.uws.ts",
-		"start:pm2": "cross-env ENV=production MAX_WORKERS=4 CLUSTER_INSTANCES=3 npm run pm2-puppeteer-ssr",
+		"start": "npx cross-env MAX_WORKERS=4 node server/src/index.uws.js",
+		"start:pm2": "npx cross-env ENV=production MAX_WORKERS=4 CLUSTER_INSTANCES=1 npm run pm2-puppeteer-ssr",
 		"dev": "cross-env ENV=development npm run start-dev",
 		"dev:fastify": "cross-env ENV=development npm run start-dev:fastify",
 		"dev:uws": "cross-env ENV=development npm run start-dev:uws",
@@ -14,7 +14,7 @@
 		"start-dev": "cross-env MAX_WORKERS=4 node -r sucrase/register server/src/index.ts",
 		"start-dev:fastify": "cross-env MAX_WORKERS=4 node -r sucrase/register server/src/index.fastify.ts",
 		"start-dev:uws": "cross-env MAX_WORKERS=4 node -r sucrase/register server/src/index.uws.ts",
-		"start-preview": "cross-env MAX_WORKERS=7 node -r sucrase/register server/src/index.ts",
+		"start-preview": "cross-env MAX_WORKERS=4 node -r sucrase/register server/src/index.ts",
 		"start-preview:fastify": "cross-env MAX_WORKERS=7 node -r sucrase/register server/src/index.fastify.ts",
 		"start-preview:uws": "cross-env MAX_WORKERS=7 node -r sucrase/register server/src/index.uws.ts",
 		"pm2-puppeteer-ssr": "node --require sucrase/register server/src/puppeteer-ssr/pm2.ts",
