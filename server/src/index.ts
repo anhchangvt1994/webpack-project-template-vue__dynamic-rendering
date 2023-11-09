@@ -4,7 +4,7 @@ import cors from 'cors'
 import express from 'express'
 import path from 'path'
 import { findFreePort, getPort, setPort } from '../../config/utils/PortHandler'
-import { ENV, pagesPath } from './constants'
+import { ENV, pagesPath, serverInfo } from './constants'
 import puppeteerSSRService from './puppeteer-ssr'
 import { COOKIE_EXPIRED } from './puppeteer-ssr/constants'
 import ServerConfig from './server.config'
@@ -209,7 +209,7 @@ const startServer = async () => {
 		// 	)
 		// 	process.exit(0)
 		// })
-	} else {
+	} else if (!serverInfo.isServer) {
 		spawn(
 			'cross-env',
 			['PORT=1234 NODE_NO_WARNINGS=1 node ./config/webpack.serve.config.js'],
