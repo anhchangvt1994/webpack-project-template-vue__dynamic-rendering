@@ -234,6 +234,7 @@ module.exports = async (env, arg) => {
 		],
 		stats: WebpackConfigWithMode.stats || 'detailed',
 		cache: WebpackConfigWithMode.cache || true,
+		performance: WebpackConfigWithMode.performance || {},
 		optimization: WebpackConfigWithMode.optimization || {},
 		experiments: WebpackConfigWithMode.experiments || {},
 		target: WebpackConfigWithMode.target || 'web',
