@@ -100,9 +100,14 @@ const ServerRouterHandler = (() => {
 			}
 
 			if (res) {
+				const curLocale = getLocale(
+					LocaleInfo.langSelected,
+					LocaleInfo.countrySelected
+				)
+
 				if (
 					REDIRECT_CODE_LIST.includes(res.status) ||
-					(SUCCESS_CODE_LIST.includes(res.status) && locale)
+					(SUCCESS_CODE_LIST.includes(res.status) && locale === curLocale)
 				) {
 					if (
 						!(location.search && res.search) ||
@@ -116,15 +121,8 @@ const ServerRouterHandler = (() => {
 									? 301
 									: res.status,
 								path:
-									res.path?.replace(
-										new RegExp(
-											`^(\/|)${getLocale(
-												LocaleInfo.langSelected,
-												LocaleInfo.countrySelected
-											)}`
-										),
-										''
-									) || '/',
+									res.path?.replace(new RegExp(`^(\/|)${curLocale}`), '') ||
+									'/',
 							}
 						)
 					}
@@ -142,19 +140,16 @@ const ServerRouterHandler = (() => {
 					})
 
 					resetSeoTag()
-					return {
-						status: 200,
-					}
 				}
 			}
 		} else if (
 			enableLocale &&
 			validPathInfo &&
 			locale !== curLocale &&
-			(to.path.replace(new RegExp(`^(\/|)${locale}`), '') || '/') ===
-				(prevPath.replace(new RegExp(`^(\/|)${curLocale}`), '') || '/')
+			to.path.replace(new RegExp(`^(\/|)${locale}|\/{0,}$`, 'g'), '') ===
+				prevPath.replace(new RegExp(`^(\/|)${curLocale}|\/{0,}$`, 'g'), '')
 		) {
-			const arrLocale = location.pathname.split('/')[1]?.split('-')
+			const arrLocale = to.path.split('/')[1]?.split('-')
 
 			if (arrLocale?.length) {
 				const cookies = getCookie('LocaleInfo')
@@ -165,12 +160,10 @@ const ServerRouterHandler = (() => {
 						LocaleInfo.defaultLang ? arrLocale[1] : arrLocale[0]
 					)
 
-				if (cookies) {
-					const objCookies = JSON.parse(cookies)
-					objCookies.langSelected = getCookie('lang')
-					objCookies.countrySelected = getCookie('country')
-					setCookie('LocaleInfo', JSON.stringify(objCookies))
-				}
+				const objCookies = cookies ? JSON.parse(cookies) : LocaleInfo
+				objCookies.langSelected = getCookie('lang')
+				objCookies.countrySelected = getCookie('country')
+				setCookie('LocaleInfo', JSON.stringify(objCookies))
 
 				ServerStore.reInit.LocaleInfo()
 			}
