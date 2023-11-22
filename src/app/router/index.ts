@@ -34,7 +34,7 @@ const routes: Readonly<RouteRecordRaw[]> = [
 		children: [
 			{
 				name: import.meta.env.ROUTER_CONTENT_COMMENT_NAME,
-				path: 'comment',
+				path: import.meta.env.ROUTER_COMMENT_PATH,
 				component: lazyComponent(
 					() => import('components/comment-page/CommentRow.vue')
 				),
