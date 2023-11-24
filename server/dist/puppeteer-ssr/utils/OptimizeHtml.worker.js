@@ -76,15 +76,18 @@ const optimizeContent = (html, isFullOptimize = false) => {
 				).trim()
 
 				switch (true) {
-					case curAttrs.indexOf('alt=') === -1:
+					case newAttrs.indexOf('alt=') === -1:
 						newAttrs = `alt="text" ${newAttrs}`
-					case curAttrs.indexOf('height=') === -1:
+					case newAttrs.indexOf('height=') === -1:
 						newAttrs = `height="200" ${newAttrs}`
-					case curAttrs.indexOf('width=') === -1:
+					case newAttrs.indexOf('width=') === -1:
 						newAttrs = `width="150" ${newAttrs}`
-						break
 					default:
 						break
+				}
+
+				if (newAttrs.indexOf('height=') === -1) {
+					console.log(newAttrs)
 				}
 
 				return `<img ${newAttrs}>`
@@ -134,11 +137,35 @@ const optimizeContent = (html, isFullOptimize = false) => {
 								''
 							)
 							tmpContent = `welcome to ${tmpContent || href}`
+
+							// if (curAttrs.indexOf('aria-label=') === -1)
+							// 	tmpAttrs = `aria-label="welcome" ${tmpAttrs}`
 							break
-						case tmpTag === 'button' && !content:
-							tmpContent = 'click'
-						case tmpTag === 'button' && curAttrs.indexOf('type=') === -1:
-							tmpAttrs = `type="button" ${tmpAttrs}`
+						case tmpTag === 'button':
+							if (!content.trim()) tmpContent = 'click'
+							if (curAttrs.indexOf('type=') === -1)
+								tmpAttrs = `type="button" ${tmpAttrs}`
+
+							if (curAttrs.indexOf('aria-label=') !== -1) {
+								const ariaLabel = _optionalChain([
+									/aria-label=("|'|)(?<ariaLabel>[^"']+)("|'|)+(\s|$)/g,
+									'access',
+									(_5) => _5.exec,
+									'call',
+									(_6) => _6(curAttrs),
+									'optionalAccess',
+									(_7) => _7.groups,
+									'optionalAccess',
+									(_8) => _8.ariaLabel,
+								])
+
+								tmpContent = ariaLabel
+							} else {
+								const tmpAriaLabel = tmpContent
+									.replace(/<[^>]*>|[\n]/g, '')
+									.trim()
+								tmpAttrs = `aria-label="${tmpAriaLabel}" ${tmpAttrs}`
+							}
 							break
 						case tmpTag === 'input' &&
 							/type=['"](button|submit)['"]/g.test(curAttrs) &&
