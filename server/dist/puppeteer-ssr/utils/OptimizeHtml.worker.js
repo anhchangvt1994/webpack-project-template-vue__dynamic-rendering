@@ -23,21 +23,21 @@ function _optionalChain(ops) {
 	}
 	return value
 }
+var _htmlminifier = require('html-minifier')
 var _workerpool = require('workerpool')
 var _workerpool2 = _interopRequireDefault(_workerpool)
-var _htmlminifier = require('html-minifier')
+var _constants = require('../../constants')
 
-var _constants = require('../constants')
-var _constants3 = require('../../constants')
+var _constants3 = require('../constants')
 
 const compressContent = (html) => {
 	if (!html) return ''
 	else if (
-		_constants.DISABLE_COMPRESS_HTML ||
-		_constants.POWER_LEVEL === _constants.POWER_LEVEL_LIST.ONE
+		_constants3.DISABLE_COMPRESS_HTML ||
+		_constants3.POWER_LEVEL === _constants3.POWER_LEVEL_LIST.ONE
 	)
 		return html
-	else if (_constants3.ENV !== 'development') {
+	else if (_constants.ENV !== 'development') {
 		html = _htmlminifier.minify.call(void 0, html, {
 			collapseBooleanAttributes: true,
 			collapseInlineTagWhitespace: true,
@@ -55,17 +55,26 @@ const compressContent = (html) => {
 
 const optimizeContent = (html, isFullOptimize = false) => {
 	if (!html) return ''
-	html = html.replace(_constants.regexOptimizeForPerformanceNormally, '')
+	html = html.replace(_constants3.regexOptimizeForPerformanceNormally, '')
 
 	if (
-		_constants.DISABLE_DEEP_OPTIMIZE ||
-		_constants.POWER_LEVEL === _constants.POWER_LEVEL_LIST.ONE
+		_constants3.DISABLE_DEEP_OPTIMIZE ||
+		_constants3.POWER_LEVEL === _constants3.POWER_LEVEL_LIST.ONE
 	)
 		return html
 	else if (isFullOptimize) {
 		html = html
-			.replace(_constants.regexOptimizeForPerformanceHardly, '')
-			.replace(_constants.regexHandleAttrsImageTag, (match, tag, curAttrs) => {
+			.replace(_constants3.regexOptimizeForPerformanceHardly, '')
+			.replace(_constants3.regexHandleAttrsHtmlTag, (match, tag, curAttrs) => {
+				let newAttrs = curAttrs
+
+				if (newAttrs.indexOf('lang') === -1) {
+					newAttrs = `lang="en"`
+				}
+
+				return `<html ${newAttrs}>`
+			})
+			.replace(_constants3.regexHandleAttrsImageTag, (match, tag, curAttrs) => {
 				let newAttrs = (
 					curAttrs.indexOf('seo-tag') !== -1
 						? curAttrs
@@ -93,7 +102,7 @@ const optimizeContent = (html, isFullOptimize = false) => {
 				return `<img ${newAttrs}>`
 			})
 			.replace(
-				_constants.regexHandleAttrsInteractiveTag,
+				_constants3.regexHandleAttrsInteractiveTag,
 				(math, tag, curAttrs, negative, content, endTag) => {
 					let tmpAttrs = `style="display: inline-block;min-width: 48px;min-height: 48px;" ${curAttrs.trim()}`
 					let tmpTag = tag
@@ -165,6 +174,7 @@ const optimizeContent = (html, isFullOptimize = false) => {
 									.replace(/<[^>]*>|[\n]/g, '')
 									.trim()
 								tmpAttrs = `aria-label="${tmpAriaLabel}" ${tmpAttrs}`
+								tmpContent = tmpAriaLabel
 							}
 							break
 						case tmpTag === 'input' &&

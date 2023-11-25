@@ -1,16 +1,17 @@
-import workerpool from 'workerpool'
 import { minify } from 'html-minifier'
+import workerpool from 'workerpool'
+import { ENV } from '../../constants'
 import {
-	regexHandleAttrsImageTag,
-	regexHandleAttrsInteractiveTag,
-	regexOptimizeForPerformanceNormally,
-	regexOptimizeForPerformanceHardly,
-	POWER_LEVEL,
-	POWER_LEVEL_LIST,
 	DISABLE_COMPRESS_HTML,
 	DISABLE_DEEP_OPTIMIZE,
+	POWER_LEVEL,
+	POWER_LEVEL_LIST,
+	regexHandleAttrsHtmlTag,
+	regexHandleAttrsImageTag,
+	regexHandleAttrsInteractiveTag,
+	regexOptimizeForPerformanceHardly,
+	regexOptimizeForPerformanceNormally,
 } from '../constants'
-import { ENV } from '../../constants'
 
 const compressContent = (html: string): string => {
 	if (!html) return ''
@@ -40,6 +41,15 @@ const optimizeContent = (html: string, isFullOptimize = false): string => {
 	else if (isFullOptimize) {
 		html = html
 			.replace(regexOptimizeForPerformanceHardly, '')
+			.replace(regexHandleAttrsHtmlTag, (match, tag, curAttrs) => {
+				let newAttrs = curAttrs
+
+				if (newAttrs.indexOf('lang') === -1) {
+					newAttrs = `lang="en"`
+				}
+
+				return `<html ${newAttrs}>`
+			})
 			.replace(regexHandleAttrsImageTag, (match, tag, curAttrs) => {
 				let newAttrs = (
 					curAttrs.indexOf('seo-tag') !== -1
@@ -125,6 +135,7 @@ const optimizeContent = (html: string, isFullOptimize = false): string => {
 									.replace(/<[^>]*>|[\n]/g, '')
 									.trim()
 								tmpAttrs = `aria-label="${tmpAriaLabel}" ${tmpAttrs}`
+								tmpContent = tmpAriaLabel
 							}
 							break
 						case tmpTag === 'input' &&
