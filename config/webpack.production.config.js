@@ -85,6 +85,10 @@ module.exports = (async () => {
 			new DefinePlugin({
 				'import.meta.env': ENV_OBJ_WITH_JSON_STRINGIFY_VALUE,
 			}),
+			new DefinePlugin({
+				__VUE_OPTIONS_API__: true,
+				__VUE_PROD_DEVTOOLS__: false,
+			}),
 		],
 		stats: {
 			assetsSort: '!size',
