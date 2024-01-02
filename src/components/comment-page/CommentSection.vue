@@ -6,10 +6,10 @@
 	<Transition mode="out-in">
 		<!-- <KeepAlive> -->
 		<section class="comment-section">
-			<Suspense>
+			<Suspense :key="$route.fullPath">
 				<slot></slot>
 				<template #fallback>
-					<CommentLoader :amount="3" :delay="120" />
+					<CommentLoader :amount="3" :delay="0" />
 				</template>
 			</Suspense>
 		</section>

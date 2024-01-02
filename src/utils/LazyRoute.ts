@@ -22,9 +22,10 @@ function LazyRoute() {
 	function _generateLazyFunc<T>(
 		input: T extends AsyncComponentLoader ? any : any
 	) {
+		const AsyncComponent = defineAsyncComponent(input)
 		return defineComponent({
 			render() {
-				return h(defineAsyncComponent(input), this.$props)
+				return h(AsyncComponent, this.$props)
 			},
 		})
 	}
