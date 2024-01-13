@@ -1,4 +1,4 @@
-import { SeoTagsEnum, SeoTags } from './constants'
+import { SeoTagsEnum, SeoTags, INFO } from './constants'
 import { ISetSeoTagOptionsParam } from './types'
 
 export const setTitleTag = SeoTags[SeoTagsEnum.title]
@@ -33,13 +33,20 @@ export const setMetaTwitterDescriptionTag =
 export const setMetaTwitterImageTag = SeoTags[SeoTagsEnum.twitter_image]
 export const setMetaTwitterCardTag = SeoTags[SeoTagsEnum.twitter_card]
 
-let resetSeoTagTimeout
 export const setSeoTag = (options?: ISetSeoTagOptionsParam) => {
-	if (resetSeoTagTimeout) clearTimeout(resetSeoTagTimeout)
-	for (const key in SeoTags) {
+	for (const key in options) {
 		SeoTags[key](options?.[key])
 	}
 }
 
-export const resetSeoTag = () =>
-	(resetSeoTagTimeout = setTimeout(setSeoTag, 150))
+export const resetSeoTag = (duration = 150) => {
+	const curPath = location.pathname
+
+	if (INFO.resetSeoTagTimeout) clearTimeout(INFO.resetSeoTagTimeout)
+	INFO.resetSeoTagTimeout = setTimeout(() => {
+		if (curPath === INFO.curPath && INFO.curPath === location.pathname) return
+		for (const key in SeoTags) {
+			SeoTags[key]()
+		}
+	}, duration)
+}

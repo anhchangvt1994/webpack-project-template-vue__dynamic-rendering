@@ -1,8 +1,6 @@
 import type { IUserInfo } from 'store/UserStore'
 import { UserInfoState } from 'store/UserStore'
-import { resetSeoTag } from 'utils/SeoHelper'
 import type { RouteLocationNormalized, Router } from 'vue-router'
-import LocaleHandler from './ServerRouterHandler'
 import ServerRouterHandler from './ServerRouterHandler'
 
 interface INavigate {
@@ -22,32 +20,6 @@ export interface ICertInfo {
 	successPath: string
 }
 
-const fetchOnRoute = (() => {
-	let controller
-
-	return async (
-		to: RouteLocationNormalized,
-		init?: RequestInit | undefined
-	): Promise<undefined | { statusCode: number; redirectUrl?: string }> => {
-		if (!to) return
-
-		controller?.abort('reject')
-		controller = new AbortController()
-
-		const data = await new Promise(async (res) => {
-			setTimeout(res, 1000)
-			const response = await fetch(to.path, {
-				...init,
-				signal: controller.signal,
-			}).then((res) => res.text())
-
-			res(/^{(.|[\r\n])*?}$/.test(response) ? JSON.parse(response) : {})
-		})
-
-		return data as { statusCode: number; redirectUrl?: string }
-	}
-})() // fetchOnRoute
-
 const VALID_CODE_LIST = [200]
 const REDIRECT_CODE_LIST = [301, 302]
 const ERROR_CODE_LIST = [404, 500, 502, 504]
@@ -59,10 +31,6 @@ const BeforeEach = (function beforeEach() {
 
 	const _init = (router: Router) => {
 		router.beforeEach(async (to, from) => {
-			const enableLocale =
-				to.params.locale !== undefined &&
-				(LocaleInfo.langSelected || LocaleInfo.countrySelected)
-
 			const result = await ServerRouterHandler(router, to, from)
 
 			if (result.status === 404) return false
