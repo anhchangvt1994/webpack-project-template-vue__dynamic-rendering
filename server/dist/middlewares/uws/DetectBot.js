@@ -10,7 +10,7 @@ const DetectBotMiddle = (res, req) => {
 	if (!res.cookies) res.cookies = {}
 
 	if (req.getHeader('service') === 'puppeteer') {
-		res.cookies.botInfo = res.cookies.botInfo = JSON.parse(
+		res.cookies.botInfo = JSON.parse(
 			req.getHeader('botinfo') || req.getHeader('botInfo') || '{}'
 		)
 	} else {
