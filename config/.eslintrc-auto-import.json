@@ -148,6 +148,7 @@
     "RouterLinkTest": true,
     "RouterLinkDefaultParams": true,
     "RouterView": true,
-    "LocaleState": true
+    "LocaleState": true,
+    "EnvironmentInfo": true
   }
 }

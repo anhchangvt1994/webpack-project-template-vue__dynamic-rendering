@@ -1,6 +1,6 @@
 import { Page } from 'puppeteer-core'
 import WorkerPool from 'workerpool'
-import { ENV, resourceExtension, userDataPath } from '../../constants'
+import { ENV_MODE, resourceExtension, userDataPath } from '../../constants'
 import ServerConfig from '../../server.config'
 import Console from '../../utils/ConsoleHandler'
 import {
@@ -19,7 +19,7 @@ import BrowserManager, { IBrowser } from './BrowserManager'
 import CacheManager from './CacheManager'
 
 const browserManager = (() => {
-	if (ENV === 'development') return undefined as unknown as IBrowser
+	if (ENV_MODE === 'development') return undefined as unknown as IBrowser
 	if (POWER_LEVEL === POWER_LEVEL_LIST.THREE)
 		return BrowserManager(() => `${userDataPath}/user_data_${Date.now()}`)
 	return BrowserManager()
@@ -198,7 +198,7 @@ const ISRHandler = async ({ isFirstRequest, url }: IISRHandlerParam) => {
 		}
 	}
 
-	if (!ServerConfig.crawler || status === 500) {
+	if (!ServerConfig.crawler || [404, 500].includes(status)) {
 		Console.log('Create new page')
 		const page = await browserManager.newPage()
 		Console.log('Create new page success!')

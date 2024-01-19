@@ -8,6 +8,7 @@ declare global {
   const BotInfo: typeof import('store/ServerStore.ts')['BotInfo']
   const DeviceInfo: typeof import('store/ServerStore.ts')['DeviceInfo']
   const EffectScope: typeof import('vue')['EffectScope']
+  const EnvironmentInfo: typeof import('store/ServerStore.ts')['EnvironmentInfo']
   const LocaleInfo: typeof import('store/ServerStore.ts')['LocaleInfo']
   const LocaleState: typeof import('store/LocaleStore.ts')['LocaleState']
   const computed: typeof import('vue')['computed']
@@ -121,6 +122,7 @@ declare module 'vue' {
     readonly BotInfo: UnwrapRef<typeof import('store/ServerStore.ts')['BotInfo']>
     readonly DeviceInfo: UnwrapRef<typeof import('store/ServerStore.ts')['DeviceInfo']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
+    readonly EnvironmentInfo: UnwrapRef<typeof import('store/ServerStore.ts')['EnvironmentInfo']>
     readonly LocaleInfo: UnwrapRef<typeof import('store/ServerStore.ts')['LocaleInfo']>
     readonly LocaleState: UnwrapRef<typeof import('store/LocaleStore.ts')['LocaleState']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
@@ -227,6 +229,7 @@ declare module '@vue/runtime-core' {
     readonly BotInfo: UnwrapRef<typeof import('store/ServerStore.ts')['BotInfo']>
     readonly DeviceInfo: UnwrapRef<typeof import('store/ServerStore.ts')['DeviceInfo']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
+    readonly EnvironmentInfo: UnwrapRef<typeof import('store/ServerStore.ts')['EnvironmentInfo']>
     readonly LocaleInfo: UnwrapRef<typeof import('store/ServerStore.ts')['LocaleInfo']>
     readonly LocaleState: UnwrapRef<typeof import('store/LocaleStore.ts')['LocaleState']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>

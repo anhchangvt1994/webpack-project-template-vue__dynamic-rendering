@@ -218,7 +218,12 @@ module.exports = async (env, arg) => {
 							'setMetaTwitterCardTag',
 							'setSeoTag',
 						],
-						'store/ServerStore.ts': ['BotInfo', 'DeviceInfo', 'LocaleInfo'],
+						'store/ServerStore.ts': [
+							'EnvironmentInfo',
+							'BotInfo',
+							'DeviceInfo',
+							'LocaleInfo',
+						],
 						'store/LocaleStore.ts': ['LocaleState'],
 						'utils/CookieHelper.ts': ['getCookie', 'setCookie'],
 					},
