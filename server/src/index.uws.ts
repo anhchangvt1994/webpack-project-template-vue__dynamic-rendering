@@ -9,7 +9,19 @@ import {
 	resourceExtension,
 	serverInfo,
 } from './constants'
-import puppeteerSSRService from './puppeteer-ssr/index.uws'
+import ServerConfig from './server.config'
+
+const dotenv = require('dotenv')
+dotenv.config({
+	path: path.resolve(__dirname, '../.env'),
+})
+
+if (ENV_MODE !== 'development') {
+	dotenv.config({
+		path: path.resolve(__dirname, '../.env.production'),
+		override: true,
+	})
+}
 
 require('events').EventEmitter.setMaxListeners(200)
 
@@ -47,16 +59,18 @@ const startServer = async () => {
 		passphrase: '1234',
 	})
 
-	app.get('/robots.txt', (res, req) => {
-		try {
-			const body = fs.readFileSync(path.resolve(__dirname, '../robots.txt'))
-			res.end(body)
-		} catch {
-			res.writeStatus('404')
-			res.end('File not found')
-		}
-	})
-	;(await puppeteerSSRService).init(app)
+	if (ServerConfig.crawler && !process.env.IS_REMOTE_CRAWLER) {
+		app.get('/robots.txt', (res, req) => {
+			try {
+				const body = fs.readFileSync(path.resolve(__dirname, '../robots.txt'))
+				res.end(body)
+			} catch {
+				res.writeStatus('404')
+				res.end('File not found')
+			}
+		})
+	}
+	;(await require('./puppeteer-ssr/index.uws').default).init(app)
 
 	app.listen(Number(port), (token) => {
 		if (token) {
@@ -72,51 +86,53 @@ const startServer = async () => {
 		process.exit(0)
 	})
 
-	if (ENV === 'development') {
-		const serverIndexFilePath = path.resolve(__dirname, './index.uws.ts')
-		// NOTE - restart server onchange
-		// const watcher = chokidar.watch([path.resolve(__dirname, './**/*.ts')], {
-		// 	ignored: /$^/,
-		// 	persistent: true,
-		// })
+	if (!process.env.IS_REMOTE_CRAWLER) {
+		if (ENV === 'development') {
+			const serverIndexFilePath = path.resolve(__dirname, './index.uws.ts')
+			// NOTE - restart server onchange
+			// const watcher = chokidar.watch([path.resolve(__dirname, './**/*.ts')], {
+			// 	ignored: /$^/,
+			// 	persistent: true,
+			// })
 
-		if (!process.env.REFRESH_SERVER) {
+			if (!process.env.REFRESH_SERVER) {
+				spawn(
+					'cross-env',
+					['PORT=3000 IO_PORT=3030 npx webpack serve --mode=development'],
+					{
+						stdio: 'inherit',
+						shell: true,
+					}
+				)
+			}
+
+			// watcher.on('change', async (path) => {
+			// 	Console.log(`File ${path} has been changed`)
+			// 	await app.close()
+			// 	setTimeout(() => {
+			// 		spawn(
+			// 			'node',
+			// 			[
+			// 				`cross-env REFRESH_SERVER=1 --require sucrase/register ${serverIndexFilePath}`,
+			// 			],
+			// 			{
+			// 				stdio: 'inherit',
+			// 				shell: true,
+			// 			}
+			// 		)
+			// 	})
+			// 	process.exit(0)
+			// })
+		} else if (!serverInfo.isServer) {
 			spawn(
 				'cross-env',
-				['PORT=3000 IO_PORT=3030 npx webpack serve --mode=development'],
+				['PORT=1234 NODE_NO_WARNINGS=1 node ./config/webpack.serve.config.js'],
 				{
 					stdio: 'inherit',
 					shell: true,
 				}
 			)
 		}
-
-		// watcher.on('change', async (path) => {
-		// 	Console.log(`File ${path} has been changed`)
-		// 	await app.close()
-		// 	setTimeout(() => {
-		// 		spawn(
-		// 			'node',
-		// 			[
-		// 				`cross-env REFRESH_SERVER=1 --require sucrase/register ${serverIndexFilePath}`,
-		// 			],
-		// 			{
-		// 				stdio: 'inherit',
-		// 				shell: true,
-		// 			}
-		// 		)
-		// 	})
-		// 	process.exit(0)
-		// })
-	} else if (!serverInfo.isServer) {
-		spawn(
-			'cross-env',
-			['PORT=1234 NODE_NO_WARNINGS=1 node ./config/webpack.serve.config.js'],
-			{
-				stdio: 'inherit',
-				shell: true,
-			}
-		)
 	}
 }
 
