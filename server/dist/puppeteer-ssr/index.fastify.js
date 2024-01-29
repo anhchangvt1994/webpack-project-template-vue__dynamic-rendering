@@ -24,8 +24,11 @@ function _optionalChain(ops) {
 	}
 	return value
 }
+var _fs = require('fs')
+var _fs2 = _interopRequireDefault(_fs)
 var _path = require('path')
 var _path2 = _interopRequireDefault(_path)
+var _zlib = require('zlib')
 var _constants = require('../constants')
 var _serverconfig = require('../server.config')
 var _serverconfig2 = _interopRequireDefault(_serverconfig)
@@ -150,6 +153,13 @@ const puppeteerSSRService = (async () => {
 						_serverconfig2.default.isr.routes[pathname].enable
 				)
 			const headers = req.headers
+			const enableContentEncoding = Boolean(headers['accept-encoding'])
+			const contentEncoding = (() => {
+				const tmpHeaderAcceptEncoding = headers['accept-encoding'] || ''
+				if (tmpHeaderAcceptEncoding.indexOf('br') !== -1) return 'br'
+				else if (tmpHeaderAcceptEncoding.indexOf('gzip') !== -1) return 'gzip'
+				return ''
+			})()
 
 			res.raw.setHeader(
 				'Content-Type',
@@ -187,6 +197,9 @@ const puppeteerSSRService = (async () => {
 							)
 							res.raw.setHeader('Cache-Control', 'no-store')
 							res.raw.statusCode = result.status
+							if (enableContentEncoding && result.status === 200) {
+								res.raw.setHeader('Content-Encoding', contentEncoding)
+							}
 
 							if (result.status === 503) res.header('Retry-After', '120')
 						} else {
@@ -198,12 +211,61 @@ const puppeteerSSRService = (async () => {
 							(_constants3.CACHEABLE_STATUS_CODE[result.status] ||
 								result.status === 503) &&
 							result.response
-						)
-							return result.html
-								? res.send(result.html)
-								: _SendFile2.default.call(void 0, result.response, res.raw)
+						) {
+							const body = (() => {
+								let tmpBody = ''
+
+								if (enableContentEncoding) {
+									tmpBody = result.html
+										? contentEncoding === 'br'
+											? _zlib.brotliCompressSync.call(void 0, result.html)
+											: contentEncoding === 'gzip'
+											? _zlib.gzipSync.call(void 0, result.html)
+											: result.html
+										: _fs2.default.readFileSync(result.response)
+								} else if (result.response.indexOf('.br') !== -1) {
+									const content = _fs2.default.readFileSync(result.response)
+
+									tmpBody = _zlib.brotliDecompressSync
+										.call(void 0, content)
+										.toString()
+								} else {
+									tmpBody = _fs2.default.readFileSync(result.response)
+								}
+
+								return tmpBody
+							})()
+
+							return res.send(body)
+						}
 						// Serve prerendered page as response.
-						else return res.send(result.html || `${result.status} Error`) // Serve prerendered page as response.
+						else {
+							const body = (() => {
+								let tmpBody = ''
+
+								if (enableContentEncoding) {
+									tmpBody = result.html
+										? contentEncoding === 'br'
+											? _zlib.brotliCompressSync.call(void 0, result.html)
+											: contentEncoding === 'gzip'
+											? _zlib.gzipSync.call(void 0, result.html)
+											: result.html
+										: _fs2.default.readFileSync(result.response)
+								} else if (result.response.indexOf('.br') !== -1) {
+									const content = _fs2.default.readFileSync(result.response)
+
+									tmpBody = _zlib.brotliDecompressSync
+										.call(void 0, content)
+										.toString()
+								} else {
+									tmpBody = _fs2.default.readFileSync(result.response)
+								}
+
+								return tmpBody
+							})()
+
+							res.send(body)
+						}
 					} catch (err) {
 						_ConsoleHandler2.default.error('url', url)
 						_ConsoleHandler2.default.error(err)

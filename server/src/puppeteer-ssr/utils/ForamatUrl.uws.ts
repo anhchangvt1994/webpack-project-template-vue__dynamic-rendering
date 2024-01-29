@@ -21,10 +21,12 @@ export const convertUrlHeaderToQueryString = (
 	}
 
 	const deviceInfoStringify = JSON.stringify(res.cookies?.deviceInfo)
+	const localeInfoStringify = JSON.stringify(res.cookies?.localeInfo)
+	const environmentInfoStringify = JSON.stringify(res.cookies?.environmentInfo)
 
-	const urlFormatted = `${url}${
+	let urlFormatted = `${url}${
 		url.indexOf('?') === -1 ? '?' : '&'
-	}botInfo=${botInfoStringify}&deviceInfo=${deviceInfoStringify}`.trim()
+	}botInfo=${botInfoStringify}&deviceInfo=${deviceInfoStringify}&localeInfo=${localeInfoStringify}&environmentInfo=${environmentInfoStringify}`.trim()
 
 	return urlFormatted
 } // formatUrl

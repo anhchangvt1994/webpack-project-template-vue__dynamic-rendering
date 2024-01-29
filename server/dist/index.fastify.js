@@ -37,15 +37,17 @@ var _cors = require('cors')
 var _cors2 = _interopRequireDefault(_cors)
 var _fastify = require('fastify')
 var _fastify2 = _interopRequireDefault(_fastify)
+var _fs = require('fs')
+var _fs2 = _interopRequireDefault(_fs)
 var _path = require('path')
 var _path2 = _interopRequireDefault(_path)
 var _servestatic = require('serve-static')
 var _servestatic2 = _interopRequireDefault(_servestatic)
+var _zlib = require('zlib')
 var _PortHandler = require('../../config/utils/PortHandler')
 var _constants = require('./constants')
 var _serverconfig = require('./server.config')
 var _serverconfig2 = _interopRequireDefault(_serverconfig)
-var _store = require('./store')
 var _CookieHandler = require('./utils/CookieHandler')
 var _DetectBot = require('./utils/DetectBot')
 var _DetectBot2 = _interopRequireDefault(_DetectBot)
@@ -62,11 +64,6 @@ var _SendFile = require('./utils/SendFile')
 var _SendFile2 = _interopRequireDefault(_SendFile)
 
 const COOKIE_EXPIRED_SECOND = _constants.COOKIE_EXPIRED / 1000
-const ENVIRONMENT = JSON.stringify({
-	ENV: _InitEnv.ENV,
-	MODE: _InitEnv.MODE,
-	ENV_MODE: _InitEnv.ENV_MODE,
-})
 
 require('events').EventEmitter.setMaxListeners(200)
 
@@ -135,16 +132,51 @@ const startServer = async () => {
 				 */
 
 				if (isStatic) {
-					const filePath = _path2.default.resolve(
+					const staticPath = _path2.default.resolve(
 						__dirname,
 						`../../dist/${req.url}`
 					)
 
-					if (_InitEnv.ENV !== 'development') {
+					if (_InitEnv.ENV === 'development') {
 						res.setHeader('Cache-Control', 'public, max-age=31556952')
-					}
+						_SendFile2.default.call(void 0, staticPath, res)
+					} else {
+						try {
+							const contentEncoding = (() => {
+								const tmpHeaderAcceptEncoding =
+									req.headers['accept-encoding'] || ''
+								if (tmpHeaderAcceptEncoding.indexOf('br') !== -1) return 'br'
+								else if (tmpHeaderAcceptEncoding.indexOf('gzip') !== -1)
+									return 'gzip'
+								return ''
+							})()
 
-					_SendFile2.default.call(void 0, filePath, res)
+							const body = (() => {
+								const content = _fs2.default.readFileSync(staticPath)
+								const tmpBody =
+									contentEncoding === 'br'
+										? _zlib.brotliCompressSync.call(void 0, content)
+										: contentEncoding === 'gzip'
+										? _zlib.gzipSync.call(void 0, content)
+										: content
+
+								return tmpBody
+							})()
+
+							const mimeType = _servestatic2.default.mime.lookup(staticPath)
+
+							res
+								.writeHead(200, {
+									'cache-control': 'public, max-age=31556952',
+									'content-encoding': contentEncoding,
+									'content-type': mimeType,
+								})
+								.end(body)
+						} catch (err) {
+							res.statusCode = 404
+							res.end('File not found')
+						}
+					}
 				} else {
 					next()
 				}
@@ -169,22 +201,16 @@ const startServer = async () => {
 				`BotInfo=${botInfo};Max-Age=${COOKIE_EXPIRED_SECOND};Path=/`
 			)
 
-			if (!_InitEnv.PROCESS_ENV.IS_REMOTE_CRAWLER) {
-				const headersStore = _store.getStore.call(void 0, 'headers')
-				headersStore.botInfo = botInfo
-				_store.setStore.call(void 0, 'headers', headersStore)
-			}
-
 			next()
 		})
 		.use(function (req, res, next) {
 			const localeInfo = (() => {
-				let tmpLocaleInfo = req['localeinfo'] || req['localeInfo']
+				let tmpLocaleInfo =
+					req.headers['localeinfo'] || req.headers['localeInfo']
 
-				if (tmpLocaleInfo) JSON.parse(tmpLocaleInfo)
-				else tmpLocaleInfo = _DetectLocale2.default.call(void 0, req)
+				if (tmpLocaleInfo) return JSON.parse(tmpLocaleInfo)
 
-				return tmpLocaleInfo
+				return _DetectLocale2.default.call(void 0, req)
 			})()
 
 			const enableLocale =
@@ -202,12 +228,6 @@ const startServer = async () => {
 					localeInfo
 				)};Max-Age=${COOKIE_EXPIRED_SECOND};Path=/`
 			)
-
-			if (!_InitEnv.PROCESS_ENV.IS_REMOTE_CRAWLER) {
-				const headersStore = _store.getStore.call(void 0, 'headers')
-				headersStore.localeInfo = JSON.stringify(localeInfo)
-				_store.setStore.call(void 0, 'headers', headersStore)
-			}
 
 			if (enableLocale) {
 				_CookieHandler.setCookie.call(
@@ -267,10 +287,22 @@ const startServer = async () => {
 	}
 	app
 		.use(function (req, res, next) {
+			const environmentInfo = (() => {
+				const tmpEnvironmentInfo =
+					req.headers['environmentinfo'] || req.headers['environmentInfo']
+
+				if (tmpEnvironmentInfo) return tmpEnvironmentInfo
+
+				return JSON.stringify({
+					ENV: _InitEnv.ENV,
+					MODE: _InitEnv.MODE,
+					ENV_MODE: _InitEnv.ENV_MODE,
+				})
+			})()
 			_CookieHandler.setCookie.call(
 				void 0,
 				res,
-				`EnvironmentInfo=${ENVIRONMENT};Max-Age=${COOKIE_EXPIRED_SECOND}`
+				`EnvironmentInfo=${environmentInfo};Max-Age=${COOKIE_EXPIRED_SECOND}`
 			)
 			next()
 		})
@@ -285,12 +317,6 @@ const startServer = async () => {
 				res,
 				`DeviceInfo=${deviceInfo};Max-Age=${COOKIE_EXPIRED_SECOND};Path=/`
 			)
-
-			if (!_InitEnv.PROCESS_ENV.IS_REMOTE_CRAWLER) {
-				const headersStore = _store.getStore.call(void 0, 'headers')
-				headersStore.deviceInfo = deviceInfo
-				_store.setStore.call(void 0, 'headers', headersStore)
-			}
 
 			next()
 		})

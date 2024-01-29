@@ -29,6 +29,7 @@ var _fs2 = _interopRequireDefault(_fs)
 var _path = require('path')
 var _path2 = _interopRequireDefault(_path)
 
+var _zlib = require('zlib')
 var _constants = require('../constants')
 var _DetectBot = require('../middlewares/uws/DetectBot')
 var _DetectBot2 = _interopRequireDefault(_DetectBot)
@@ -56,11 +57,6 @@ var _ISRHandler = require('./utils/ISRHandler')
 var _ISRHandler2 = _interopRequireDefault(_ISRHandler)
 
 const COOKIE_EXPIRED_SECOND = _constants.COOKIE_EXPIRED / 1000
-const ENVIRONMENT = JSON.stringify({
-	ENV: _InitEnv.ENV,
-	MODE: _InitEnv.MODE,
-	ENV_MODE: _InitEnv.ENV_MODE,
-})
 
 const puppeteerSSRService = (async () => {
 	let _app
@@ -71,7 +67,9 @@ const puppeteerSSRService = (async () => {
 		res
 			.writeHeader(
 				'set-cookie',
-				`EnvironmentInfo=${ENVIRONMENT};Max-Age=${COOKIE_EXPIRED_SECOND};Path=/`
+				`EnvironmentInfo=${JSON.stringify(
+					res.cookies.environmentInfo
+				)};Max-Age=${COOKIE_EXPIRED_SECOND};Path=/`
 			)
 			.writeHeader(
 				'set-cookie',
@@ -158,6 +156,11 @@ const puppeteerSSRService = (async () => {
 				})
 		}
 		_app.get('/*', async function (res, req) {
+			_DetectStatic2.default.call(void 0, res, req)
+
+			// NOTE - Check if static will send static file
+			if (res.writableEnded) return
+
 			// NOTE - Check and create base url
 			if (!_InitEnv.PROCESS_ENV.BASE_URL)
 				_InitEnv.PROCESS_ENV.BASE_URL = `${
@@ -165,11 +168,6 @@ const puppeteerSSRService = (async () => {
 						? req.getHeader('x-forwarded-proto')
 						: 'http'
 				}://${req.getHeader('host')}`
-
-			_DetectStatic2.default.call(void 0, res, req)
-
-			// NOTE - Check if static will send static file
-			if (res.writableEnded) return
 
 			// NOTE - Detect, setup BotInfo and LocaleInfo
 			_DetectBot2.default.call(void 0, res, req)
@@ -210,6 +208,20 @@ const puppeteerSSRService = (async () => {
 			// NOTE - Detect DeviceInfo
 			_DetectDevice2.default.call(void 0, res, req)
 
+			// NOTE - Set cookies for EnvironmentInfo
+			res.cookies.environmentInfo = (() => {
+				const tmpEnvironmentInfo =
+					req.getHeader('environmentinfo') || req.getHeader('environmentInfo')
+
+				if (tmpEnvironmentInfo) return JSON.parse(tmpEnvironmentInfo)
+
+				return {
+					ENV: _InitEnv.ENV,
+					MODE: _InitEnv.MODE,
+					ENV_MODE: _InitEnv.ENV_MODE,
+				}
+			})()
+
 			const enableISR =
 				_serverconfig2.default.isr.enable &&
 				Boolean(
@@ -219,6 +231,14 @@ const puppeteerSSRService = (async () => {
 						!_serverconfig2.default.isr.routes[res.urlForCrawler] ||
 						_serverconfig2.default.isr.routes[res.urlForCrawler].enable
 				)
+
+			const enableContentEncoding = Boolean(req.getHeader('accept-encoding'))
+			const contentEncoding = (() => {
+				const tmpHeaderAcceptEncoding = req.getHeader('accept-encoding') || ''
+				if (tmpHeaderAcceptEncoding.indexOf('br') !== -1) return 'br'
+				else if (tmpHeaderAcceptEncoding.indexOf('gzip') !== -1) return 'gzip'
+				return ''
+			})()
 
 			if (
 				_InitEnv.ENV_MODE !== 'development' &&
@@ -251,6 +271,10 @@ const puppeteerSSRService = (async () => {
 								 */
 								res.writeStatus(String(result.status))
 
+								if (enableContentEncoding && result.status === 200) {
+									res.writeHeader('Content-Encoding', contentEncoding)
+								}
+
 								if (result.status === 503) res.writeHeader('Retry-After', '120')
 
 								// Add Server-Timing! See https://w3c.github.io/server-timing/.
@@ -261,9 +285,32 @@ const puppeteerSSRService = (async () => {
 								) {
 									try {
 										res = _getResponseWithDefaultCookie(res)
-										const body = result.html
-											? result.html
-											: _fs2.default.readFileSync(result.response)
+										const body = (() => {
+											let tmpBody = ''
+
+											if (enableContentEncoding) {
+												tmpBody = result.html
+													? contentEncoding === 'br'
+														? _zlib.brotliCompressSync.call(void 0, result.html)
+														: contentEncoding === 'gzip'
+														? _zlib.gzipSync.call(void 0, result.html)
+														: result.html
+													: _fs2.default.readFileSync(result.response)
+											} else if (result.response.indexOf('.br') !== -1) {
+												const content = _fs2.default.readFileSync(
+													result.response
+												)
+
+												tmpBody = _zlib.brotliDecompressSync
+													.call(void 0, content)
+													.toString()
+											} else {
+												tmpBody = _fs2.default.readFileSync(result.response)
+											}
+
+											return tmpBody
+										})()
+
 										res.end(body, true)
 									} catch (e) {
 										res.writeStatus('404').end('Page not found!', true)
@@ -278,7 +325,11 @@ const puppeteerSSRService = (async () => {
 											.writeHeader('Cache-Control', 'no-store')
 									}
 
-									res.end(result.html || '', true)
+									const body = enableContentEncoding
+										? _zlib.brotliCompressSync.call(void 0, result.html)
+										: result.html
+
+									res.end(body || '', true)
 								} else {
 									res.end(`${result.status} Error`, true)
 								}

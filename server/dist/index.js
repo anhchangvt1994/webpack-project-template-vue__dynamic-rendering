@@ -35,11 +35,15 @@ var _cors = require('cors')
 var _cors2 = _interopRequireDefault(_cors)
 var _express = require('express')
 var _express2 = _interopRequireDefault(_express)
+var _fs = require('fs')
+var _fs2 = _interopRequireDefault(_fs)
 var _path = require('path')
 var _path2 = _interopRequireDefault(_path)
+var _servestatic = require('serve-static')
+var _servestatic2 = _interopRequireDefault(_servestatic)
+var _zlib = require('zlib')
 var _PortHandler = require('../../config/utils/PortHandler')
 var _constants = require('./constants')
-var _store = require('./store')
 var _CookieHandler = require('./utils/CookieHandler')
 var _DetectBot = require('./utils/DetectBot')
 var _DetectBot2 = _interopRequireDefault(_DetectBot)
@@ -65,11 +69,6 @@ const ServerConfig = _nullishCoalesce(
 )
 
 const COOKIE_EXPIRED_SECOND = _constants.COOKIE_EXPIRED / 1000
-const ENVIRONMENT = JSON.stringify({
-	ENV: _InitEnv.ENV,
-	MODE: _InitEnv.MODE,
-	ENV_MODE: _InitEnv.ENV_MODE,
-})
 
 require('events').EventEmitter.setMaxListeners(200)
 
@@ -129,18 +128,53 @@ const startServer = async () => {
 				 * https://www.inchcalculator.com/convert/month-to-second/
 				 */
 				if (isStatic) {
-					if (_InitEnv.ENV !== 'development') {
-						res.set('Cache-Control', 'public, max-age=31556952')
-					}
+					const staticPath = _path2.default.resolve(
+						__dirname,
+						`../../dist/${req.url}`
+					)
 
 					try {
-						res
-							.status(200)
-							.sendFile(
-								_path2.default.resolve(__dirname, `../../dist/${req.url}`)
-							)
-					} catch (err) {
-						res.status(404).send('File not found')
+						if (_InitEnv.ENV === 'development') {
+							res
+								.status(200)
+								.set('Cache-Control', 'public, max-age=31556952')
+								.sendFile(staticPath)
+						} else {
+							const contentEncoding = (() => {
+								const tmpHeaderAcceptEncoding =
+									req.headers['accept-encoding'] || ''
+								if (tmpHeaderAcceptEncoding.indexOf('br') !== -1) return 'br'
+								else if (tmpHeaderAcceptEncoding.indexOf('gzip') !== -1)
+									return 'gzip'
+								return ''
+							})()
+							res.set({
+								'Content-Encoding': contentEncoding,
+							})
+							const body = (() => {
+								const content = _fs2.default.readFileSync(staticPath)
+								const tmpBody =
+									contentEncoding === 'br'
+										? _zlib.brotliCompressSync.call(void 0, content)
+										: contentEncoding === 'gzip'
+										? _zlib.gzipSync.call(void 0, content)
+										: content
+
+								return tmpBody
+							})()
+
+							const mimeType = _servestatic2.default.mime.lookup(staticPath)
+
+							res
+								.status(200)
+								.set('Cache-Control', 'public, max-age=31556952')
+								.set({
+									'Content-type': mimeType,
+								})
+								.send(body)
+						}
+					} catch (e) {
+						res.status(404).send('File not found!')
 					}
 				} else {
 					next()
@@ -166,22 +200,16 @@ const startServer = async () => {
 				`BotInfo=${botInfo};Max-Age=${COOKIE_EXPIRED_SECOND}`
 			)
 
-			if (!_InitEnv.PROCESS_ENV.IS_REMOTE_CRAWLER) {
-				const headersStore = _store.getStore.call(void 0, 'headers')
-				headersStore.botInfo = botInfo
-				_store.setStore.call(void 0, 'headers', headersStore)
-			}
-
 			next()
 		})
 		.use(function (req, res, next) {
 			const localeInfo = (() => {
-				let tmpLocaleInfo = req['localeinfo'] || req['localeInfo']
+				let tmpLocaleInfo =
+					req.headers['localeinfo'] || req.headers['localeInfo']
 
-				if (tmpLocaleInfo) JSON.parse(tmpLocaleInfo)
-				else tmpLocaleInfo = _DetectLocale2.default.call(void 0, req)
+				if (tmpLocaleInfo) return JSON.parse(tmpLocaleInfo)
 
-				return tmpLocaleInfo
+				return _DetectLocale2.default.call(void 0, req)
 			})()
 
 			const enableLocale =
@@ -199,12 +227,6 @@ const startServer = async () => {
 					localeInfo
 				)};Max-Age=${COOKIE_EXPIRED_SECOND};Path=/`
 			)
-
-			if (!_InitEnv.PROCESS_ENV.IS_REMOTE_CRAWLER) {
-				const headersStore = _store.getStore.call(void 0, 'headers')
-				headersStore.localeInfo = JSON.stringify(localeInfo)
-				_store.setStore.call(void 0, 'headers', headersStore)
-			}
 
 			if (enableLocale) {
 				_CookieHandler.setCookie.call(
@@ -264,10 +286,22 @@ const startServer = async () => {
 	}
 	app
 		.use(function (req, res, next) {
+			const environmentInfo = (() => {
+				const tmpEnvironmentInfo =
+					req.headers['environmentinfo'] || req.headers['environmentInfo']
+
+				if (tmpEnvironmentInfo) return tmpEnvironmentInfo
+
+				return JSON.stringify({
+					ENV: _InitEnv.ENV,
+					MODE: _InitEnv.MODE,
+					ENV_MODE: _InitEnv.ENV_MODE,
+				})
+			})()
 			_CookieHandler.setCookie.call(
 				void 0,
 				res,
-				`EnvironmentInfo=${ENVIRONMENT};Max-Age=${COOKIE_EXPIRED_SECOND}`
+				`EnvironmentInfo=${environmentInfo};Max-Age=${COOKIE_EXPIRED_SECOND}`
 			)
 			next()
 		})
@@ -282,12 +316,6 @@ const startServer = async () => {
 				res,
 				`DeviceInfo=${deviceInfo};Max-Age=${COOKIE_EXPIRED_SECOND}`
 			)
-
-			if (!_InitEnv.PROCESS_ENV.IS_REMOTE_CRAWLER) {
-				const headersStore = _store.getStore.call(void 0, 'headers')
-				headersStore.deviceInfo = deviceInfo
-				_store.setStore.call(void 0, 'headers', headersStore)
-			}
 
 			next()
 		})

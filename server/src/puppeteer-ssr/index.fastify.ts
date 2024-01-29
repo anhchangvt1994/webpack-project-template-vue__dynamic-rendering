@@ -1,5 +1,7 @@
 import { FastifyInstance } from 'fastify'
+import fs from 'fs'
 import path from 'path'
+import { brotliCompressSync, brotliDecompressSync, gzipSync } from 'zlib'
 import { SERVER_LESS } from '../constants'
 import ServerConfig from '../server.config'
 import { IBotInfo } from '../types'
@@ -76,6 +78,13 @@ const puppeteerSSRService = (async () => {
 						ServerConfig.isr.routes[pathname].enable
 				)
 			const headers = req.headers
+			const enableContentEncoding = Boolean(headers['accept-encoding'])
+			const contentEncoding = (() => {
+				const tmpHeaderAcceptEncoding = headers['accept-encoding'] || ''
+				if (tmpHeaderAcceptEncoding.indexOf('br') !== -1) return 'br'
+				else if (tmpHeaderAcceptEncoding.indexOf('gzip') !== -1) return 'gzip'
+				return '' as 'br' | 'gzip' | ''
+			})()
 
 			res.raw.setHeader(
 				'Content-Type',
@@ -112,6 +121,9 @@ const puppeteerSSRService = (async () => {
 							)
 							res.raw.setHeader('Cache-Control', 'no-store')
 							res.raw.statusCode = result.status
+							if (enableContentEncoding && result.status === 200) {
+								res.raw.setHeader('Content-Encoding', contentEncoding)
+							}
 
 							if (result.status === 503) res.header('Retry-After', '120')
 						} else {
@@ -122,12 +134,57 @@ const puppeteerSSRService = (async () => {
 						if (
 							(CACHEABLE_STATUS_CODE[result.status] || result.status === 503) &&
 							result.response
-						)
-							return result.html
-								? res.send(result.html)
-								: sendFile(result.response, res.raw)
+						) {
+							const body = (() => {
+								let tmpBody: string | Buffer = ''
+
+								if (enableContentEncoding) {
+									tmpBody = result.html
+										? contentEncoding === 'br'
+											? brotliCompressSync(result.html)
+											: contentEncoding === 'gzip'
+											? gzipSync(result.html)
+											: result.html
+										: fs.readFileSync(result.response)
+								} else if (result.response.indexOf('.br') !== -1) {
+									const content = fs.readFileSync(result.response)
+
+									tmpBody = brotliDecompressSync(content).toString()
+								} else {
+									tmpBody = fs.readFileSync(result.response)
+								}
+
+								return tmpBody
+							})()
+
+							return res.send(body)
+						}
 						// Serve prerendered page as response.
-						else return res.send(result.html || `${result.status} Error`) // Serve prerendered page as response.
+						else {
+							const body = (() => {
+								let tmpBody: string | Buffer = ''
+
+								if (enableContentEncoding) {
+									tmpBody = result.html
+										? contentEncoding === 'br'
+											? brotliCompressSync(result.html)
+											: contentEncoding === 'gzip'
+											? gzipSync(result.html)
+											: result.html
+										: fs.readFileSync(result.response)
+								} else if (result.response.indexOf('.br') !== -1) {
+									const content = fs.readFileSync(result.response)
+
+									tmpBody = brotliDecompressSync(content).toString()
+								} else {
+									tmpBody = fs.readFileSync(result.response)
+								}
+
+								return tmpBody
+							})()
+
+							res.send(body)
+						}
 					} catch (err) {
 						Console.error('url', url)
 						Console.error(err)
