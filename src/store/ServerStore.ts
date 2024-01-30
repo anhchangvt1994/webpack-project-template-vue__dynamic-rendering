@@ -49,7 +49,7 @@ export const ServerStore = (() => {
 	const html = document.documentElement
 	return {
 		init() {
-			if (!EnvironmentInfo)
+			if (!EnvironmentInfo) {
 				EnvironmentInfo = (() => {
 					const strInfo = getCookie('EnvironmentInfo')
 
@@ -61,19 +61,25 @@ export const ServerStore = (() => {
 								ENV_MODE: 'production',
 						  }
 				})()
-			if (!BotInfo)
+				deleteCookie('EnvironmentInfo')
+			}
+			if (!BotInfo) {
 				BotInfo = (() => {
 					const strInfo = getCookie('BotInfo')
 
 					return strInfo ? JSON.parse(strInfo) : { isBot: false }
 				})()
-			if (!DeviceInfo)
+				deleteCookie('BotInfo')
+			}
+			if (!DeviceInfo) {
 				DeviceInfo = (() => {
 					const strInfo = getCookie('DeviceInfo')
 
 					return strInfo ? JSON.parse(strInfo) : {}
 				})()
-			if (!LocaleInfo)
+				deleteCookie('DeviceInfo')
+			}
+			if (!LocaleInfo) {
 				LocaleInfo = (() => {
 					const strInfo = getCookie('LocaleInfo')
 
@@ -86,6 +92,8 @@ export const ServerStore = (() => {
 
 					return info
 				})()
+				deleteCookie('LocaleInfo')
+			}
 
 			if (html) {
 				html.setAttribute(
@@ -108,6 +116,8 @@ export const ServerStore = (() => {
 
 					return info
 				})()
+
+				deleteCookie('LocaleInfo')
 
 				if (html) {
 					html.setAttribute(

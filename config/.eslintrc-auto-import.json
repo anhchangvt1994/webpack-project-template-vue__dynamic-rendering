@@ -149,6 +149,7 @@
     "RouterLinkDefaultParams": true,
     "RouterView": true,
     "LocaleState": true,
-    "EnvironmentInfo": true
+    "EnvironmentInfo": true,
+    "deleteCookie": true
   }
 }

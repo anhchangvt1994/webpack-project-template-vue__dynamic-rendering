@@ -225,7 +225,7 @@ module.exports = async (env, arg) => {
 							'LocaleInfo',
 						],
 						'store/LocaleStore.ts': ['LocaleState'],
-						'utils/CookieHelper.ts': ['getCookie', 'setCookie'],
+						'utils/CookieHelper.ts': ['getCookie', 'setCookie', 'deleteCookie'],
 					},
 				],
 				dts: PROJECT_PATH + '/config/auto-imports.d.ts',

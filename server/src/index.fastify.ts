@@ -223,7 +223,7 @@ const startServer = async () => {
 			})()
 			setCookie(
 				res,
-				`EnvironmentInfo=${environmentInfo};Max-Age=${COOKIE_EXPIRED_SECOND}`
+				`EnvironmentInfo=${environmentInfo};Max-Age=${COOKIE_EXPIRED_SECOND};Path=/`
 			)
 			next()
 		})
@@ -266,14 +266,10 @@ const startServer = async () => {
 			// })
 
 			if (!PROCESS_ENV.REFRESH_SERVER) {
-				spawn(
-					'cross-env',
-					['PORT=3000 IO_PORT=3030 npx webpack serve --mode=development'],
-					{
-						stdio: 'inherit',
-						shell: true,
-					}
-				)
+				spawn('vite', [], {
+					stdio: 'inherit',
+					shell: true,
+				})
 			}
 
 			// watcher.on('change', async (path) => {
@@ -294,14 +290,10 @@ const startServer = async () => {
 			// 	process.exit(0)
 			// })
 		} else if (!PROCESS_ENV.IS_SERVER) {
-			spawn(
-				'cross-env',
-				['PORT=1234 NODE_NO_WARNINGS=1 node ./config/webpack.serve.config.js'],
-				{
-					stdio: 'inherit',
-					shell: true,
-				}
-			)
+			spawn('vite', ['preview'], {
+				stdio: 'inherit',
+				shell: true,
+			})
 		}
 	}
 }

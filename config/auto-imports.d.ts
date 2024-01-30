@@ -18,6 +18,7 @@ declare global {
   const customRef: typeof import('vue')['customRef']
   const defineAsyncComponent: typeof import('vue')['defineAsyncComponent']
   const defineComponent: typeof import('vue')['defineComponent']
+  const deleteCookie: typeof import('utils/CookieHelper.ts')['deleteCookie']
   const effectScope: typeof import('vue')['effectScope']
   const generateSentenceCase: typeof import('utils/StringHelper.ts')['generateSentenceCase']
   const generateTitleCase: typeof import('utils/StringHelper.ts')['generateTitleCase']
@@ -132,6 +133,7 @@ declare module 'vue' {
     readonly customRef: UnwrapRef<typeof import('vue')['customRef']>
     readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
     readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
+    readonly deleteCookie: UnwrapRef<typeof import('utils/CookieHelper.ts')['deleteCookie']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly generateSentenceCase: UnwrapRef<typeof import('utils/StringHelper.ts')['generateSentenceCase']>
     readonly generateTitleCase: UnwrapRef<typeof import('utils/StringHelper.ts')['generateTitleCase']>
@@ -239,6 +241,7 @@ declare module '@vue/runtime-core' {
     readonly customRef: UnwrapRef<typeof import('vue')['customRef']>
     readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
     readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
+    readonly deleteCookie: UnwrapRef<typeof import('utils/CookieHelper.ts')['deleteCookie']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly generateSentenceCase: UnwrapRef<typeof import('utils/StringHelper.ts')['generateSentenceCase']>
     readonly generateTitleCase: UnwrapRef<typeof import('utils/StringHelper.ts')['generateTitleCase']>
