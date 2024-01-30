@@ -366,6 +366,10 @@ const ISRHandler = async ({ isFirstRequest, url }) => {
 				true,
 				isForceToOptimizeAndCompress,
 			])
+
+			if (_constants.IS_REMOTE_CRAWLER && !_constants3.DISABLE_COMPRESS_HTML) {
+				html = await optimizeHTMLContentPool.exec('optimizeContent', [html])
+			}
 		} catch (err) {
 			_ConsoleHandler2.default.error(err)
 			return

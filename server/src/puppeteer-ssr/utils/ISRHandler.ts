@@ -3,6 +3,7 @@ import WorkerPool from 'workerpool'
 import {
 	BANDWIDTH_LEVEL,
 	BANDWIDTH_LEVEL_LIST,
+	IS_REMOTE_CRAWLER,
 	POWER_LEVEL,
 	POWER_LEVEL_LIST,
 	resourceExtension,
@@ -13,6 +14,7 @@ import Console from '../../utils/ConsoleHandler'
 import { ENV_MODE } from '../../utils/InitEnv'
 import {
 	CACHEABLE_STATUS_CODE,
+	DISABLE_COMPRESS_HTML,
 	DURATION_TIMEOUT,
 	MAX_WORKERS,
 	regexNotFoundPageID,
@@ -322,6 +324,10 @@ const ISRHandler = async ({ isFirstRequest, url }: IISRHandlerParam) => {
 				true,
 				isForceToOptimizeAndCompress,
 			])
+
+			if (IS_REMOTE_CRAWLER && !DISABLE_COMPRESS_HTML) {
+				html = await optimizeHTMLContentPool.exec('optimizeContent', [html])
+			}
 		} catch (err) {
 			Console.error(err)
 			return
