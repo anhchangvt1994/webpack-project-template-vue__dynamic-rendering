@@ -3,13 +3,6 @@ Object.defineProperty(exports, '__esModule', { value: true })
 function _interopRequireDefault(obj) {
 	return obj && obj.__esModule ? obj : { default: obj }
 }
-async function _asyncNullishCoalesce(lhs, rhsFn) {
-	if (lhs != null) {
-		return lhs
-	} else {
-		return await rhsFn()
-	}
-}
 function _optionalChain(ops) {
 	let lastAccessLHS = undefined
 	let value = ops[0]
@@ -26,27 +19,6 @@ function _optionalChain(ops) {
 			value = fn(value)
 		} else if (op === 'call' || op === 'optionalCall') {
 			value = fn((...args) => value.call(lastAccessLHS, ...args))
-			lastAccessLHS = undefined
-		}
-	}
-	return value
-}
-async function _asyncOptionalChain(ops) {
-	let lastAccessLHS = undefined
-	let value = ops[0]
-	let i = 1
-	while (i < ops.length) {
-		const op = ops[i]
-		const fn = ops[i + 1]
-		i += 2
-		if ((op === 'optionalAccess' || op === 'optionalCall') && value == null) {
-			return undefined
-		}
-		if (op === 'access' || op === 'optionalAccess') {
-			lastAccessLHS = value
-			value = await fn(value)
-		} else if (op === 'call' || op === 'optionalCall') {
-			value = await fn((...args) => value.call(lastAccessLHS, ...args))
 			lastAccessLHS = undefined
 		}
 	}
@@ -88,11 +60,21 @@ const deleteUserDataDir = async (dir) => {
 				(_4) => _4('deleteResource', [dir]),
 			])
 		} catch (err) {
+			_ConsoleHandler2.default.log('BrowserManager line 39:')
 			_ConsoleHandler2.default.error(err)
 		}
 	}
 }
 exports.deleteUserDataDir = deleteUserDataDir // deleteUserDataDir
+
+const _getSafePage = (page) => {
+	let SafePage = page
+
+	return () => {
+		if (SafePage && SafePage.isClosed()) return
+		return SafePage
+	}
+} // _getSafePage
 
 const BrowserManager = (
 	userDataDir = () => `${_constants.userDataPath}/user_data`
@@ -106,8 +88,12 @@ const BrowserManager = (
 	const __launch = async () => {
 		totalRequests = 0
 
-		const selfUserDataDirPath = reserveUserDataDirPath || userDataDir()
-		reserveUserDataDirPath = `${userDataDir()}_reserve`
+		const selfUserDataDirPath =
+			reserveUserDataDirPath ||
+			`${userDataDir()}${_constants.IS_REMOTE_CRAWLER ? '_remote' : ''}`
+		reserveUserDataDirPath = `${userDataDir()}_reserve${
+			_constants.IS_REMOTE_CRAWLER ? '_remote' : ''
+		}`
 
 		browserLaunch = new Promise(async (res, rej) => {
 			let isError = false
@@ -192,30 +178,41 @@ const BrowserManager = (
 				const browser = await browserLaunch
 
 				browser.on('createNewPage', async (page) => {
+					const safePage = _getSafePage(page)
 					await new Promise((resolveCloseTab) => {
 						const timeoutCloseTab = setTimeout(() => {
-							if (!page.isClosed()) {
-								page.close({
-									runBeforeUnload: true,
-								})
+							const tmpPage = safePage()
+							if (!tmpPage) resolveCloseTab(null)
+							else if (!tmpPage.isClosed()) {
+								tmpPage.close()
 							}
-							resolveCloseTab(null)
 						}, 180000)
-						page.once('close', () => {
-							clearTimeout(timeoutCloseTab)
-							resolveCloseTab(null)
-						})
+
+						_optionalChain([
+							safePage,
+							'call',
+							(_5) => _5(),
+							'optionalAccess',
+							(_6) => _6.once,
+							'call',
+							(_7) =>
+								_7('close', () => {
+									clearTimeout(timeoutCloseTab)
+									resolveCloseTab(null)
+								}),
+						])
 					})
 
 					tabsClosed++
 
-					if (!_constants.SERVER_LESS && tabsClosed === 20) {
-						browser.close()
-						__launch()
+					if (!_constants.SERVER_LESS && tabsClosed === maxRequestPerBrowser) {
+						if (browser.connected) browser.close()
+
 						exports.deleteUserDataDir.call(void 0, selfUserDataDirPath)
 					}
 				})
 			} catch (err) {
+				_ConsoleHandler2.default.log('Browser manager line 177:')
 				_ConsoleHandler2.default.error(err)
 			}
 		}
@@ -233,21 +230,8 @@ const BrowserManager = (
 		totalRequests++
 		const curBrowserLaunch = browserLaunch
 
-		const pages = await _asyncNullishCoalesce(
-			await _asyncOptionalChain([
-				await await _asyncOptionalChain([
-					await curBrowserLaunch,
-					'optionalAccess',
-					async (_5) => _5.pages,
-					'call',
-					async (_6) => _6(),
-				]),
-				'optionalAccess',
-				async (_7) => _7.length,
-			]),
-			async () => 0
-		)
-		await new Promise((res) => setTimeout(res, pages * 20))
+		// const pages = (await (await curBrowserLaunch)?.pages())?.length ?? 0;
+		// await new Promise((res) => setTimeout(res, pages * 10));
 
 		return curBrowserLaunch
 	} // _get

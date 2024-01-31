@@ -3,7 +3,6 @@ import WorkerPool from 'workerpool'
 import {
 	BANDWIDTH_LEVEL,
 	BANDWIDTH_LEVEL_LIST,
-	IS_REMOTE_CRAWLER,
 	POWER_LEVEL,
 	POWER_LEVEL_LIST,
 	resourceExtension,
@@ -14,7 +13,6 @@ import Console from '../../utils/ConsoleHandler'
 import { ENV_MODE } from '../../utils/InitEnv'
 import {
 	CACHEABLE_STATUS_CODE,
-	DISABLE_COMPRESS_HTML,
 	DURATION_TIMEOUT,
 	MAX_WORKERS,
 	regexNotFoundPageID,
@@ -37,11 +35,20 @@ interface IISRHandlerParam {
 	url: string
 }
 
-const getRestOfDuration = (startGenerating, gapDuration = 0) => {
+const _getRestOfDuration = (startGenerating, gapDuration = 0) => {
 	if (!startGenerating) return 0
 
 	return DURATION_TIMEOUT - gapDuration - (Date.now() - startGenerating)
-} // getRestOfDuration
+} // _getRestOfDuration
+
+const _getSafePage = (page: Page | undefined) => {
+	const SafePage = page
+
+	return () => {
+		if (SafePage && SafePage.isClosed()) return
+		return SafePage
+	}
+} // _getSafePage
 
 const fetchData = async (
 	input: RequestInfo | URL,
@@ -91,9 +98,10 @@ const waitResponse = (() => {
 	const requestFailDuration =
 		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 200 : 250
 	const maximumTimeout =
-		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 5000 : 5000
+		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 120000 : 120000
 
 	return async (page: Page, url: string, duration: number) => {
+		const safePage = _getSafePage(page)
 		let response
 		try {
 			response = await new Promise(async (resolve, reject) => {
@@ -101,6 +109,7 @@ const waitResponse = (() => {
 					page
 						.goto(url.split('?')[0], {
 							waitUntil: 'domcontentloaded',
+							timeout: 80000,
 						})
 						.then((res) => {
 							setTimeout(() => resolveAfterPageLoad(res), firstWaitingDuration)
@@ -110,7 +119,7 @@ const waitResponse = (() => {
 						})
 				})
 
-				const html = await page.content()
+				const html = (await safePage()?.content()) ?? ''
 
 				if (regexNotFoundPageID.test(html)) return resolve(result)
 
@@ -125,13 +134,13 @@ const waitResponse = (() => {
 
 					startTimeout()
 
-					page.on('requestfinished', () => {
+					safePage()?.on('requestfinished', () => {
 						startTimeout()
 					})
-					page.on('requestservedfromcache', () => {
+					safePage()?.on('requestservedfromcache', () => {
 						startTimeout(requestServedFromCacheDuration)
 					})
-					page.on('requestfailed', () => {
+					safePage()?.on('requestfailed', () => {
 						startTimeout(requestFailDuration)
 					})
 
@@ -143,6 +152,7 @@ const waitResponse = (() => {
 				}, 100)
 			})
 		} catch (err) {
+			Console.log('ISRHandler line 156:')
 			throw err
 		}
 
@@ -154,11 +164,11 @@ const gapDurationDefault = 1500
 
 const ISRHandler = async ({ isFirstRequest, url }: IISRHandlerParam) => {
 	const startGenerating = Date.now()
-	if (getRestOfDuration(startGenerating, gapDurationDefault) <= 0) return
+	if (_getRestOfDuration(startGenerating, gapDurationDefault) <= 0) return
 
 	const cacheManager = CacheManager()
 
-	let restOfDuration = getRestOfDuration(startGenerating, gapDurationDefault)
+	let restOfDuration = _getRestOfDuration(startGenerating, gapDurationDefault)
 
 	if (restOfDuration <= 0) {
 		if (!isFirstRequest) {
@@ -216,6 +226,7 @@ const ISRHandler = async ({ isFirstRequest, url }: IISRHandlerParam) => {
 			}
 			Console.log('External crawler status: ', status)
 		} catch (err) {
+			Console.log('ISRHandler line 230:')
 			Console.log('Crawler is fail!')
 			Console.error(err)
 		}
@@ -224,6 +235,8 @@ const ISRHandler = async ({ isFirstRequest, url }: IISRHandlerParam) => {
 	if (!ServerConfig.crawler || [404, 500].includes(status)) {
 		Console.log('Create new page')
 		const page = await browserManager.newPage()
+		const safePage = _getSafePage(page)
+
 		Console.log('Create new page success!')
 
 		if (!page) {
@@ -238,9 +251,9 @@ const ISRHandler = async ({ isFirstRequest, url }: IISRHandlerParam) => {
 		let isGetHtmlProcessError = false
 
 		try {
-			// await page.waitForNetworkIdle({ idleTime: 150 })
-			await page.setRequestInterception(true)
-			page.on('request', (req) => {
+			// await safePage()?.waitForNetworkIdle({ idleTime: 150 })
+			await safePage()?.setRequestInterception(true)
+			safePage()?.on('request', (req) => {
 				const resourceType = req.resourceType()
 
 				if (resourceType === 'stylesheet') {
@@ -255,7 +268,7 @@ const ISRHandler = async ({ isFirstRequest, url }: IISRHandlerParam) => {
 				}
 			})
 
-			await page.setExtraHTTPHeaders({
+			await safePage()?.setExtraHTTPHeaders({
 				...specialInfo,
 				service: 'puppeteer',
 			})
@@ -270,9 +283,10 @@ const ISRHandler = async ({ isFirstRequest, url }: IISRHandlerParam) => {
 				} catch (err) {
 					if (err.name !== 'TimeoutError') {
 						isGetHtmlProcessError = true
-						res(false)
-						await page.close()
-						return Console.error(err)
+						Console.log('ISRHandler line 285:')
+						Console.error(err)
+						await safePage()?.close()
+						return res(false)
 					}
 				} finally {
 					status = response?.status?.() ?? status
@@ -282,9 +296,10 @@ const ISRHandler = async ({ isFirstRequest, url }: IISRHandlerParam) => {
 				}
 			})
 		} catch (err) {
+			Console.log('ISRHandler line 297:')
 			Console.log('Crawler is fail!')
 			Console.error(err)
-			await page.close()
+			await safePage()?.close()
 			return {
 				status: 500,
 			}
@@ -296,9 +311,10 @@ const ISRHandler = async ({ isFirstRequest, url }: IISRHandlerParam) => {
 			}
 
 		try {
-			html = await page.content() // serialized HTML of page DOM.
-			await page.close()
+			html = (await safePage()?.content()) ?? '' // serialized HTML of page DOM.
+			await safePage()?.close()
 		} catch (err) {
+			Console.log('ISRHandler line 315:')
 			Console.error(err)
 			return
 		}
@@ -306,7 +322,7 @@ const ISRHandler = async ({ isFirstRequest, url }: IISRHandlerParam) => {
 		status = html && regexNotFoundPageID.test(html) ? 404 : 200
 	}
 
-	restOfDuration = getRestOfDuration(startGenerating)
+	restOfDuration = _getRestOfDuration(startGenerating)
 
 	let result: ISSRResult
 	if (CACHEABLE_STATUS_CODE[status]) {
@@ -324,10 +340,6 @@ const ISRHandler = async ({ isFirstRequest, url }: IISRHandlerParam) => {
 				true,
 				isForceToOptimizeAndCompress,
 			])
-
-			if (IS_REMOTE_CRAWLER && !DISABLE_COMPRESS_HTML) {
-				html = await optimizeHTMLContentPool.exec('optimizeContent', [html])
-			}
 		} catch (err) {
 			Console.error(err)
 			return

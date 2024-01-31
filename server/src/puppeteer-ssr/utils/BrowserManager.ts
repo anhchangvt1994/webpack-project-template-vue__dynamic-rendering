@@ -3,6 +3,7 @@ import path from 'path'
 import { Browser, Page } from 'puppeteer-core'
 import WorkerPool from 'workerpool'
 import {
+	IS_REMOTE_CRAWLER,
 	POWER_LEVEL,
 	POWER_LEVEL_LIST,
 	SERVER_LESS,
@@ -34,10 +35,20 @@ export const deleteUserDataDir = async (dir: string) => {
 				)
 			)?.exec('deleteResource', [dir])
 		} catch (err) {
+			Console.log('BrowserManager line 39:')
 			Console.error(err)
 		}
 	}
 } // deleteUserDataDir
+
+const _getSafePage = (page: Page | undefined) => {
+	let SafePage = page
+
+	return () => {
+		if (SafePage && SafePage.isClosed()) return
+		return SafePage
+	}
+} // _getSafePage
 
 const BrowserManager = (
 	userDataDir: () => string = () => `${userDataPath}/user_data`
@@ -51,8 +62,12 @@ const BrowserManager = (
 	const __launch = async () => {
 		totalRequests = 0
 
-		const selfUserDataDirPath = reserveUserDataDirPath || userDataDir()
-		reserveUserDataDirPath = `${userDataDir()}_reserve`
+		const selfUserDataDirPath =
+			reserveUserDataDirPath ||
+			`${userDataDir()}${IS_REMOTE_CRAWLER ? '_remote' : ''}`
+		reserveUserDataDirPath = `${userDataDir()}_reserve${
+			IS_REMOTE_CRAWLER ? '_remote' : ''
+		}`
 
 		browserLaunch = new Promise(async (res, rej) => {
 			let isError = false
@@ -135,16 +150,17 @@ const BrowserManager = (
 				const browser: Browser = (await browserLaunch) as Browser
 
 				browser.on('createNewPage', (async (page: Page) => {
+					const safePage = _getSafePage(page)
 					await new Promise((resolveCloseTab) => {
 						const timeoutCloseTab = setTimeout(() => {
-							if (!page.isClosed()) {
-								page.close({
-									runBeforeUnload: true,
-								})
+							const tmpPage = safePage()
+							if (!tmpPage) resolveCloseTab(null)
+							else if (!tmpPage.isClosed()) {
+								tmpPage.close()
 							}
-							resolveCloseTab(null)
 						}, 180000)
-						page.once('close', () => {
+
+						safePage()?.once('close', () => {
 							clearTimeout(timeoutCloseTab)
 							resolveCloseTab(null)
 						})
@@ -152,13 +168,14 @@ const BrowserManager = (
 
 					tabsClosed++
 
-					if (!SERVER_LESS && tabsClosed === 20) {
-						browser.close()
-						__launch()
+					if (!SERVER_LESS && tabsClosed === maxRequestPerBrowser) {
+						if (browser.connected) browser.close()
+
 						deleteUserDataDir(selfUserDataDirPath)
 					}
 				}) as any)
 			} catch (err) {
+				Console.log('Browser manager line 177:')
 				Console.error(err)
 			}
 		}
@@ -176,8 +193,8 @@ const BrowserManager = (
 		totalRequests++
 		const curBrowserLaunch = browserLaunch
 
-		const pages = (await (await curBrowserLaunch)?.pages())?.length ?? 0
-		await new Promise((res) => setTimeout(res, pages * 20))
+		// const pages = (await (await curBrowserLaunch)?.pages())?.length ?? 0;
+		// await new Promise((res) => setTimeout(res, pages * 10));
 
 		return curBrowserLaunch as Promise<Browser>
 	} // _get
