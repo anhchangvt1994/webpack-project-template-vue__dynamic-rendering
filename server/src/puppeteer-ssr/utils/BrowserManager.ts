@@ -114,7 +114,13 @@ const BrowserManager = (
 							args: Chromium.args,
 							executablePath,
 						})
-						reserveBrowser.close()
+						try {
+							await reserveBrowser.close()
+						} catch (err) {
+							Console.log('BrowserManager line 121')
+							Console.error(err)
+						}
+
 						res(null)
 					})
 				} else {
@@ -130,7 +136,12 @@ const BrowserManager = (
 							...defaultBrowserOptions,
 							userDataDir: reserveUserDataDirPath,
 						})
-						reserveBrowser.close()
+						try {
+							await reserveBrowser.close()
+						} catch (err) {
+							Console.log('BrowserManager line 143')
+							Console.error(err)
+						}
 						res(null)
 					})
 				}
@@ -152,11 +163,16 @@ const BrowserManager = (
 				browser.on('createNewPage', (async (page: Page) => {
 					const safePage = _getSafePage(page)
 					await new Promise((resolveCloseTab) => {
-						const timeoutCloseTab = setTimeout(() => {
+						const timeoutCloseTab = setTimeout(async () => {
 							const tmpPage = safePage()
 							if (!tmpPage) resolveCloseTab(null)
-							else if (!tmpPage.isClosed()) {
-								tmpPage.close()
+							else if (browser.connected && !tmpPage.isClosed()) {
+								try {
+									await tmpPage.close()
+								} catch (err) {
+									Console.log('BrowserManager line 164')
+									Console.error(err)
+								}
 							}
 						}, 180000)
 
@@ -169,7 +185,13 @@ const BrowserManager = (
 					tabsClosed++
 
 					if (!SERVER_LESS && tabsClosed === maxRequestPerBrowser) {
-						if (browser.connected) browser.close()
+						if (browser.connected)
+							try {
+								await browser.close()
+							} catch (err) {
+								Console.log('BrowserManager line 193')
+								Console.error(err)
+							}
 
 						deleteUserDataDir(selfUserDataDirPath)
 					}
@@ -220,7 +242,7 @@ const BrowserManager = (
 	} // _newPage
 
 	const _isReady = () => {
-		return totalRequests <= maxRequestPerBrowser
+		return totalRequests < maxRequestPerBrowser
 	} // _isReady
 
 	return {

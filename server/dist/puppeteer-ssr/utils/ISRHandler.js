@@ -127,37 +127,102 @@ const waitResponse = (() => {
 		_constants.BANDWIDTH_LEVEL > _constants.BANDWIDTH_LEVEL_LIST.ONE ? 200 : 250
 	const maximumTimeout =
 		_constants.BANDWIDTH_LEVEL > _constants.BANDWIDTH_LEVEL_LIST.ONE
-			? 120000
-			: 120000
+			? 60000
+			: 60000
 
 	return async (page, url, duration) => {
+		let hasRedirected = false
 		const safePage = _getSafePage(page)
+		_optionalChain([
+			safePage,
+			'call',
+			(_) => _(),
+			'optionalAccess',
+			(_2) => _2.on,
+			'call',
+			(_3) =>
+				_3('response', (response) => {
+					const status = response.status()
+					//[301, 302, 303, 307, 308]
+					if (status >= 300 && status <= 399) {
+						hasRedirected = true
+					}
+				}),
+		])
+
 		let response
 		try {
 			response = await new Promise(async (resolve, reject) => {
 				const result = await new Promise((resolveAfterPageLoad) => {
-					page
-						.goto(url.split('?')[0], {
-							waitUntil: 'domcontentloaded',
-							timeout: 80000,
-						})
-						.then((res) => {
-							setTimeout(() => resolveAfterPageLoad(res), firstWaitingDuration)
-						})
-						.catch((err) => {
-							reject(err)
-						})
+					_optionalChain([
+						safePage,
+						'call',
+						(_4) => _4(),
+						'optionalAccess',
+						(_5) => _5.goto,
+						'call',
+						(_6) =>
+							_6(url.split('?')[0], {
+								waitUntil: 'domcontentloaded',
+								timeout: 0,
+							}),
+						'access',
+						(_7) => _7.then,
+						'call',
+						(_8) =>
+							_8((res) => {
+								setTimeout(
+									() => resolveAfterPageLoad(res),
+									firstWaitingDuration
+								)
+							}),
+						'access',
+						(_9) => _9.catch,
+						'call',
+						(_10) =>
+							_10((err) => {
+								reject(err)
+							}),
+					])
 				})
+
+				const waitForNavigate = async () => {
+					if (hasRedirected) {
+						hasRedirected = false
+						await _optionalChain([
+							safePage,
+							'call',
+							(_11) => _11(),
+							'optionalAccess',
+							(_12) => _12.waitForSelector,
+							'call',
+							(_13) => _13('body'),
+						])
+						await waitForNavigate()
+					}
+				}
+
+				await waitForNavigate()
+
+				_optionalChain([
+					safePage,
+					'call',
+					(_14) => _14(),
+					'optionalAccess',
+					(_15) => _15.removeAllListeners,
+					'call',
+					(_16) => _16('response'),
+				])
 
 				const html = await _asyncNullishCoalesce(
 					await _optionalChain([
 						safePage,
 						'call',
-						(_) => _(),
+						(_17) => _17(),
 						'optionalAccess',
-						(_2) => _2.content,
+						(_18) => _18.content,
 						'call',
-						(_3) => _3(),
+						(_19) => _19(),
 					]),
 					async () => ''
 				)
@@ -178,36 +243,36 @@ const waitResponse = (() => {
 					_optionalChain([
 						safePage,
 						'call',
-						(_4) => _4(),
+						(_20) => _20(),
 						'optionalAccess',
-						(_5) => _5.on,
+						(_21) => _21.on,
 						'call',
-						(_6) =>
-							_6('requestfinished', () => {
+						(_22) =>
+							_22('requestfinished', () => {
 								startTimeout()
 							}),
 					])
 					_optionalChain([
 						safePage,
 						'call',
-						(_7) => _7(),
+						(_23) => _23(),
 						'optionalAccess',
-						(_8) => _8.on,
+						(_24) => _24.on,
 						'call',
-						(_9) =>
-							_9('requestservedfromcache', () => {
+						(_25) =>
+							_25('requestservedfromcache', () => {
 								startTimeout(requestServedFromCacheDuration)
 							}),
 					])
 					_optionalChain([
 						safePage,
 						'call',
-						(_10) => _10(),
+						(_26) => _26(),
 						'optionalAccess',
-						(_11) => _11.on,
+						(_27) => _27.on,
 						'call',
-						(_12) =>
-							_12('requestfailed', () => {
+						(_28) =>
+							_28('requestfailed', () => {
 								startTimeout(requestFailDuration)
 							}),
 					])
@@ -254,11 +319,11 @@ const ISRHandler = async ({ isFirstRequest, url }) => {
 		_optionalChain([
 			_constants3.regexQueryStringSpecialInfo,
 			'access',
-			(_13) => _13.exec,
+			(_29) => _29.exec,
 			'call',
-			(_14) => _14(url),
+			(_30) => _30(url),
 			'optionalAccess',
-			(_15) => _15.groups,
+			(_31) => _31.groups,
 		]),
 		() => ({})
 	)
@@ -332,24 +397,25 @@ const ISRHandler = async ({ isFirstRequest, url }) => {
 
 		try {
 			// await safePage()?.waitForNetworkIdle({ idleTime: 150 })
+			// safePage()?.setDefaultNavigationTimeout(0);
 			await _optionalChain([
 				safePage,
 				'call',
-				(_16) => _16(),
+				(_32) => _32(),
 				'optionalAccess',
-				(_17) => _17.setRequestInterception,
+				(_33) => _33.setRequestInterception,
 				'call',
-				(_18) => _18(true),
+				(_34) => _34(true),
 			])
 			_optionalChain([
 				safePage,
 				'call',
-				(_19) => _19(),
+				(_35) => _35(),
 				'optionalAccess',
-				(_20) => _20.on,
+				(_36) => _36.on,
 				'call',
-				(_21) =>
-					_21('request', (req) => {
+				(_37) =>
+					_37('request', (req) => {
 						const resourceType = req.resourceType()
 
 						if (resourceType === 'stylesheet') {
@@ -370,12 +436,12 @@ const ISRHandler = async ({ isFirstRequest, url }) => {
 			await _optionalChain([
 				safePage,
 				'call',
-				(_22) => _22(),
+				(_38) => _38(),
 				'optionalAccess',
-				(_23) => _23.setExtraHTTPHeaders,
+				(_39) => _39.setExtraHTTPHeaders,
 				'call',
-				(_24) =>
-					_24({
+				(_40) =>
+					_40({
 						...specialInfo,
 						service: 'puppeteer',
 					}),
@@ -396,11 +462,11 @@ const ISRHandler = async ({ isFirstRequest, url }) => {
 						await _optionalChain([
 							safePage,
 							'call',
-							(_25) => _25(),
+							(_41) => _41(),
 							'optionalAccess',
-							(_26) => _26.close,
+							(_42) => _42.close,
 							'call',
-							(_27) => _27(),
+							(_43) => _43(),
 						])
 						return res(false)
 					}
@@ -409,9 +475,9 @@ const ISRHandler = async ({ isFirstRequest, url }) => {
 						_optionalChain([
 							response,
 							'optionalAccess',
-							(_28) => _28.status,
+							(_44) => _44.status,
 							'optionalCall',
-							(_29) => _29(),
+							(_45) => _45(),
 						]),
 						() => status
 					)
@@ -427,11 +493,11 @@ const ISRHandler = async ({ isFirstRequest, url }) => {
 			await _optionalChain([
 				safePage,
 				'call',
-				(_30) => _30(),
+				(_46) => _46(),
 				'optionalAccess',
-				(_31) => _31.close,
+				(_47) => _47.close,
 				'call',
-				(_32) => _32(),
+				(_48) => _48(),
 			])
 			return {
 				status: 500,
@@ -448,22 +514,22 @@ const ISRHandler = async ({ isFirstRequest, url }) => {
 				await _optionalChain([
 					safePage,
 					'call',
-					(_33) => _33(),
+					(_49) => _49(),
 					'optionalAccess',
-					(_34) => _34.content,
+					(_50) => _50.content,
 					'call',
-					(_35) => _35(),
+					(_51) => _51(),
 				]),
 				async () => ''
 			) // serialized HTML of page DOM.
 			await _optionalChain([
 				safePage,
 				'call',
-				(_36) => _36(),
+				(_52) => _52(),
 				'optionalAccess',
-				(_37) => _37.close,
+				(_53) => _53.close,
 				'call',
-				(_38) => _38(),
+				(_54) => _54(),
 			])
 		} catch (err) {
 			_ConsoleHandler2.default.log('ISRHandler line 315:')
@@ -493,8 +559,10 @@ const ISRHandler = async ({ isFirstRequest, url }) => {
 				isForceToOptimizeAndCompress,
 			])
 		} catch (err) {
+			_ConsoleHandler2.default.log('--------------------')
+			_ConsoleHandler2.default.log('ISRHandler line 368:')
+			_ConsoleHandler2.default.log('error url', url.split('?')[0])
 			_ConsoleHandler2.default.error(err)
-			return
 		} finally {
 			optimizeHTMLContentPool.terminate()
 		}

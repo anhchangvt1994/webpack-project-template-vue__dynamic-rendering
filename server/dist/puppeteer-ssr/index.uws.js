@@ -265,6 +265,7 @@ const puppeteerSSRService = (async () => {
 
 				if (botInfo.isBot) {
 					res.onAborted(() => {
+						res.writableEnded = true
 						_ConsoleHandler2.default.log('Request aborted')
 					})
 

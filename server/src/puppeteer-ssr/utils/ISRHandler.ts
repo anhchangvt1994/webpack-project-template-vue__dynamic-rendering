@@ -98,18 +98,27 @@ const waitResponse = (() => {
 	const requestFailDuration =
 		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 200 : 250
 	const maximumTimeout =
-		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 120000 : 120000
+		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 60000 : 60000
 
 	return async (page: Page, url: string, duration: number) => {
+		let hasRedirected = false
 		const safePage = _getSafePage(page)
+		safePage()?.on('response', (response) => {
+			const status = response.status()
+			//[301, 302, 303, 307, 308]
+			if (status >= 300 && status <= 399) {
+				hasRedirected = true
+			}
+		})
+
 		let response
 		try {
 			response = await new Promise(async (resolve, reject) => {
 				const result = await new Promise<any>((resolveAfterPageLoad) => {
-					page
-						.goto(url.split('?')[0], {
+					safePage()
+						?.goto(url.split('?')[0], {
 							waitUntil: 'domcontentloaded',
-							timeout: 80000,
+							timeout: 0,
 						})
 						.then((res) => {
 							setTimeout(() => resolveAfterPageLoad(res), firstWaitingDuration)
@@ -118,6 +127,18 @@ const waitResponse = (() => {
 							reject(err)
 						})
 				})
+
+				const waitForNavigate = async () => {
+					if (hasRedirected) {
+						hasRedirected = false
+						await safePage()?.waitForSelector('body')
+						await waitForNavigate()
+					}
+				}
+
+				await waitForNavigate()
+
+				safePage()?.removeAllListeners('response')
 
 				const html = (await safePage()?.content()) ?? ''
 
@@ -252,6 +273,7 @@ const ISRHandler = async ({ isFirstRequest, url }: IISRHandlerParam) => {
 
 		try {
 			// await safePage()?.waitForNetworkIdle({ idleTime: 150 })
+			// safePage()?.setDefaultNavigationTimeout(0);
 			await safePage()?.setRequestInterception(true)
 			safePage()?.on('request', (req) => {
 				const resourceType = req.resourceType()
@@ -341,8 +363,10 @@ const ISRHandler = async ({ isFirstRequest, url }: IISRHandlerParam) => {
 				isForceToOptimizeAndCompress,
 			])
 		} catch (err) {
+			Console.log('--------------------')
+			Console.log('ISRHandler line 368:')
+			Console.log('error url', url.split('?')[0])
 			Console.error(err)
-			return
 		} finally {
 			optimizeHTMLContentPool.terminate()
 		}

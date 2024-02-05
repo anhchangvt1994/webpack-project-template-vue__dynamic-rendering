@@ -9,7 +9,7 @@ var _constants = require('./constants')
 var _constants3 = require('../../constants')
 
 const minWorkers = 1
-const maxWorkers = 20
+const maxWorkers = 10
 
 const testPuppeteerSSRService = (() => {
 	const _init = () => {

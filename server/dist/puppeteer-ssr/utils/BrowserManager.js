@@ -142,7 +142,13 @@ const BrowserManager = (
 							args: _chromiummin2.default.args,
 							executablePath,
 						})
-						reserveBrowser.close()
+						try {
+							await reserveBrowser.close()
+						} catch (err) {
+							_ConsoleHandler2.default.log('BrowserManager line 121')
+							_ConsoleHandler2.default.error(err)
+						}
+
 						res(null)
 					})
 				} else {
@@ -158,7 +164,12 @@ const BrowserManager = (
 							..._constants3.defaultBrowserOptions,
 							userDataDir: reserveUserDataDirPath,
 						})
-						reserveBrowser.close()
+						try {
+							await reserveBrowser.close()
+						} catch (err) {
+							_ConsoleHandler2.default.log('BrowserManager line 143')
+							_ConsoleHandler2.default.error(err)
+						}
 						res(null)
 					})
 				}
@@ -180,11 +191,16 @@ const BrowserManager = (
 				browser.on('createNewPage', async (page) => {
 					const safePage = _getSafePage(page)
 					await new Promise((resolveCloseTab) => {
-						const timeoutCloseTab = setTimeout(() => {
+						const timeoutCloseTab = setTimeout(async () => {
 							const tmpPage = safePage()
 							if (!tmpPage) resolveCloseTab(null)
-							else if (!tmpPage.isClosed()) {
-								tmpPage.close()
+							else if (browser.connected && !tmpPage.isClosed()) {
+								try {
+									await tmpPage.close()
+								} catch (err) {
+									_ConsoleHandler2.default.log('BrowserManager line 164')
+									_ConsoleHandler2.default.error(err)
+								}
 							}
 						}, 180000)
 
@@ -206,7 +222,13 @@ const BrowserManager = (
 					tabsClosed++
 
 					if (!_constants.SERVER_LESS && tabsClosed === maxRequestPerBrowser) {
-						if (browser.connected) browser.close()
+						if (browser.connected)
+							try {
+								await browser.close()
+							} catch (err) {
+								_ConsoleHandler2.default.log('BrowserManager line 193')
+								_ConsoleHandler2.default.error(err)
+							}
 
 						exports.deleteUserDataDir.call(void 0, selfUserDataDirPath)
 					}
@@ -263,7 +285,7 @@ const BrowserManager = (
 	} // _newPage
 
 	const _isReady = () => {
-		return totalRequests <= maxRequestPerBrowser
+		return totalRequests < maxRequestPerBrowser
 	} // _isReady
 
 	return {

@@ -3,7 +3,7 @@ import { urlList } from './constants'
 import { resourceExtension } from '../../constants'
 
 const minWorkers = 1
-const maxWorkers = 20
+const maxWorkers = 10
 
 const testPuppeteerSSRService = (() => {
 	const _init = () => {

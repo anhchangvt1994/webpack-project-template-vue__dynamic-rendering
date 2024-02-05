@@ -219,6 +219,7 @@ const puppeteerSSRService = (async () => {
 
 				if (botInfo.isBot) {
 					res.onAborted(() => {
+						res.writableEnded = true
 						Console.log('Request aborted')
 					})
 
