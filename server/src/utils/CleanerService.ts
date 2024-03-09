@@ -11,6 +11,7 @@ import { canUseLinuxChromium, chromiumPath } from '../puppeteer-ssr/constants'
 import { getStore, setStore } from '../store'
 import Console from './ConsoleHandler'
 import { PROCESS_ENV } from './InitEnv'
+import ServerConfig from '../server.config'
 
 const CleanerService = async () => {
 	// NOTE - Browsers Cleaner
@@ -88,13 +89,14 @@ const CleanerService = async () => {
 
 			if (!SERVER_LESS)
 				setTimeout(() => {
-					cleanPages(5)
-				}, 300000)
+					console.log(ServerConfig.crawl.cache.time)
+					cleanPages(ServerConfig.crawl.cache.time)
+				}, 21600000)
 		}
 	}
 
-	if (SERVER_LESS) cleanPages(10)
-	else await cleanPages()
+	if (SERVER_LESS) cleanPages(360)
+	else await cleanPages(360)
 }
 
 if (!SERVER_LESS) CleanerService()
