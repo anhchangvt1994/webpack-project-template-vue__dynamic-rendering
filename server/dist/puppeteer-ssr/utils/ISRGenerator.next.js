@@ -24,13 +24,12 @@ function _optionalChain(ops) {
 	}
 	return value
 }
-var _fs = require('fs')
-var _fs2 = _interopRequireDefault(_fs)
 var _workerpool = require('workerpool')
 var _workerpool2 = _interopRequireDefault(_workerpool)
-var _zlib = require('zlib')
 
 var _constants = require('../../constants')
+var _serverconfig = require('../../server.config')
+var _serverconfig2 = _interopRequireDefault(_serverconfig)
 var _ConsoleHandler = require('../../utils/ConsoleHandler')
 var _ConsoleHandler2 = _interopRequireDefault(_ConsoleHandler)
 var _InitEnv = require('../../utils/InitEnv')
@@ -40,8 +39,6 @@ var _CacheManager = require('./CacheManager')
 var _CacheManager2 = _interopRequireDefault(_CacheManager)
 var _ISRHandler = require('./ISRHandler')
 var _ISRHandler2 = _interopRequireDefault(_ISRHandler)
-
-const cacheManager = _CacheManager2.default.call(void 0)
 
 const fetchData = async (input, init, reqData) => {
 	try {
@@ -74,6 +71,8 @@ const getRestOfDuration = (startGenerating, gapDuration = 0) => {
 } // getRestOfDuration
 
 const SSRGenerator = async ({ isSkipWaiting = false, ...ISRHandlerParams }) => {
+	const cacheManager = _CacheManager2.default.call(void 0, ISRHandlerParams.url)
+
 	if (!_InitEnv.PROCESS_ENV.BASE_URL) {
 		_ConsoleHandler2.default.error('Missing base url!')
 		return
@@ -99,140 +98,157 @@ const SSRGenerator = async ({ isSkipWaiting = false, ...ISRHandlerParams }) => {
 		})
 
 	let result
-	result = await cacheManager.achieve(ISRHandlerParams.url)
+	result = await cacheManager.achieve()
 
 	if (result) {
 		const NonNullableResult = result
+		const pathname = new URL(ISRHandlerParams.url).pathname
+		const renewTime =
+			(_optionalChain([
+				_serverconfig2.default,
+				'access',
+				(_) => _.crawl,
+				'access',
+				(_2) => _2.routes,
+				'access',
+				(_3) => _3[pathname],
+				'optionalAccess',
+				(_4) => _4.cache,
+				'access',
+				(_5) => _5.renewTime,
+			]) ||
+				_optionalChain([
+					_serverconfig2.default,
+					'access',
+					(_6) => _6.crawl,
+					'access',
+					(_7) => _7.custom,
+					'optionalCall',
+					(_8) => _8(pathname),
+					'optionalAccess',
+					(_9) => _9.cache,
+					'access',
+					(_10) => _10.renewTime,
+				]) ||
+				_serverconfig2.default.crawl.cache.renewTime) * 1000
 
-		if (NonNullableResult.isRaw) {
-			_ConsoleHandler2.default.log(
-				'File và nội dung đã tồn tại, đang tiến hành Optimize file'
-			)
-			const asyncTmpResult = new Promise(async (res) => {
-				const optimizeHTMLContentPool = _workerpool2.default.pool(
-					__dirname + `/OptimizeHtml.worker.${_constants.resourceExtension}`,
-					{
-						minWorkers: 1,
-						maxWorkers: _constants3.MAX_WORKERS,
-					}
-				)
+		// if (NonNullableResult.isRaw) {
+		// 	Console.log('Optimize content!')
+		// 	const asyncTmpResult = new Promise<ISSRResult>(async (res) => {
+		// 		const optimizeHTMLContentPool = WorkerPool.pool(
+		// 			__dirname + `/OptimizeHtml.worker.${resourceExtension}`,
+		// 			{
+		// 				minWorkers: 1,
+		// 				maxWorkers: MAX_WORKERS,
+		// 			}
+		// 		)
 
-				if (
-					!NonNullableResult ||
-					!NonNullableResult.file ||
-					!_fs2.default.existsSync(NonNullableResult.file)
-				)
-					res(undefined)
+		// 		if (
+		// 			!NonNullableResult ||
+		// 			!NonNullableResult.file ||
+		// 			!fs.existsSync(NonNullableResult.file)
+		// 		)
+		// 			res(undefined)
 
-				_fs2.default.readFile(NonNullableResult.file, async (err, data) => {
-					if (err) return res(undefined)
+		// 		fs.readFile(NonNullableResult.file as string, async (err, data) => {
+		// 			if (err) return res(undefined)
 
-					const restOfDuration = (() => {
-						const duration = getRestOfDuration(startGenerating, 2000)
+		// 			const restOfDuration = (() => {
+		// 				const duration = getRestOfDuration(startGenerating, 2000)
 
-						return duration > 7000 ? 7000 : duration
-					})()
+		// 				return duration > 7000 ? 7000 : duration
+		// 			})()
 
-					let html = (() => {
-						if (NonNullableResult.file.endsWith('.br'))
-							return _zlib.brotliDecompressSync.call(void 0, data).toString()
+		// 			let html = (() => {
+		// 				if (NonNullableResult.file.endsWith('.br'))
+		// 					return brotliDecompressSync(data).toString()
 
-						return data.toString('utf-8')
-					})()
+		// 				return data.toString('utf-8')
+		// 			})()
 
-					const timeout = setTimeout(async () => {
-						optimizeHTMLContentPool.terminate()
-						const result = await cacheManager.set({
-							html,
-							url: ISRHandlerParams.url,
-							isRaw: !NonNullableResult.available,
-						})
+		// 			const timeout = setTimeout(async () => {
+		// 				optimizeHTMLContentPool.terminate()
+		// 				const result = await cacheManager.set({
+		// 					html,
+		// 					url: ISRHandlerParams.url,
+		// 					isRaw: !NonNullableResult.available,
+		// 				})
 
-						res(result)
-					}, restOfDuration)
+		// 				res(result)
+		// 			}, restOfDuration)
 
-					let tmpHTML = ''
+		// 			let tmpHTML = ''
 
-					try {
-						if (_constants.POWER_LEVEL === _constants.POWER_LEVEL_LIST.THREE)
-							tmpHTML = await optimizeHTMLContentPool.exec('compressContent', [
-								html,
-							])
-					} catch (err) {
-						tmpHTML = html
-						// Console.error(err)
-					} finally {
-						clearTimeout(timeout)
-						optimizeHTMLContentPool.terminate()
+		// 			try {
+		// 				if (POWER_LEVEL === POWER_LEVEL_LIST.THREE)
+		// 					tmpHTML = await optimizeHTMLContentPool.exec('compressContent', [
+		// 						html,
+		// 					])
+		// 			} catch (err) {
+		// 				tmpHTML = html
+		// 				// Console.error(err)
+		// 			} finally {
+		// 				clearTimeout(timeout)
+		// 				optimizeHTMLContentPool.terminate()
 
-						const result = await cacheManager.set({
-							html: tmpHTML,
-							url: ISRHandlerParams.url,
-							isRaw: !NonNullableResult.available,
-						})
+		// 				const result = await cacheManager.set({
+		// 					html: tmpHTML,
+		// 					url: ISRHandlerParams.url,
+		// 					isRaw: !NonNullableResult.available,
+		// 				})
 
-						res(result)
-					}
-				})
-			})
+		// 				res(result)
+		// 			}
+		// 		})
+		// 	})
 
-			const tmpResult = await asyncTmpResult
-			result = tmpResult || result
-		} else if (
+		// 	const tmpResult = await asyncTmpResult
+		// 	result = tmpResult || result
+		// } else
+		if (
 			Date.now() - new Date(NonNullableResult.updatedAt).getTime() >
-			300000
+			renewTime
 		) {
-			result = await cacheManager.renew(ISRHandlerParams.url)
-			if (!result.hasRenew)
-				if (_constants.SERVER_LESS)
-					fetchData(
-						`${_InitEnv.PROCESS_ENV.BASE_URL}/web-scraping`,
-						{
-							method: 'GET',
-							headers: new Headers({
-								Authorization: 'web-scraping-service',
-								Accept: 'application/json',
-								service: 'web-scraping-service',
-							}),
-						},
-						{
+			cacheManager.renew().then((result) => {
+				if (!result.hasRenew)
+					if (_constants.SERVER_LESS)
+						fetchData(
+							`${_InitEnv.PROCESS_ENV.BASE_URL}/web-scraping`,
+							{
+								method: 'GET',
+								headers: new Headers({
+									Authorization: 'web-scraping-service',
+									Accept: 'application/json',
+									service: 'web-scraping-service',
+								}),
+							},
+							{
+								startGenerating,
+								hasCache: NonNullableResult.available,
+								url: ISRHandlerParams.url,
+							}
+						)
+					else
+						_ISRHandler2.default.call(void 0, {
 							startGenerating,
 							hasCache: NonNullableResult.available,
-							url: ISRHandlerParams.url,
-						}
-					)
-				else
-					_ISRHandler2.default.call(void 0, {
-						startGenerating,
-						hasCache: NonNullableResult.available,
-						...ISRHandlerParams,
-					})
+							...ISRHandlerParams,
+						})
+			})
 		}
-	} else {
-		result = await cacheManager.get(ISRHandlerParams.url)
+	}
+	if (!result) {
+		result = await cacheManager.get()
 
 		_ConsoleHandler2.default.log('Check for condition to create new page.')
 		_ConsoleHandler2.default.log(
 			'result.available',
-			_optionalChain([result, 'optionalAccess', (_) => _.available])
+			_optionalChain([result, 'optionalAccess', (_11) => _11.available])
 		)
 
 		if (result) {
 			const NonNullableResult = result
-			const isValidToScraping = (() => {
-				return NonNullableResult.isInit
-				// || (() => {
-				// 	const createTimeDuration =
-				// 		Date.now() - new Date(NonNullableResult.createdAt).getTime()
-				// 	return (
-				// 		!NonNullableResult.available &&
-				// 		createTimeDuration >=
-				// 			(SERVER_LESS && BANDWIDTH_LEVEL === BANDWIDTH_LEVEL_LIST.ONE
-				// 				? 2000
-				// 				: 10000)
-				// 	)
-				// })()
-			})()
+			const isValidToScraping = NonNullableResult.isInit
 
 			if (isValidToScraping) {
 				const tmpResult = await new Promise(async (res) => {
@@ -283,7 +299,7 @@ const SSRGenerator = async ({ isSkipWaiting = false, ...ISRHandlerParams }) => {
 
 				if (tmpResult && tmpResult.status) result = tmpResult
 				else {
-					const tmpResult = await cacheManager.achieve(ISRHandlerParams.url)
+					const tmpResult = await cacheManager.achieve()
 					result = tmpResult || result
 				}
 
@@ -326,7 +342,7 @@ const SSRGenerator = async ({ isSkipWaiting = false, ...ISRHandlerParams }) => {
 								: 200
 
 						setTimeout(async () => {
-							const tmpResult = await cacheManager.achieve(ISRHandlerParams.url)
+							const tmpResult = await cacheManager.achieve()
 
 							if (tmpResult && tmpResult.response) return res(tmpResult)
 

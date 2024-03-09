@@ -163,7 +163,7 @@ const waitResponse = (() => {
 						'call',
 						(_6) =>
 							_6(url.split('?')[0], {
-								waitUntil: 'domcontentloaded',
+								waitUntil: 'networkidle2',
 								timeout: 0,
 							}),
 						'access',
@@ -299,13 +299,13 @@ const ISRHandler = async ({ hasCache, url }) => {
 	const startGenerating = Date.now()
 	if (_getRestOfDuration(startGenerating, gapDurationDefault) <= 0) return
 
-	const cacheManager = _CacheManager2.default.call(void 0)
+	const cacheManager = _CacheManager2.default.call(void 0, url)
 
 	let restOfDuration = _getRestOfDuration(startGenerating, gapDurationDefault)
 
 	if (restOfDuration <= 0) {
 		if (hasCache) {
-			const tmpResult = await cacheManager.achieve(url)
+			const tmpResult = await cacheManager.achieve()
 
 			return tmpResult
 		}
@@ -386,7 +386,7 @@ const ISRHandler = async ({ hasCache, url }) => {
 
 		if (!page) {
 			if (!page && hasCache) {
-				const tmpResult = await cacheManager.achieve(url)
+				const tmpResult = await cacheManager.achieve()
 
 				return tmpResult
 			}
@@ -459,7 +459,7 @@ const ISRHandler = async ({ hasCache, url }) => {
 						isGetHtmlProcessError = true
 						_ConsoleHandler2.default.log('ISRHandler line 285:')
 						_ConsoleHandler2.default.error(err)
-						await _optionalChain([
+						_optionalChain([
 							safePage,
 							'call',
 							(_41) => _41(),
@@ -490,7 +490,8 @@ const ISRHandler = async ({ hasCache, url }) => {
 			_ConsoleHandler2.default.log('ISRHandler line 297:')
 			_ConsoleHandler2.default.log('Crawler is fail!')
 			_ConsoleHandler2.default.error(err)
-			await _optionalChain([
+			cacheManager.remove(url)
+			_optionalChain([
 				safePage,
 				'call',
 				(_46) => _46(),
@@ -504,10 +505,12 @@ const ISRHandler = async ({ hasCache, url }) => {
 			}
 		}
 
-		if (isGetHtmlProcessError)
+		if (isGetHtmlProcessError) {
+			cacheManager.remove(url)
 			return {
 				status: 500,
 			}
+		}
 
 		try {
 			html = await _asyncNullishCoalesce(
@@ -522,7 +525,7 @@ const ISRHandler = async ({ hasCache, url }) => {
 				]),
 				async () => ''
 			) // serialized HTML of page DOM.
-			await _optionalChain([
+			_optionalChain([
 				safePage,
 				'call',
 				(_52) => _52(),
@@ -552,16 +555,73 @@ const ISRHandler = async ({ hasCache, url }) => {
 			}
 		)
 
+		let isRaw = false
+
 		try {
+			const pathname = new URL(url).pathname
+			const enableToOptimize =
+				_optionalChain([
+					_serverconfig2.default,
+					'access',
+					(_55) => _55.crawl,
+					'access',
+					(_56) => _56.routes,
+					'access',
+					(_57) => _57[pathname],
+					'optionalAccess',
+					(_58) => _58.optimize,
+				]) ||
+				_optionalChain([
+					_serverconfig2.default,
+					'access',
+					(_59) => _59.crawl,
+					'access',
+					(_60) => _60.custom,
+					'optionalCall',
+					(_61) => _61(pathname),
+					'optionalAccess',
+					(_62) => _62.optimize,
+				]) ||
+				_serverconfig2.default.crawl.optimize ||
+				isForceToOptimizeAndCompress
+
 			html = await optimizeHTMLContentPool.exec('optimizeContent', [
 				html,
 				true,
-				isForceToOptimizeAndCompress,
+				enableToOptimize,
 			])
 
-			if (hasCache)
-				html = await optimizeHTMLContentPool.exec('compressContent', [html])
+			const enableToCompress =
+				_optionalChain([
+					_serverconfig2.default,
+					'access',
+					(_63) => _63.crawl,
+					'access',
+					(_64) => _64.routes,
+					'access',
+					(_65) => _65[pathname],
+					'optionalAccess',
+					(_66) => _66.compress,
+				]) ||
+				_optionalChain([
+					_serverconfig2.default,
+					'access',
+					(_67) => _67.crawl,
+					'access',
+					(_68) => _68.custom,
+					'optionalCall',
+					(_69) => _69(pathname),
+					'optionalAccess',
+					(_70) => _70.compress,
+				]) ||
+				_serverconfig2.default.crawl.compress
+
+			html = await optimizeHTMLContentPool.exec('compressContent', [
+				html,
+				enableToCompress,
+			])
 		} catch (err) {
+			isRaw = true
 			_ConsoleHandler2.default.log('--------------------')
 			_ConsoleHandler2.default.log('ISRHandler line 368:')
 			_ConsoleHandler2.default.log('error url', url.split('?')[0])
@@ -573,10 +633,10 @@ const ISRHandler = async ({ hasCache, url }) => {
 		result = await cacheManager.set({
 			html,
 			url,
-			isRaw: !hasCache,
+			isRaw,
 		})
 	} else {
-		await cacheManager.remove(url)
+		cacheManager.remove(url)
 		return {
 			status,
 			html: status === 404 ? 'Page not found!' : html,
