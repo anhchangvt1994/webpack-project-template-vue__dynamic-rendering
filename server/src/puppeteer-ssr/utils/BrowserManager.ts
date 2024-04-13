@@ -1,5 +1,6 @@
 import Chromium from '@sparticuz/chromium-min'
 import path from 'path'
+import fs from 'fs'
 import { Browser, Page } from 'puppeteer-core'
 import WorkerPool from 'workerpool'
 import {

@@ -77,7 +77,9 @@ const CleanerService = async () => {
 		}
 	})()
 
-	if (!_constants.SERVER_LESS) cleanBrowsers()
+	// if (!SERVER_LESS) cleanBrowsers()
+	if (process.env.MODE === 'development') cleanBrowsers(0)
+	else cleanBrowsers(360)
 
 	// NOTE - Pages Cleaner
 	const cleanPages = async (
@@ -110,8 +112,8 @@ const CleanerService = async () => {
 		}
 	}
 
-	if (_constants.SERVER_LESS) cleanPages(360)
-	else await cleanPages(360)
+	if (process.env.MODE === 'development') cleanPages(0)
+	else cleanPages(360)
 }
 
 if (!_constants.SERVER_LESS) CleanerService()
