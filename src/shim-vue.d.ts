@@ -21,3 +21,7 @@ declare module 'vue-router' {
 		country?: string
 	}
 }
+
+declare global {
+	const API_STORE: { [key: string]: any } = {}
+}

@@ -11,17 +11,21 @@ declare global {
   const EnvironmentInfo: typeof import('store/ServerStore.ts')['EnvironmentInfo']
   const LocaleInfo: typeof import('store/ServerStore.ts')['LocaleInfo']
   const LocaleState: typeof import('store/LocaleStore.ts')['LocaleState']
+  const ProxyAPI: typeof import('utils/ProxyAPIHelper/index.ts')['ProxyAPI']
   const computed: typeof import('vue')['computed']
   const createApp: typeof import('vue')['createApp']
   const createRouter: typeof import('vue-router')['createRouter']
   const createWebHistory: typeof import('vue-router')['createWebHistory']
   const customRef: typeof import('vue')['customRef']
+  const decode: typeof import('utils/StringHelper.ts')['decode']
   const defineAsyncComponent: typeof import('vue')['defineAsyncComponent']
   const defineComponent: typeof import('vue')['defineComponent']
   const deleteCookie: typeof import('utils/CookieHelper.ts')['deleteCookie']
   const effectScope: typeof import('vue')['effectScope']
+  const encode: typeof import('utils/StringHelper.ts')['encode']
   const generateSentenceCase: typeof import('utils/StringHelper.ts')['generateSentenceCase']
   const generateTitleCase: typeof import('utils/StringHelper.ts')['generateTitleCase']
+  const getAPIStore: typeof import('store/APIStore.ts')['getAPIStore']
   const getCookie: typeof import('utils/CookieHelper.ts')['getCookie']
   const getCurrentInstance: typeof import('vue')['getCurrentInstance']
   const getCurrentScope: typeof import('vue')['getCurrentScope']
@@ -31,6 +35,7 @@ declare global {
   const getSlugWithoutDash: typeof import('utils/StringHelper.ts')['getSlugWithoutDash']
   const getUnsignedLetters: typeof import('utils/StringHelper.ts')['getUnsignedLetters']
   const h: typeof import('vue')['h']
+  const hashCode: typeof import('utils/StringHelper.ts')['hashCode']
   const inject: typeof import('vue')['inject']
   const isProxy: typeof import('vue')['isProxy']
   const isReactive: typeof import('vue')['isReactive']
@@ -126,17 +131,21 @@ declare module 'vue' {
     readonly EnvironmentInfo: UnwrapRef<typeof import('store/ServerStore.ts')['EnvironmentInfo']>
     readonly LocaleInfo: UnwrapRef<typeof import('store/ServerStore.ts')['LocaleInfo']>
     readonly LocaleState: UnwrapRef<typeof import('store/LocaleStore.ts')['LocaleState']>
+    readonly ProxyAPI: UnwrapRef<typeof import('utils/ProxyAPIHelper/index.ts')['ProxyAPI']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
     readonly createRouter: UnwrapRef<typeof import('vue-router')['createRouter']>
     readonly createWebHistory: UnwrapRef<typeof import('vue-router')['createWebHistory']>
     readonly customRef: UnwrapRef<typeof import('vue')['customRef']>
+    readonly decode: UnwrapRef<typeof import('utils/StringHelper.ts')['decode']>
     readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
     readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
     readonly deleteCookie: UnwrapRef<typeof import('utils/CookieHelper.ts')['deleteCookie']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
+    readonly encode: UnwrapRef<typeof import('utils/StringHelper.ts')['encode']>
     readonly generateSentenceCase: UnwrapRef<typeof import('utils/StringHelper.ts')['generateSentenceCase']>
     readonly generateTitleCase: UnwrapRef<typeof import('utils/StringHelper.ts')['generateTitleCase']>
+    readonly getAPIStore: UnwrapRef<typeof import('store/APIStore.ts')['getAPIStore']>
     readonly getCookie: UnwrapRef<typeof import('utils/CookieHelper.ts')['getCookie']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
@@ -146,6 +155,7 @@ declare module 'vue' {
     readonly getSlugWithoutDash: UnwrapRef<typeof import('utils/StringHelper.ts')['getSlugWithoutDash']>
     readonly getUnsignedLetters: UnwrapRef<typeof import('utils/StringHelper.ts')['getUnsignedLetters']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
+    readonly hashCode: UnwrapRef<typeof import('utils/StringHelper.ts')['hashCode']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
@@ -234,17 +244,21 @@ declare module '@vue/runtime-core' {
     readonly EnvironmentInfo: UnwrapRef<typeof import('store/ServerStore.ts')['EnvironmentInfo']>
     readonly LocaleInfo: UnwrapRef<typeof import('store/ServerStore.ts')['LocaleInfo']>
     readonly LocaleState: UnwrapRef<typeof import('store/LocaleStore.ts')['LocaleState']>
+    readonly ProxyAPI: UnwrapRef<typeof import('utils/ProxyAPIHelper/index.ts')['ProxyAPI']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
     readonly createRouter: UnwrapRef<typeof import('vue-router')['createRouter']>
     readonly createWebHistory: UnwrapRef<typeof import('vue-router')['createWebHistory']>
     readonly customRef: UnwrapRef<typeof import('vue')['customRef']>
+    readonly decode: UnwrapRef<typeof import('utils/StringHelper.ts')['decode']>
     readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
     readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
     readonly deleteCookie: UnwrapRef<typeof import('utils/CookieHelper.ts')['deleteCookie']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
+    readonly encode: UnwrapRef<typeof import('utils/StringHelper.ts')['encode']>
     readonly generateSentenceCase: UnwrapRef<typeof import('utils/StringHelper.ts')['generateSentenceCase']>
     readonly generateTitleCase: UnwrapRef<typeof import('utils/StringHelper.ts')['generateTitleCase']>
+    readonly getAPIStore: UnwrapRef<typeof import('store/APIStore.ts')['getAPIStore']>
     readonly getCookie: UnwrapRef<typeof import('utils/CookieHelper.ts')['getCookie']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
@@ -254,6 +268,7 @@ declare module '@vue/runtime-core' {
     readonly getSlugWithoutDash: UnwrapRef<typeof import('utils/StringHelper.ts')['getSlugWithoutDash']>
     readonly getUnsignedLetters: UnwrapRef<typeof import('utils/StringHelper.ts')['getUnsignedLetters']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
+    readonly hashCode: UnwrapRef<typeof import('utils/StringHelper.ts')['hashCode']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>

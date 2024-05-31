@@ -119,11 +119,13 @@ const get = async (
 	}
 } // get
 
-const set = async ({
-	html,
-	url,
-	isRaw = false,
-}: ICacheSetParams): Promise<ISSRResult> => {
+const set = async (
+	{ html, url, isRaw }: ICacheSetParams = {
+		html: '',
+		url: '',
+		isRaw: false,
+	}
+): Promise<ISSRResult> => {
 	const key = getKey(url)
 
 	if (!html) {
@@ -228,4 +230,7 @@ WorkerPool.worker({
 	set,
 	renew,
 	remove,
+	finish: () => {
+		return 'finish'
+	},
 })

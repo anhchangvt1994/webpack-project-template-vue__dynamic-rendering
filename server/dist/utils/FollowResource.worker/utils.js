@@ -6,7 +6,7 @@ function _interopRequireDefault(obj) {
 var _fsextra = require('fs-extra')
 var _fsextra2 = _interopRequireDefault(_fsextra)
 
-var _ConsoleHandler = require('../../../utils/ConsoleHandler')
+var _ConsoleHandler = require('../ConsoleHandler')
 var _ConsoleHandler2 = _interopRequireDefault(_ConsoleHandler)
 
 const deleteResource = (path, WorkerPool) => {

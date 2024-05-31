@@ -32,10 +32,11 @@ var _path2 = _interopRequireDefault(_path)
 var _workerpool = require('workerpool')
 var _workerpool2 = _interopRequireDefault(_workerpool)
 
-var _constants = require('../../../constants')
-var _ConsoleHandler = require('../../../utils/ConsoleHandler')
+var _zlib = require('zlib')
+var _constants = require('../../constants')
+var _constants3 = require('../../puppeteer-ssr/constants')
+var _ConsoleHandler = require('../ConsoleHandler')
 var _ConsoleHandler2 = _interopRequireDefault(_ConsoleHandler)
-var _constants3 = require('../../constants')
 var _utils = require('./utils')
 
 const deleteResource = (path) => {
@@ -249,9 +250,140 @@ const scanToCleanPages = async (dirPath, durationValidToKeep = 1) => {
 	})
 } // scanToCleanPages
 
+const scanToCleanAPIDataCache = async (dirPath) => {
+	if (!dirPath) {
+		_ConsoleHandler2.default.error('You need to provide dirPath param!')
+		return
+	}
+
+	const apiCacheList = _fs2.default.readdirSync(dirPath)
+
+	if (!apiCacheList || !apiCacheList.length) return
+
+	const chunkSize = 50
+
+	const arrPromise = []
+	const curTime = Date.now()
+
+	for (let i = 0; i < apiCacheList.length; i += chunkSize) {
+		arrPromise.push(
+			new Promise(async (resolve) => {
+				let timeout
+				const arrChunked = apiCacheList.slice(i, i + chunkSize)
+				for (const item of arrChunked) {
+					if (item.includes('.fetch')) continue
+
+					const absolutePath = _path2.default.join(dirPath, item)
+
+					if (!_fs2.default.existsSync(absolutePath)) continue
+					const fileInfo = await getFileInfo(absolutePath)
+
+					if (!_optionalChain([fileInfo, 'optionalAccess', (_5) => _5.size]))
+						continue
+
+					const fileContent = (() => {
+						const tmpContent = _fs2.default.readFileSync(absolutePath)
+
+						return JSON.parse(
+							_zlib.brotliDecompressSync.call(void 0, tmpContent).toString()
+						)
+					})()
+
+					const expiredTime = fileContent.cache
+						? fileContent.cache.expiredTime
+						: 60000
+
+					if (
+						curTime - new Date(fileInfo.requestedAt).getTime() >=
+						expiredTime
+					) {
+						if (timeout) clearTimeout(timeout)
+						try {
+							_fs2.default.unlink(absolutePath, () => {})
+						} catch (err) {
+							_ConsoleHandler2.default.error(err)
+						} finally {
+							timeout = setTimeout(() => {
+								resolve('complete')
+							}, 100)
+						}
+					}
+				}
+
+				timeout = setTimeout(() => {
+					resolve('complete')
+				}, 100)
+			})
+		)
+	}
+
+	await Promise.all(arrPromise)
+
+	return 'complete'
+} // scanToCleanAPIDataCache
+
+const scanToCleanAPIStoreCache = async (dirPath) => {
+	if (!dirPath) {
+		_ConsoleHandler2.default.error('You need to provide dirPath param!')
+		return
+	}
+
+	const apiCacheList = _fs2.default.readdirSync(dirPath)
+
+	if (!apiCacheList || !apiCacheList.length) return
+
+	const chunkSize = 50
+
+	const arrPromise = []
+	const curTime = Date.now()
+
+	for (let i = 0; i < apiCacheList.length; i += chunkSize) {
+		arrPromise.push(
+			new Promise(async (resolve) => {
+				let timeout
+				const arrChunked = apiCacheList.slice(i, i + chunkSize)
+				for (const item of arrChunked) {
+					const absolutePath = _path2.default.join(dirPath, item)
+
+					if (!_fs2.default.existsSync(absolutePath)) continue
+					const fileInfo = await getFileInfo(absolutePath)
+
+					if (!_optionalChain([fileInfo, 'optionalAccess', (_6) => _6.size]))
+						continue
+
+					if (curTime - new Date(fileInfo.requestedAt).getTime() >= 300000) {
+						try {
+							_fs2.default.unlink(absolutePath, () => {})
+						} catch (err) {
+							_ConsoleHandler2.default.error(err)
+						} finally {
+							timeout = setTimeout(() => {
+								resolve('complete')
+							}, 100)
+						}
+					}
+				}
+
+				timeout = setTimeout(() => {
+					resolve('complete')
+				}, 100)
+			})
+		)
+	}
+
+	await Promise.all(arrPromise)
+
+	return 'complete'
+} // scanToCleanAPIStoreCache
+
 _workerpool2.default.worker({
 	checkToCleanFile,
 	scanToCleanBrowsers,
 	scanToCleanPages,
+	scanToCleanAPIDataCache,
+	scanToCleanAPIStoreCache,
 	deleteResource,
+	finish: () => {
+		return 'finish'
+	},
 })

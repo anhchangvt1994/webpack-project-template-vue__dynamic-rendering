@@ -184,7 +184,7 @@ const ServerRouterHandler = (() => {
 				}${search ? '?' + search : ''}`,
 				status: 301,
 			}
-		} else if (!to.path.startsWith(to.path)) {
+		} else if (!to.path.startsWith(prevPath)) {
 			resetSeoTag()
 		}
 

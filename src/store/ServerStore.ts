@@ -5,14 +5,13 @@ export interface IEnvironment {
 	MODE: 'development' | 'preview' | 'production'
 	ENV_MODE: 'development' | 'staging' | 'uat' | 'production'
 }
-
 export interface IBotInfo {
 	isBot: boolean
 	name: string
 }
 
 export interface IDeviceInfo {
-	type: string
+	type: 'mobile' | 'tablet' | 'desktop'
 	isMobile: string | boolean
 	os: string
 }

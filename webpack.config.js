@@ -180,6 +180,9 @@ module.exports = async (env, arg) => {
 							'generateTitleCase',
 							'generateSentenceCase',
 							'getLocale',
+							'encode',
+							'decode',
+							'hashCode',
 						],
 						'composable/useStringHelper.ts': [
 							'useSlug',
@@ -225,6 +228,8 @@ module.exports = async (env, arg) => {
 							'LocaleInfo',
 						],
 						'store/LocaleStore.ts': ['LocaleState'],
+						'store/APIStore.ts': ['getAPIStore'],
+						'utils/ProxyAPIHelper/index.ts': ['ProxyAPI'],
 						'utils/CookieHelper.ts': ['getCookie', 'setCookie', 'deleteCookie'],
 					},
 				],
