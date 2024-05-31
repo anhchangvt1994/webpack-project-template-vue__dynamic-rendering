@@ -14,3 +14,5 @@ server/**/user_data*
 server/**/.cache
 server/**/utils/Cache.worker/pages/*
 .cache
+server/**/api/utils/CacheManager/data/*
+server/**/api/utils/CacheManager/store/*
