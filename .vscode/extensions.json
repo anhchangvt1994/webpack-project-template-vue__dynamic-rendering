@@ -1,10 +1,8 @@
 {
 	"recommendations": [
-		"vue.volar",
 		"vue.vscode-typescript-vue-plugin",
 		"tabnine.tabnine-vscode",
 		"ionutvmi.path-autocomplete",
 		"rohit-gohri.format-code-action"
-	],
-	"unwantedRecommendations": ["vscode.typescript-language-features"]
+	]
 }

@@ -14,6 +14,9 @@ module.exports = async (env, arg) => {
 	const WebpackConfigWithMode = await require(getWebpackConfigFilePathWithMode(
 		arg.mode
 	))
+	const { ENV_VARIABLE_EXPORTER_FOR_AUTO_IMPORT } = await import(
+		'./config/env/ENV_AUTO_IMPORT.mjs'
+	)
 
 	if (!WebpackConfigWithMode) return
 
@@ -221,16 +224,17 @@ module.exports = async (env, arg) => {
 							'setMetaTwitterCardTag',
 							'setSeoTag',
 						],
-						'store/ServerStore.ts': [
+						'app/store/ServerStore.ts': [
 							'EnvironmentInfo',
 							'BotInfo',
 							'DeviceInfo',
 							'LocaleInfo',
 						],
-						'store/LocaleStore.ts': ['LocaleState'],
-						'store/APIStore.ts': ['getAPIStore'],
+						'app/store/LocaleStore.ts': ['LocaleState'],
+						'app/store/APIStore.ts': ['getAPIStore'],
 						'utils/ProxyAPIHelper/index.ts': ['ProxyAPI'],
 						'utils/CookieHelper.ts': ['getCookie', 'setCookie', 'deleteCookie'],
+						...ENV_VARIABLE_EXPORTER_FOR_AUTO_IMPORT,
 					},
 				],
 				dts: PROJECT_PATH + '/config/auto-imports.d.ts',

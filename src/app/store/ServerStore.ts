@@ -82,7 +82,7 @@ export const ServerStore = (() => {
 				LocaleInfo = (() => {
 					const strInfo = getCookie('LocaleInfo')
 
-					const info = strInfo ? JSON.parse(strInfo) : LocaleInfo
+					const info = strInfo ? JSON.parse(strInfo) : LocaleInfo || {}
 
 					setLocaleState({
 						lang: info.langSelected,
@@ -106,7 +106,7 @@ export const ServerStore = (() => {
 				LocaleInfo = (() => {
 					const strInfo = getCookie('LocaleInfo')
 
-					const info = strInfo ? JSON.parse(strInfo) : LocaleInfo || {}
+					const info = strInfo ? JSON.parse(strInfo) : LocaleInfo
 
 					setLocaleState({
 						lang: info.langSelected,

@@ -52,7 +52,6 @@ export const fetchData = async (
 				}
 			})
 			.catch((err) => {
-				console.log(err)
 				if (err.name !== 'AbortError') Console.log(err)
 				return {
 					status: 500,

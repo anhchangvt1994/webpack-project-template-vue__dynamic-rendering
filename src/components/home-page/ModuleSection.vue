@@ -35,7 +35,7 @@
 				v-for="item in moduleList"
 				:key="item.title"
 				:to="{
-					name: 'ContentPage',
+					name: ROUTER_CONTENT_NAME,
 					params: {
 						id: item.id,
 						title: getSlug(item.title),

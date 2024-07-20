@@ -1,8 +1,8 @@
 import ErrorComponent from 'components/ErrorComponent.vue'
 import PageLoader from 'components/PageLoader.vue'
-import { ServerStore } from 'store/ServerStore'
+import { ServerStore } from 'app/store/ServerStore'
 import LazyRoute from 'utils/LazyRoute'
-import { createWebHashHistory, type RouteRecordRaw } from 'vue-router'
+import { type RouteRecordRaw } from 'vue-router'
 import BeforeEach from './utils/BeforeEachHandler'
 
 ServerStore.init()
@@ -59,7 +59,7 @@ const routes: Readonly<RouteRecordRaw[]> = [
 	{
 		name: import.meta.env.ROUTER_LOGIN_NAME,
 		path: import.meta.env.ROUTER_LOGIN_PATH,
-		component: lazyComponent(() => import('pages/LoginPage.vue')),
+		component: lazyPage(() => import('pages/LoginPage.vue')),
 		meta: {
 			protect(certInfo) {
 				if (certInfo && certInfo.user && certInfo.user.email) {
@@ -97,25 +97,6 @@ const router = createRouter({
 	sensitive: true,
 })
 
-BeforeEach.init(
-	router,
-	// NOTE - Waiting Verify Router Name List
-	/**
-	 * It's very useful in case you need to redirect to a previous route after you finish verify
-	 * EX:
-	 * - You click "See more" comment
-	 * - The "See more" comment can only access after you logged
-	 * - In case you haven't logged already, the system will redirect you to "login page"
-	 * - You click login and the system will redirect you back to "see more" comment page
-	 */
-	/**
-	 * {
-	 *  [key: is the back router's name, you need to back after finish verify]: Array<> is list of router's name valid to keep the back router's name (EX: in step you're redirected to login page and you doesn't have account before, you will go to register page to regist and login -> that means register page is valid route to keep the back router's name continuely)
-	 * }
-	 */
-	{
-		[import.meta.env.ROUTER_COMMENT_NAME]: [import.meta.env.ROUTER_LOGIN_NAME],
-	}
-)
+BeforeEach.init(router, {})
 
 export default router

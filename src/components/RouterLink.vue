@@ -6,7 +6,6 @@
 		class?: string
 	}
 
-	const route = useRoute()
 	const props = defineProps<ILinkProps>()
 
 	if (props.to.params?.locale) {

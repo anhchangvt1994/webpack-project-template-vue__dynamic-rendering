@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { UserInfoState } from 'store/UserStore'
+	import { UserInfoState } from 'app/store/UserStore'
 	import ImageItem from 'components/ImageItem.vue'
 
 	const route = useRoute()
@@ -15,7 +15,7 @@
 		<div>
 			<router-link
 				:to="{
-					name: 'HomePage',
+					name: ROUTER_HOME_NAME,
 				}"
 				>Back to HomePage</router-link
 			>

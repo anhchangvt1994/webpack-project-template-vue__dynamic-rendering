@@ -1,4 +1,4 @@
-import { ServerStore } from 'store/ServerStore'
+import { ServerStore } from 'app/store/ServerStore'
 import { resetSeoTag } from 'utils/SeoHelper'
 import { RouteLocationNormalized, Router } from 'vue-router'
 

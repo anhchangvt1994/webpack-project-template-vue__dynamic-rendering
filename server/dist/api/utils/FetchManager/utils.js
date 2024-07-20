@@ -84,7 +84,6 @@ const fetchData = async (input, init) => {
 				}
 			})
 			.catch((err) => {
-				console.log(err)
 				if (err.name !== 'AbortError') _ConsoleHandler2.default.log(err)
 				return {
 					status: 500,

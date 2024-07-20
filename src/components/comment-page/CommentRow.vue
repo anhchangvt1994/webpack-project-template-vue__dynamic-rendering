@@ -3,8 +3,6 @@
 
 	const route = useRoute()
 
-	const commentPageName = import.meta.env.ROUTER_COMMENT_NAME
-
 	const props = defineProps<{
 		total?: number
 	}>()
@@ -39,9 +37,9 @@
 	</div>
 
 	<router-link
-		v-if="route.name !== commentPageName"
+		v-if="route.name !== ROUTER_COMMENT_NAME"
 		:to="{
-			name: commentPageName,
+			name: ROUTER_COMMENT_NAME,
 			params: route.params,
 		}"
 		>See more</router-link

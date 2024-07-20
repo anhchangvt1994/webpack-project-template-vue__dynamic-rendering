@@ -1,8 +1,7 @@
 <script setup>
-	import { UserInfoState } from 'store/UserStore'
+	import { UserInfoState } from 'app/store/UserStore'
 
 	const router = useRoute()
-	const loginPageName = import.meta.env.ROUTER_LOGIN_NAME
 </script>
 
 <template>
@@ -45,7 +44,7 @@
 				>Logout</span
 			>
 		</div>
-		<router-link v-else :to="{ name: loginPageName }"> Login </router-link>
+		<router-link v-else :to="{ name: ROUTER_LOGIN_NAME }"> Login </router-link>
 	</header>
 </template>
 
