@@ -14,11 +14,12 @@ module.exports = async (env, arg) => {
 	const WebpackConfigWithMode = await require(getWebpackConfigFilePathWithMode(
 		arg.mode
 	))
+
+	if (!WebpackConfigWithMode) return
+
 	const { ENV_VARIABLE_EXPORTER_FOR_AUTO_IMPORT } = await import(
 		'./config/env/ENV_AUTO_IMPORT.mjs'
 	)
-
-	if (!WebpackConfigWithMode) return
 
 	return {
 		mode: WebpackConfigWithMode.mode || arg.mode || 'production',
