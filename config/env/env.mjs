@@ -54,6 +54,12 @@ const generateObjectFormatted = (obj, prefix) => {
 
 			delete obj[key]
 		} else {
+			ENV_VARIABLE_EXPORTER += `export const ${tmpKey}=${JSON.stringify(
+				obj[key]
+			)};`
+			ENV_VARIABLE_EXPORTER_FOR_AUTO_IMPORT[
+				'@/config/env/ENV_AUTO_IMPORT.mjs'
+			].push(tmpKey)
 			setValueForObject(ENV_OBJECT_DEFAULT, tmpKey, obj[key])
 			setValueForObject(
 				ENV_OBJ_WITH_JSON_STRINGIFY_VALUE,
