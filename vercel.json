@@ -16,14 +16,14 @@
 			"use": "@vercel/node"
 		},
 		{
-			"src": "**/*.js",
+			"src": "server/index/index.js",
 			"use": "@vercel/node"
 		}
 	],
 	"routes": [
 		{
 			"src": "/(.*)",
-			"dest": "server/dist/index.uws.js"
+			"dest": "server/dist/index.js"
 		}
 	]
 }
