@@ -133,6 +133,7 @@
     "watch": true,
     "watchEffect": true,
     "watchPostEffect": true,
-    "watchSyncEffect": true
+    "watchSyncEffect": true,
+    "GENERAL_GREETING": true
   }
 }

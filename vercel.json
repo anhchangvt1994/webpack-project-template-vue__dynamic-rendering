@@ -14,16 +14,12 @@
 		{
 			"src": "package.json",
 			"use": "@vercel/node"
-		},
-		{
-			"src": "server/dist/index.uws.js",
-			"use": "@vercel/node"
 		}
 	],
-	"rewrites": [
+	"routes": [
 		{
-			"source": "/(.*)",
-			"destination": "server/dist/index.uws.js"
+			"src": "/(.*)",
+			"dest": "server/dist/index.uws.js"
 		}
 	],
 	"headers": [
