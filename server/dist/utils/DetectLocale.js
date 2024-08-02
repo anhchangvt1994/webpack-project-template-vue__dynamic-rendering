@@ -53,7 +53,8 @@ const LOCALE_INFO_DEFAULT = {
 }
 
 function detectLocale(req) {
-	if (!req) return LOCALE_INFO_DEFAULT
+	if (['true', 'TRUE', '1'].includes(process.env.DISABLE_DETECT_LOCALE) || !req)
+		return LOCALE_INFO_DEFAULT
 
 	const clientIp = (
 		req.headers['x-forwarded-for'] ||

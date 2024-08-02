@@ -15,14 +15,14 @@
 			"use": "@vercel/node"
 		},
 		{
-			"src": "server/dist/index.js",
+			"src": "server/dist/index.uws.js",
 			"use": "@vercel/node"
 		}
 	],
 	"rewrites": [
 		{
 			"source": "/(.*)",
-			"destination": "server/dist/index.js"
+			"destination": "server/dist/index.uws.js"
 		}
 	],
 	"headers": [

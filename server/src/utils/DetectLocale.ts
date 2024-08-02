@@ -30,7 +30,13 @@ const LOCALE_INFO_DEFAULT: ILocaleInfo = {
 }
 
 export default function detectLocale(req): ILocaleInfo {
-	if (!req) return LOCALE_INFO_DEFAULT
+	if (
+		['true', 'TRUE', '1'].includes(
+			process.env.DISABLE_DETECT_LOCALE as string
+		) ||
+		!req
+	)
+		return LOCALE_INFO_DEFAULT
 
 	const clientIp = (
 		req.headers['x-forwarded-for'] ||
