@@ -7,7 +7,8 @@
 		"POWER_LEVEL": "2",
 		"BANDWIDTH_LEVEL": "1",
 		"SERVER_LESS": "true",
-		"PUPPETEER_SKIP_DOWNLOAD": "true"
+		"PUPPETEER_SKIP_DOWNLOAD": "true",
+		"DISABLE_DETECT_LOCALE": "true"
 	},
 	"builds": [
 		{
