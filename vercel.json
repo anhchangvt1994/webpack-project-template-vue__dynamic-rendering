@@ -21,16 +21,5 @@
 			"src": "/(.*)",
 			"dest": "server/dist/index.uws.js"
 		}
-	],
-	"headers": [
-		{
-			"source": "/(.*)",
-			"headers": [
-				{
-					"key": "Cache-Control",
-					"value": "no-cache"
-				}
-			]
-		}
 	]
 }
