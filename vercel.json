@@ -16,14 +16,25 @@
 			"use": "@vercel/node"
 		},
 		{
-			"src": "server/index/index.js",
+			"src": "server/dist/index.js",
 			"use": "@vercel/node"
 		}
 	],
-	"routes": [
+	"rewrites": [
 		{
-			"src": "/(.*)",
-			"dest": "server/dist/index.js"
+			"source": "/(.*)",
+			"destination": "server/dist/index.js"
+		}
+	],
+	"headers": [
+		{
+			"source": "/(.*)",
+			"headers": [
+				{
+					"key": "Cache-Control",
+					"value": "no-cache"
+				}
+			]
 		}
 	]
 }
