@@ -19,7 +19,7 @@ const workerManager = WorkerManager.init(
 	path.resolve(__dirname, `./FollowResource.worker/index.${resourceExtension}`),
 	{
 		minWorkers: 1,
-		maxWorkers: 4,
+		maxWorkers: 3,
 	},
 	['scanToCleanBrowsers', 'scanToCleanPages', 'scanToCleanAPIDataCache']
 )

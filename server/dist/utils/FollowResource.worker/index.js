@@ -32,7 +32,6 @@ var _workerpool2 = _interopRequireDefault(_workerpool)
 
 var _zlib = require('zlib')
 var _constants = require('../../constants')
-
 var _ConsoleHandler = require('../ConsoleHandler')
 var _ConsoleHandler2 = _interopRequireDefault(_ConsoleHandler)
 var _utils = require('./utils')

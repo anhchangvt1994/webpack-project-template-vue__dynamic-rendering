@@ -1,12 +1,9 @@
-import Chromium from '@sparticuz/chromium-min'
 import fs from 'fs'
 import path from 'path'
 import WorkerPool from 'workerpool'
 
-import { Browser } from 'puppeteer-core'
 import { brotliDecompressSync } from 'zlib'
 import { resourceExtension } from '../../constants'
-import { defaultBrowserOptions, puppeteer } from '../../puppeteer-ssr/constants'
 import Console from '../ConsoleHandler'
 import { deleteResource as deleteResourceWithWorker } from './utils'
 

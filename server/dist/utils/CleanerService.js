@@ -26,7 +26,7 @@ const workerManager = _WorkerManager2.default.init(
 	),
 	{
 		minWorkers: 1,
-		maxWorkers: 4,
+		maxWorkers: 3,
 	},
 	['scanToCleanBrowsers', 'scanToCleanPages', 'scanToCleanAPIDataCache']
 )
