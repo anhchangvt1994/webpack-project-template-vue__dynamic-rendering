@@ -7,6 +7,23 @@ import { ENV, ENV_MODE, PROCESS_ENV } from './utils/InitEnv'
 
 require('events').EventEmitter.setMaxListeners(200)
 
+const setupCors = (res) => {
+	res
+		.writeHeader('Access-Control-Allow-Origin', '*')
+		.writeHeader('Access-Control-Allow-Credentials', 'true')
+		.writeHeader(
+			'Access-Control-Allow-Methods',
+			'GET, POST, PUT, DELETE, OPTIONS'
+		)
+		.writeHeader(
+			'Access-Control-Allow-Headers',
+			'origin, content-type, accept,' +
+				' x-requested-with, authorization, lang, domain-key, Access-Control-Allow-Origin'
+		)
+		.writeHeader('Access-Control-Max-Age', '2592000')
+		.writeHeader('Vary', 'Origin')
+}
+
 const startServer = async () => {
 	let port =
 		PROCESS_ENV.PORT || ENV_MODE === 'production'
@@ -36,6 +53,19 @@ const startServer = async () => {
 			}
 		})
 	}
+
+	app.any('/*', (res, req) => {
+		if (!PROCESS_ENV.BASE_URL)
+			PROCESS_ENV.BASE_URL = `${
+				req.getHeader('x-forwarded-proto')
+					? req.getHeader('x-forwarded-proto')
+					: 'http'
+			}://${req.getHeader('host')}`
+
+		setupCors(res)
+
+		res.end('') // end the request
+	})
 	;(await require('./api/index.uws').default).init(app)
 	;(await require('./puppeteer-ssr/index.uws').default).init(app)
 
