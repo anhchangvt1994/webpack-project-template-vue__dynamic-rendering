@@ -6,22 +6,20 @@ function _interopRequireDefault(obj) {
 var _workerpool = require('workerpool')
 var _workerpool2 = _interopRequireDefault(_workerpool)
 
-var _InitEnv = require('./InitEnv')
 var _ConsoleHandler = require('./ConsoleHandler')
 var _ConsoleHandler2 = _interopRequireDefault(_ConsoleHandler)
-
-const MAX_WORKERS = _InitEnv.PROCESS_ENV.MAX_WORKERS
-	? Number(_InitEnv.PROCESS_ENV.MAX_WORKERS)
-	: 7
 
 const WorkerManager = (() => {
 	return {
 		init: (workerPath, options, instanceTaskList) => {
 			options = {
 				minWorkers: 1,
-				maxWorkers: MAX_WORKERS,
+				maxWorkers: 1,
+				workerTerminateTimeout: 0,
 				...(options || {}),
 			}
+
+			const MAX_WORKERS = options.maxWorkers
 
 			let curPool = _workerpool2.default.pool(workerPath, options)
 
@@ -38,43 +36,58 @@ const WorkerManager = (() => {
 				_ConsoleHandler2.default.error(err)
 			}
 
-			const _terminate = (() => {
-				let isTerminate = false
+			const _terminate = (pool) => {
+				let count = 0
+				// let timeout: NodeJS.Timeout
+				return () => {
+					count++
 
-				return async () => {
-					if (isTerminate) return
-					isTerminate = true
-					const pool = curPool
+					if (count === MAX_WORKERS) {
+						setTimeout(() => {
+							pool.terminate()
+						}, 5000)
+					}
+				}
+			}
 
-					const newPool = _workerpool2.default.pool(workerPath, {
-						...options,
-					})
+			const _getFreePool = (() => {
+				let count = 0
+				let pool = curPool
+				let terminate = _terminate(pool)
 
-					try {
-						if (instanceTaskList && instanceTaskList.length) {
-							const promiseTaskList = []
-							for (const task of instanceTaskList) {
-								promiseTaskList.push(newPool.exec(task, []))
-							}
-
-							await Promise.all(promiseTaskList)
-						}
-					} catch (err) {
-						_ConsoleHandler2.default.error(err)
-					} finally {
-						isTerminate = false
+				return () => {
+					count++
+					if (count > MAX_WORKERS) {
+						count = 1
+						pool = curPool
+						terminate = _terminate(pool)
 					}
 
-					curPool = newPool
-					isTerminate = false
-					pool.terminate()
-				}
-			})()
+					if (count === 1) {
+						curPool = _workerpool2.default.pool(workerPath, {
+							...options,
+						})
 
-			const _getFreePool = () => ({
-				pool: curPool,
-				terminate: _terminate,
-			}) // _getFreePool
+						try {
+							if (instanceTaskList && instanceTaskList.length) {
+								const promiseTaskList = []
+								for (const task of instanceTaskList) {
+									promiseTaskList.push(curPool.exec(task, []))
+								}
+
+								Promise.all(promiseTaskList)
+							}
+						} catch (err) {
+							_ConsoleHandler2.default.error(err)
+						}
+					}
+
+					return {
+						pool,
+						terminate,
+					}
+				}
+			})() // _getFreePool
 
 			return {
 				getFreePool: _getFreePool,

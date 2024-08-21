@@ -15,7 +15,7 @@ const workerManager = _WorkerManager2.default.init(
 	_path2.default.resolve(__dirname, `./worker.${_constants.resourceExtension}`),
 	{
 		minWorkers: 1,
-		maxWorkers: 4,
+		maxWorkers: 3,
 	},
 	['fetchData', 'refreshData']
 )

@@ -19,7 +19,6 @@ const optionArgs = [
 	`--user-agent=${_userAgent}`,
 	'--no-sandbox',
 	'--disable-setuid-sandbox',
-	'--headless',
 	`--window-size=${_windowWidth},${_windowHeight}`,
 	`--ozone-override-screen-size=${_windowWidth},${_windowHeight}`,
 	'--disable-gpu',
@@ -65,7 +64,9 @@ const optionArgs = [
 	'--use-gl=swiftshader',
 	'--use-mock-keychain',
 	// '--use-gl=angle',
-	// '--use-angle=gl-egl',
+	// '--use-angle=gl',
+	// '--enable-unsafe-webgpu',
+	// '--use-angle=disabled',
 	// "--shm-size=4gb",
 ]
 exports.optionArgs = optionArgs
@@ -77,10 +78,10 @@ const defaultBrowserOptions = {
 		height: _windowHeight,
 	},
 	userDataDir: `${_constants.userDataPath}/user_data`,
-	// args: optionArgs,
+	args: exports.optionArgs,
 	// protocolTimeout: 240000, // NOTE - Handle for error protocol timeout (can test adidas site to got detail of this issue)
 	ignoreDefaultArgs: false,
-	ignoreHTTPSErrors: true,
+	// ignoreHTTPSErrors: true,
 }
 exports.defaultBrowserOptions = defaultBrowserOptions
 

@@ -2,8 +2,10 @@ export interface IStores {
 	browser: {
 		userDataPath?: string
 		reserveUserDataPath?: string
+		wsEndpoint?: string
 		[key: string]: string | number | undefined
 	}
+	totalRequestToCrawl: number
 	headers: {
 		botInfo?: string
 		deviceInfo?: string

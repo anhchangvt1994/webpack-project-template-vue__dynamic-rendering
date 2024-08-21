@@ -24,7 +24,7 @@ import CacheManager from './CacheManager'
 
 const workerManager = WorkerManager.init(
 	path.resolve(__dirname + `/OptimizeHtml.worker.${resourceExtension}`),
-	{ minWorkers: 1, maxWorkers: 4 },
+	{ minWorkers: 1, maxWorkers: 2 },
 	['optimizeContent', 'compressContent']
 )
 

@@ -12,14 +12,14 @@ import {
 	regexOptimizeForScriptBlockPerformance,
 } from '../constants'
 
-const compressContent = (html: string): string => {
+const compressContent = async (html: string): Promise<string> => {
 	if (!html) return ''
 	if (Buffer.isBuffer(html)) html = brotliDecompressSync(html).toString()
 
 	if (POWER_LEVEL === POWER_LEVEL_LIST.ONE) return html
 
 	if (ENV !== 'development') {
-		html = minify(html, {
+		html = await minify(html, {
 			collapseBooleanAttributes: true,
 			collapseInlineTagWhitespace: true,
 			collapseWhitespace: true,

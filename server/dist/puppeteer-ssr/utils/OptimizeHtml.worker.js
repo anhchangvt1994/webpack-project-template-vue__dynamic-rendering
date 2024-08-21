@@ -32,7 +32,7 @@ var _InitEnv = require('../../utils/InitEnv')
 
 var _constants3 = require('../constants')
 
-const compressContent = (html) => {
+const compressContent = async (html) => {
 	if (!html) return ''
 	if (Buffer.isBuffer(html))
 		html = _zlib.brotliDecompressSync.call(void 0, html).toString()
@@ -40,7 +40,7 @@ const compressContent = (html) => {
 	if (_constants.POWER_LEVEL === _constants.POWER_LEVEL_LIST.ONE) return html
 
 	if (_InitEnv.ENV !== 'development') {
-		html = _htmlminifierterser.minify.call(void 0, html, {
+		html = await _htmlminifierterser.minify.call(void 0, html, {
 			collapseBooleanAttributes: true,
 			collapseInlineTagWhitespace: true,
 			collapseWhitespace: true,

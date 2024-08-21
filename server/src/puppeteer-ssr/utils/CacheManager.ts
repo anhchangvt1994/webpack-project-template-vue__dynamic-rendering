@@ -15,7 +15,7 @@ const workerManager = WorkerManager.init(
 	path.resolve(__dirname, `./Cache.worker/index.${resourceExtension}`),
 	{
 		minWorkers: 1,
-		maxWorkers: 4,
+		maxWorkers: 3,
 	},
 	['get', 'set', 'renew', 'remove']
 )

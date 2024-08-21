@@ -61,7 +61,7 @@ const workerManager = _WorkerManager2.default.init(
 	_path2.default.resolve(
 		__dirname + `/OptimizeHtml.worker.${_constants.resourceExtension}`
 	),
-	{ minWorkers: 1, maxWorkers: 4 },
+	{ minWorkers: 1, maxWorkers: 2 },
 	['optimizeContent', 'compressContent']
 )
 
