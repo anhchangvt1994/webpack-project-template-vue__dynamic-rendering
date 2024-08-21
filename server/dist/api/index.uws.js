@@ -407,7 +407,9 @@ const apiService = (async () => {
 	return {
 		init(app) {
 			if (!app)
-				return _ConsoleHandler2.default.warn('You need provide express app!')
+				return _ConsoleHandler2.default.warn(
+					'You need provide uWebsockets app!'
+				)
 			_app = {
 				all: (pattern, handler) => {
 					app.get(pattern, handler)

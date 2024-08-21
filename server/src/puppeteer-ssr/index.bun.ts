@@ -159,7 +159,7 @@ const puppeteerSSRService = (async () => {
 
 	return {
 		init(app: Elysia) {
-			if (!app) return Console.warn('You need provide express app!')
+			if (!app) return Console.warn('You need provide bun app!')
 			_app = app
 			_allRequestHandler()
 		},

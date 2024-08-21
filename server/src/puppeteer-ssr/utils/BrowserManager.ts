@@ -83,17 +83,18 @@ const BrowserManager = (
 			ServerConfig.isRemoteCrawler ? '_remote' : ''
 		}`
 
+		const browserStore = (() => {
+			const tmpBrowserStore = getStore('browser')
+			return tmpBrowserStore || {}
+		})()
+		const promiseStore = (() => {
+			const tmpPromiseStore = getStore('promise')
+			return tmpPromiseStore || {}
+		})()
+
 		browserLaunch = new Promise(async (res, rej) => {
 			let isError = false
 			let promiseBrowser
-			const browserStore = (() => {
-				const tmpBrowserStore = getStore('browser')
-				return tmpBrowserStore || {}
-			})()
-			const promiseStore = (() => {
-				const tmpPromiseStore = getStore('promise')
-				return tmpPromiseStore || {}
-			})()
 
 			try {
 				if (canUseLinuxChromium && !promiseStore.executablePath) {
@@ -173,6 +174,9 @@ const BrowserManager = (
 			try {
 				let tabsClosed = 0
 				const browser: Browser = (await browserLaunch) as Browser
+
+				browserStore.wsEndpoint = browser.wsEndpoint()
+				setStore('browser', browserStore)
 
 				browser.on('createNewPage', (async (page: Page) => {
 					const safePage = _getSafePage(page)

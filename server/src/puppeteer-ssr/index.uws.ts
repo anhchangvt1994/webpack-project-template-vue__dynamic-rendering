@@ -541,7 +541,7 @@ const puppeteerSSRService = (async () => {
 
 	return {
 		init(app: TemplatedApp) {
-			if (!app) return Console.warn('You need provide express app!')
+			if (!app) return Console.warn('You need provide uWebSockets app!')
 			_app = app
 			_allRequestHandler()
 		},
