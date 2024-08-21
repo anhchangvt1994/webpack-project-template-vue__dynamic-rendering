@@ -25,58 +25,62 @@ const workerManager = WorkerManager.init(
 )
 
 const CleanerService = async () => {
-	// NOTE - Browsers Cleaner
-	const cleanBrowsers = (() => {
-		let executablePath: string
-		return async (durationValidToKeep = PROCESS_ENV.RESET_RESOURCE ? 0 : 1) => {
-			const browserStore = (() => {
-				const tmpBrowserStore = getStore('browser')
-				return tmpBrowserStore || {}
-			})()
-			const promiseStore = (() => {
-				const tmpPromiseStore = getStore('promise')
-				return tmpPromiseStore || {}
-			})()
+	if (!process.env.PUPPETEER_SKIP_DOWNLOAD || !canUseLinuxChromium) {
+		// NOTE - Browsers Cleaner
+		const cleanBrowsers = (() => {
+			let executablePath: string
+			return async (
+				durationValidToKeep = PROCESS_ENV.RESET_RESOURCE ? 0 : 1
+			) => {
+				const browserStore = (() => {
+					const tmpBrowserStore = getStore('browser')
+					return tmpBrowserStore || {}
+				})()
+				const promiseStore = (() => {
+					const tmpPromiseStore = getStore('promise')
+					return tmpPromiseStore || {}
+				})()
 
-			if (canUseLinuxChromium && !promiseStore.executablePath) {
-				Console.log('Create executablePath')
-				promiseStore.executablePath = Chromium.executablePath(chromiumPath)
+				if (canUseLinuxChromium && !promiseStore.executablePath) {
+					Console.log('Create executablePath')
+					promiseStore.executablePath = Chromium.executablePath(chromiumPath)
+				}
+
+				setStore('browser', browserStore)
+				setStore('promise', promiseStore)
+
+				if (!executablePath && promiseStore.executablePath) {
+					executablePath = await promiseStore.executablePath
+				}
+
+				const freePool = workerManager.getFreePool()
+				const pool = freePool.pool
+
+				browserStore.executablePath = executablePath
+
+				try {
+					await pool.exec('scanToCleanBrowsers', [
+						userDataPath,
+						durationValidToKeep,
+						browserStore,
+					])
+				} catch (err) {
+					Console.error(err)
+				} finally {
+					freePool.terminate()
+
+					if (!SERVER_LESS)
+						setTimeout(() => {
+							cleanBrowsers(5)
+						}, 300000)
+				}
 			}
+		})()
 
-			setStore('browser', browserStore)
-			setStore('promise', promiseStore)
-
-			if (!executablePath && promiseStore.executablePath) {
-				executablePath = await promiseStore.executablePath
-			}
-
-			const freePool = workerManager.getFreePool()
-			const pool = freePool.pool
-
-			browserStore.executablePath = executablePath
-
-			try {
-				await pool.exec('scanToCleanBrowsers', [
-					userDataPath,
-					durationValidToKeep,
-					browserStore,
-				])
-			} catch (err) {
-				Console.error(err)
-			} finally {
-				freePool.terminate()
-
-				if (!SERVER_LESS)
-					setTimeout(() => {
-						cleanBrowsers(5)
-					}, 300000)
-			}
-		}
-	})()
-
-	// if (!SERVER_LESS) cleanBrowsers()
-	if (process.env.MODE === 'development') cleanBrowsers(0)
-	else cleanBrowsers(60)
+		// if (!SERVER_LESS) cleanBrowsers()
+		if (process.env.MODE === 'development') cleanBrowsers(0)
+		else cleanBrowsers(60)
+	}
 
 	// NOTE - Pages Cleaner
 	const cleanPages = async (
