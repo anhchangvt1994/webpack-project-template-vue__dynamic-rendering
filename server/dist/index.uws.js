@@ -56,10 +56,7 @@ const startServer = async () => {
 		cert_file_name: 'misc/cert.pem',
 	})
 
-	if (
-		_serverconfig2.default.crawler &&
-		!_serverconfig2.default.isRemoteCrawler
-	) {
+	if (!_serverconfig2.default.isRemoteCrawler) {
 		app.get('/robots.txt', (res, req) => {
 			try {
 				const body = _fs2.default.readFileSync(

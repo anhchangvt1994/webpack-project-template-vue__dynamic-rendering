@@ -16,7 +16,7 @@ const DetectStaticMiddle = (res: HttpResponse, req: HttpRequest) => {
 	 * https://www.inchcalculator.com/convert/month-to-second/
 	 */
 
-	if (isStatic && ServerConfig.crawler && !ServerConfig.isRemoteCrawler) {
+	if (isStatic && !ServerConfig.isRemoteCrawler) {
 		const staticPath = path.resolve(
 			__dirname,
 			`../../../../dist/${req.getUrl()}`
