@@ -138,8 +138,17 @@ const waitResponse = (() => {
 				const waitForNavigate = async () => {
 					if (hasRedirected) {
 						hasRedirected = false
-						await safePage()?.waitForSelector('body')
-						await waitForNavigate()
+						return new Promise(async (resolveAfterNavigate) => {
+							try {
+								await safePage()?.waitForSelector('body')
+								await waitForNavigate()
+
+								resolveAfterNavigate('finish')
+							} catch (err) {
+								Console.error(err.message)
+								resolve(null)
+							}
+						})
 					}
 				}
 

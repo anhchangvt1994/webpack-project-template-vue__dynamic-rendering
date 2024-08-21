@@ -200,16 +200,25 @@ const waitResponse = (() => {
 				const waitForNavigate = async () => {
 					if (hasRedirected) {
 						hasRedirected = false
-						await _optionalChain([
-							safePage,
-							'call',
-							(_11) => _11(),
-							'optionalAccess',
-							(_12) => _12.waitForSelector,
-							'call',
-							(_13) => _13('body'),
-						])
-						await waitForNavigate()
+						return new Promise(async (resolveAfterNavigate) => {
+							try {
+								await _optionalChain([
+									safePage,
+									'call',
+									(_11) => _11(),
+									'optionalAccess',
+									(_12) => _12.waitForSelector,
+									'call',
+									(_13) => _13('body'),
+								])
+								await waitForNavigate()
+
+								resolveAfterNavigate('finish')
+							} catch (err) {
+								_ConsoleHandler2.default.error(err.message)
+								resolve(null)
+							}
+						})
 					}
 				}
 
