@@ -32,14 +32,14 @@ const workerManager = WorkerManager.init(
 	),
 	{
 		minWorkers: 1,
-		maxWorkers: 3,
+		maxWorkers: 1,
 	},
 	['deleteResource']
 )
 
 export const deleteUserDataDir = async (dir: string) => {
 	if (dir) {
-		const freePool = workerManager.getFreePool()
+		const freePool = await workerManager.getFreePool()
 		const pool = freePool.pool
 
 		try {
@@ -47,9 +47,9 @@ export const deleteUserDataDir = async (dir: string) => {
 		} catch (err) {
 			Console.log('BrowserManager line 39:')
 			Console.error(err)
-		} finally {
-			freePool.terminate()
 		}
+
+		freePool.terminate()
 	}
 } // deleteUserDataDir
 
@@ -178,28 +178,21 @@ const BrowserManager = (
 				browserStore.wsEndpoint = browser.wsEndpoint()
 				setStore('browser', browserStore)
 
-				browser.on('createNewPage', (async (page: Page) => {
-					const safePage = _getSafePage(page)
-					await new Promise((resolveCloseTab) => {
-						const timeoutCloseTab = setTimeout(async () => {
-							const tmpPage = safePage()
-							if (!tmpPage) resolveCloseTab(null)
-							else if (browser.connected && !tmpPage.isClosed()) {
-								try {
-									await tmpPage.close()
-								} catch (err) {
-									Console.log('BrowserManager line 164')
-									Console.error(err)
-								}
-							}
-						}, 180000)
+				browser.on('createNewPage', (async (page?: Page) => {
+					if (page) {
+						const safePage = _getSafePage(page)
 
-						safePage()?.once('close', () => {
-							clearTimeout(timeoutCloseTab)
-							resolveCloseTab(null)
+						const timeoutToCloseBrowserPage = setTimeout(() => {
+							browser.emit('closePage', true)
+						}, 30000)
+
+						safePage()?.once('close', async () => {
+							clearTimeout(timeoutToCloseBrowserPage)
 						})
-					})
+					}
+				}) as any)
 
+				browser.on('closePage', async (url) => {
 					tabsClosed++
 
 					if (!SERVER_LESS && tabsClosed === maxRequestPerBrowser) {
@@ -211,7 +204,20 @@ const BrowserManager = (
 								Console.error(err)
 							}
 					}
-				}) as any)
+					// else {
+					// 	browser.pages().then(async (pages) => {
+					// 		if (pages.length) {
+					// 			for (const page of pages) {
+					// 				if (page.url() === url && !page.isClosed()) {
+					// 					await new Promise((res) => setTimeout(res, 20000))
+
+					// 					if (!page.isClosed()) page.close()
+					// 				}
+					// 			}
+					// 		}
+					// 	})
+					// }
+				})
 
 				browser.once('disconnected', () => {
 					deleteUserDataDir(selfUserDataDirPath)

@@ -10,7 +10,7 @@ interface IInitOptions {
 
 interface IGetFreePool {
 	pool: Pool
-	terminate: () => void
+	terminate: (options?: { force?: boolean; delay?: number }) => void
 }
 
 const WorkerManager = (() => {
@@ -27,9 +27,14 @@ const WorkerManager = (() => {
 				...(options || {}),
 			}
 
-			const MAX_WORKERS = options.maxWorkers
+			let rootCounter = 0
 
 			let curPool = WorkerPool.pool(workerPath, options)
+
+			let terminate: {
+				run: IGetFreePool['terminate']
+				cancel: () => void
+			}
 
 			try {
 				if (instanceTaskList && instanceTaskList.length) {
@@ -44,55 +49,80 @@ const WorkerManager = (() => {
 				Console.error(err)
 			}
 
-			const _terminate = (pool: Pool) => {
-				let count = 0
-				// let timeout: NodeJS.Timeout
-				return () => {
-					count++
+			const _getTerminate = (
+				pool: Pool
+			): {
+				run: IGetFreePool['terminate']
+				cancel: () => void
+			} => {
+				let timeout: NodeJS.Timeout
+				return {
+					run: (options) => {
+						options = {
+							force: false,
+							delay: 10000,
+							...options,
+						}
+						rootCounter--
 
-					if (count === MAX_WORKERS) {
-						setTimeout(() => {
-							pool.terminate()
-						}, 5000)
-					}
+						timeout = setTimeout(async () => {
+							curPool = WorkerPool.pool(workerPath, {
+								...options,
+							})
+							terminate = _getTerminate(curPool)
+
+							try {
+								if (instanceTaskList && instanceTaskList.length) {
+									const promiseTaskList: Promise<any>[] = []
+									for (const task of instanceTaskList) {
+										promiseTaskList.push(curPool.exec(task, []))
+									}
+
+									await Promise.all(promiseTaskList)
+								}
+
+								if (!pool.stats().activeTasks) {
+									pool.terminate(options.force)
+								} else {
+									setTimeout(() => {
+										pool.terminate(options.force)
+									}, 5000)
+								}
+							} catch (err) {
+								Console.error(err)
+							}
+						}, options.delay)
+					},
+					cancel: () => {
+						if (timeout) clearTimeout(timeout)
+					},
 				}
 			}
 
-			const _getFreePool: () => IGetFreePool = (() => {
-				let count = 0
-				let pool = curPool as Pool
-				let terminate = _terminate(pool)
+			terminate = _getTerminate(curPool)
 
-				return () => {
-					count++
-					if (count > MAX_WORKERS) {
-						count = 1
-						pool = curPool
-						terminate = _terminate(pool)
+			const _getFreePool: (options?: {
+				delay?: number
+			}) => Promise<IGetFreePool> = (() => {
+				return async (options) => {
+					options = {
+						delay: 0,
+						...options,
 					}
 
-					if (count === 1) {
-						curPool = WorkerPool.pool(workerPath, {
-							...options,
-						})
+					rootCounter++
 
-						try {
-							if (instanceTaskList && instanceTaskList.length) {
-								const promiseTaskList: Promise<any>[] = []
-								for (const task of instanceTaskList) {
-									promiseTaskList.push(curPool.exec(task, []))
-								}
+					terminate.cancel()
 
-								Promise.all(promiseTaskList)
-							}
-						} catch (err) {
-							Console.error(err)
-						}
+					if (options.delay) {
+						const duration = (options.delay as number) * (rootCounter - 1)
+
+						await new Promise((res) => setTimeout(res, duration))
 					}
 
 					return {
-						pool,
-						terminate,
+						pool: curPool,
+						terminate: terminate.run,
 					}
 				}
 			})() // _getFreePool

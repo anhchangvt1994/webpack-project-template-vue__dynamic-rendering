@@ -79,10 +79,10 @@ const startServer = async () => {
 				const body = _fs2.default.readFileSync(
 					_path2.default.resolve(__dirname, '../robots.txt')
 				)
-				res.end(body)
+				res.end(body, true)
 			} catch (e) {
 				res.writeStatus('404')
-				res.end('File not found')
+				res.end('File not found', true)
 			}
 		})
 	}
@@ -97,7 +97,7 @@ const startServer = async () => {
 
 		setupCors(res)
 
-		res.end('') // end the request
+		res.end('', true) // end the request
 	})
 	;(await require('./api/index.uws').default).init(app)
 	;(await require('./puppeteer-ssr/index.uws').default).init(app)

@@ -34,7 +34,7 @@ function _optionalChain(ops) {
 
 var _zlib = require('zlib')
 
-var _CacheManager = require('./utils/CacheManager')
+var _utils = require('./utils/CacheManager/utils')
 var _ConsoleHandler = require('../utils/ConsoleHandler')
 var _ConsoleHandler2 = _interopRequireDefault(_ConsoleHandler)
 var _StringHelper = require('../utils/StringHelper')
@@ -54,7 +54,7 @@ const fetchCache = (() => {
 	return (cacheKey) =>
 		new Promise((res) => {
 			setTimeout(async () => {
-				const apiCache = await _CacheManager.getData.call(void 0, cacheKey)
+				const apiCache = await _utils.getData.call(void 0, cacheKey)
 
 				if (apiCache.cache) res(apiCache.cache)
 				else {
@@ -221,7 +221,7 @@ const apiService = (async () => {
 				// NOTE - Handle API Store
 				// NOTE - when enableStore, system will store it, but when the client set enableStore to false, system have to remove it. So we must recalculate in each
 				if (requestInfo.enableStore) {
-					const apiStore = await _CacheManager.getStore.call(
+					const apiStore = await _utils.getStore.call(
 						void 0,
 						requestInfo.storeKey,
 						{
@@ -229,20 +229,16 @@ const apiService = (async () => {
 						}
 					)
 					if (!apiStore || !apiStore.data) {
-						_CacheManager.setStore.call(void 0, requestInfo.storeKey, [
+						_utils.setStore.call(void 0, requestInfo.storeKey, [
 							requestInfo.cacheKey,
 						])
 					} else if (!apiStore.data.includes(requestInfo.cacheKey)) {
 						apiStore.data.push(requestInfo.cacheKey)
 
-						_CacheManager.setStore.call(
-							void 0,
-							requestInfo.storeKey,
-							apiStore.data
-						)
+						_utils.setStore.call(void 0, requestInfo.storeKey, apiStore.data)
 					}
 				} else if (requestInfo.storeKey) {
-					const apiStore = await _CacheManager.getStore.call(
+					const apiStore = await _utils.getStore.call(
 						void 0,
 						requestInfo.storeKey,
 						{
@@ -256,17 +252,13 @@ const apiService = (async () => {
 
 						tmpAPIStoreData.splice(indexNext, 1)
 
-						_CacheManager.setStore.call(
-							void 0,
-							requestInfo.storeKey,
-							tmpAPIStoreData
-						)
+						_utils.setStore.call(void 0, requestInfo.storeKey, tmpAPIStoreData)
 					}
 				}
 
 				// NOTE - Handle API Cache
 				if (enableCache) {
-					const apiCache = await _CacheManager.getData.call(
+					const apiCache = await _utils.getData.call(
 						void 0,
 						requestInfo.cacheKey
 					)
@@ -277,7 +269,7 @@ const apiService = (async () => {
 							curTime - new Date(apiCache.requestedAt).getTime() >=
 							requestInfo.expiredTime
 						) {
-							_CacheManager.removeData.call(void 0, requestInfo.cacheKey)
+							_utils.removeData.call(void 0, requestInfo.cacheKey)
 						} else {
 							if (
 								(curTime - new Date(apiCache.updatedAt).getTime() >=
@@ -286,7 +278,7 @@ const apiService = (async () => {
 									apiCache.cache.status !== 200) &&
 								apiCache.status !== 'fetch'
 							) {
-								_CacheManager.updateDataStatus.call(
+								_utils.updateDataStatus.call(
 									void 0,
 									requestInfo.cacheKey,
 									'fetch'
@@ -306,7 +298,7 @@ const apiService = (async () => {
 											!apiCache.cache ||
 											apiCache.cache.status !== 200
 										if (enableToSetCache) {
-											_CacheManager.setData.call(void 0, requestInfo.cacheKey, {
+											_utils.setData.call(void 0, requestInfo.cacheKey, {
 												url: fetchUrl,
 												method,
 												body,
@@ -326,17 +318,21 @@ const apiService = (async () => {
 
 							const data = convertData(cache, contentEncoding)
 
-							res.cork(() => {
-								res.writableEnded = true
-								res
-									.writeStatus(
-										`${cache.status}${cache.message ? ' ' + cache.message : ''}`
-									)
-									.writeHeader('Content-Type', 'application/json')
-									.writeHeader('Cache-Control', 'no-store')
-									.writeHeader('Content-Encoding', contentEncoding)
-									.end(data, true)
-							})
+							if (!res.writableEnded) {
+								res.cork(() => {
+									res.writableEnded = true
+									res
+										.writeStatus(
+											`${cache.status}${
+												cache.message ? ' ' + cache.message : ''
+											}`
+										)
+										.writeHeader('Content-Type', 'application/json')
+										.writeHeader('Cache-Control', 'no-store')
+										.writeHeader('Content-Encoding', contentEncoding)
+										.end(data, true)
+								})
+							}
 						} // IF expiredTime is valid
 					} // IF has apiCache
 				} // IF requestInfo.expiredTime > 0
@@ -354,17 +350,17 @@ const apiService = (async () => {
 					)
 
 					if (enableCache) {
-						_CacheManager.setData.call(void 0, requestInfo.cacheKey, '', {
+						_utils.setData.call(void 0, requestInfo.cacheKey, '', {
 							isCompress: true,
 							status: 'fetch',
 						})
-					} else _CacheManager.removeData.call(void 0, requestInfo.cacheKey)
+					} else _utils.removeData.call(void 0, requestInfo.cacheKey)
 
 					const result = await fetchAPITarget
 					const data = convertData(result, contentEncoding)
 
 					if (enableCache) {
-						_CacheManager.setData.call(void 0, requestInfo.cacheKey, {
+						_utils.setData.call(void 0, requestInfo.cacheKey, {
 							url: fetchUrl,
 							method,
 							body,

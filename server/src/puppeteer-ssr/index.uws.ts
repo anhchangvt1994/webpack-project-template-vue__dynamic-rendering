@@ -5,7 +5,7 @@ import { brotliCompressSync, brotliDecompressSync, gzipSync } from 'zlib'
 import {
 	getData as getDataCache,
 	getStore as getStoreCache,
-} from '../api/utils/CacheManager'
+} from '../api/utils/CacheManager/utils'
 import { COOKIE_EXPIRED, SERVER_LESS } from '../constants'
 import DetectBotMiddle from '../middlewares/uws/DetectBot'
 import DetectDeviceMiddle from '../middlewares/uws/DetectDevice'
@@ -343,12 +343,12 @@ const puppeteerSSRService = (async () => {
 									res.end(body || '', true)
 								} else {
 									res
-										.writeStatus(String(result.status))
+										// .writeStatus(String(result.status))
 										.writeHeader('Content-Type', 'text/html; charset=utf-8')
 
-									if (enableContentEncoding && result.status === 200) {
-										res.writeHeader('Content-Encoding', contentEncoding)
-									}
+									// if (enableContentEncoding && result.status === 200) {
+									// 	res.writeHeader('Content-Encoding', contentEncoding)
+									// }
 									res.end(`${result.status} Error`, true)
 								}
 							} else {
@@ -472,9 +472,9 @@ const puppeteerSSRService = (async () => {
 
 						html = html.replace(
 							'</head>',
-							`<script>window.API_STORE = ${JSON.stringify(
-								WindowAPIStore
-							)}</script></head>`
+							`<script>window.API_STORE = ${JSON.stringify({
+								WindowAPIStore,
+							})}</script></head>`
 						)
 
 						const body = (() => {
@@ -521,18 +521,20 @@ const puppeteerSSRService = (async () => {
 							res.end(body, true)
 						})
 					} catch (err) {
-						console.log(err)
-						res.cork(() => {
-							res
-								.writeStatus('404')
-								.writeHeader(
-									'Content-Type',
-									reqHeaderAccept === 'application/json'
-										? 'application/json'
-										: 'text/html; charset=utf-8'
-								)
-								.end('File not found!', true)
-						})
+						Console.log(err)
+						if (!res.writableEnded) {
+							res.cork(() => {
+								res
+									.writeStatus('404')
+									.writeHeader(
+										'Content-Type',
+										reqHeaderAccept === 'application/json'
+											? 'application/json'
+											: 'text/html; charset=utf-8'
+									)
+									.end('File not found!', true)
+							})
+						}
 					}
 				}
 			}

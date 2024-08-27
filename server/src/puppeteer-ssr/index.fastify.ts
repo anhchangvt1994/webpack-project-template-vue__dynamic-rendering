@@ -5,7 +5,7 @@ import { brotliCompressSync, brotliDecompressSync, gzipSync } from 'zlib'
 import {
 	getData as getDataCache,
 	getStore as getStoreCache,
-} from '../api/utils/CacheManager'
+} from '../api/utils/CacheManager/utils'
 import { SERVER_LESS } from '../constants'
 import ServerConfig from '../server.config'
 import { IBotInfo } from '../types'

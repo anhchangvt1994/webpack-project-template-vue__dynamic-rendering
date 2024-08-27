@@ -26,7 +26,7 @@ const workerManager = _WorkerManager2.default.init(
 	),
 	{
 		minWorkers: 1,
-		maxWorkers: 3,
+		maxWorkers: 4,
 	},
 	['scanToCleanBrowsers', 'scanToCleanPages', 'scanToCleanAPIDataCache']
 )
@@ -65,7 +65,7 @@ const CleanerService = async () => {
 					executablePath = await promiseStore.executablePath
 				}
 
-				const freePool = workerManager.getFreePool()
+				const freePool = await workerManager.getFreePool()
 				const pool = freePool.pool
 
 				browserStore.executablePath = executablePath
@@ -78,14 +78,14 @@ const CleanerService = async () => {
 					])
 				} catch (err) {
 					_ConsoleHandler2.default.error(err)
-				} finally {
-					freePool.terminate()
-
-					if (!_constants.SERVER_LESS)
-						setTimeout(() => {
-							cleanBrowsers(5)
-						}, 300000)
 				}
+
+				// freePool.terminate()
+
+				if (!_constants.SERVER_LESS)
+					setTimeout(() => {
+						cleanBrowsers(5)
+					}, 300000)
 			}
 		})()
 
@@ -98,7 +98,7 @@ const CleanerService = async () => {
 	const cleanPages = async (
 		durationValidToKeep = _InitEnv.PROCESS_ENV.RESET_RESOURCE ? 0 : 1
 	) => {
-		const freePool = workerManager.getFreePool()
+		const freePool = await workerManager.getFreePool()
 		const pool = freePool.pool
 
 		try {
@@ -108,16 +108,16 @@ const CleanerService = async () => {
 			])
 		} catch (err) {
 			_ConsoleHandler2.default.error(err)
-		} finally {
-			freePool.terminate()
+		}
 
-			if (!_constants.SERVER_LESS) {
-				const cacheTimeHour = _serverconfig2.default.crawl.cache.time / 3600
+		// freePool.terminate()
 
-				setTimeout(() => {
-					cleanPages(cacheTimeHour)
-				}, 21600000)
-			}
+		if (!_constants.SERVER_LESS) {
+			const cacheTimeHour = _serverconfig2.default.crawl.cache.time / 3600
+
+			setTimeout(() => {
+				cleanPages(cacheTimeHour)
+			}, 21600000)
 		}
 	}
 
@@ -126,21 +126,21 @@ const CleanerService = async () => {
 
 	// NOTE - API Data Cache Cleaner
 	const cleanAPIDataCache = async () => {
-		const freePool = workerManager.getFreePool()
+		const freePool = await workerManager.getFreePool()
 		const pool = freePool.pool
 
 		try {
 			await pool.exec('scanToCleanAPIDataCache', [_constants.dataPath])
 		} catch (err) {
 			_ConsoleHandler2.default.error(err)
-		} finally {
-			freePool.terminate()
+		}
 
-			if (!_constants.SERVER_LESS) {
-				setTimeout(() => {
-					cleanAPIDataCache()
-				}, 10000)
-			}
+		// freePool.terminate()
+
+		if (!_constants.SERVER_LESS) {
+			setTimeout(() => {
+				cleanAPIDataCache()
+			}, 10000)
 		}
 	}
 
@@ -149,21 +149,21 @@ const CleanerService = async () => {
 
 	// NOTE - API Store Cache Cleaner
 	const cleanAPIStoreCache = async () => {
-		const freePool = workerManager.getFreePool()
+		const freePool = await workerManager.getFreePool()
 		const pool = freePool.pool
 
 		try {
 			await pool.exec('scanToCleanAPIStoreCache', [_constants.storePath])
 		} catch (err) {
 			_ConsoleHandler2.default.error(err)
-		} finally {
-			freePool.terminate()
+		}
 
-			if (!_constants.SERVER_LESS) {
-				setTimeout(() => {
-					cleanAPIStoreCache()
-				}, 10000)
-			}
+		// freePool.terminate()
+
+		if (!_constants.SERVER_LESS) {
+			setTimeout(() => {
+				cleanAPIStoreCache()
+			}, 10000)
 		}
 	}
 

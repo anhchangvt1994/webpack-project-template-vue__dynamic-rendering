@@ -47,14 +47,14 @@ const workerManager = _WorkerManager2.default.init(
 	),
 	{
 		minWorkers: 1,
-		maxWorkers: 3,
+		maxWorkers: 1,
 	},
 	['deleteResource']
 )
 
 const deleteUserDataDir = async (dir) => {
 	if (dir) {
-		const freePool = workerManager.getFreePool()
+		const freePool = await workerManager.getFreePool()
 		const pool = freePool.pool
 
 		try {
@@ -62,9 +62,9 @@ const deleteUserDataDir = async (dir) => {
 		} catch (err) {
 			_ConsoleHandler2.default.log('BrowserManager line 39:')
 			_ConsoleHandler2.default.error(err)
-		} finally {
-			freePool.terminate()
 		}
+
+		freePool.terminate()
 	}
 }
 exports.deleteUserDataDir = deleteUserDataDir // deleteUserDataDir
@@ -200,20 +200,12 @@ const BrowserManager = (
 				_store.setStore.call(void 0, 'browser', browserStore)
 
 				browser.on('createNewPage', async (page) => {
-					const safePage = _getSafePage(page)
-					await new Promise((resolveCloseTab) => {
-						const timeoutCloseTab = setTimeout(async () => {
-							const tmpPage = safePage()
-							if (!tmpPage) resolveCloseTab(null)
-							else if (browser.connected && !tmpPage.isClosed()) {
-								try {
-									await tmpPage.close()
-								} catch (err) {
-									_ConsoleHandler2.default.log('BrowserManager line 164')
-									_ConsoleHandler2.default.error(err)
-								}
-							}
-						}, 180000)
+					if (page) {
+						const safePage = _getSafePage(page)
+
+						const timeoutToCloseBrowserPage = setTimeout(() => {
+							browser.emit('closePage', true)
+						}, 30000)
 
 						_optionalChain([
 							safePage,
@@ -223,13 +215,14 @@ const BrowserManager = (
 							(_2) => _2.once,
 							'call',
 							(_3) =>
-								_3('close', () => {
-									clearTimeout(timeoutCloseTab)
-									resolveCloseTab(null)
+								_3('close', async () => {
+									clearTimeout(timeoutToCloseBrowserPage)
 								}),
 						])
-					})
+					}
+				})
 
+				browser.on('closePage', async (url) => {
 					tabsClosed++
 
 					if (!_constants.SERVER_LESS && tabsClosed === maxRequestPerBrowser) {
@@ -241,6 +234,19 @@ const BrowserManager = (
 								_ConsoleHandler2.default.error(err)
 							}
 					}
+					// else {
+					// 	browser.pages().then(async (pages) => {
+					// 		if (pages.length) {
+					// 			for (const page of pages) {
+					// 				if (page.url() === url && !page.isClosed()) {
+					// 					await new Promise((res) => setTimeout(res, 20000))
+
+					// 					if (!page.isClosed()) page.close()
+					// 				}
+					// 			}
+					// 		}
+					// 	})
+					// }
 				})
 
 				browser.once('disconnected', () => {

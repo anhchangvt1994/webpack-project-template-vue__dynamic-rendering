@@ -1,24 +1,18 @@
 import fs from 'fs'
 import path from 'path'
-import { pagesPath, resourceExtension } from '../../constants'
-import ServerConfig from '../../server.config'
-import Console from '../../utils/ConsoleHandler'
-import WorkerManager from '../../utils/WorkerManager'
-import { ISSRResult } from '../types'
+import { pagesPath } from '../../../constants'
+import ServerConfig from '../../../server.config'
+import Console from '../../../utils/ConsoleHandler'
+import { ISSRResult } from '../../types'
 import {
 	ICacheSetParams,
 	getKey as getCacheKey,
 	getFileInfo,
-} from './Cache.worker/utils'
-
-const workerManager = WorkerManager.init(
-	path.resolve(__dirname, `./Cache.worker/index.${resourceExtension}`),
-	{
-		minWorkers: 1,
-		maxWorkers: 3,
-	},
-	['get', 'set', 'renew', 'remove']
-)
+	get as getCache,
+	set as setCache,
+	renew as renewCache,
+	remove as removeCache,
+} from '../Cache.worker/utils'
 
 const maintainFile = path.resolve(__dirname, '../../../maintain.html')
 
@@ -50,18 +44,15 @@ const CacheManager = (url: string) => {
 				isInit: true,
 			}
 
-		const freePool = workerManager.getFreePool()
-		const pool = freePool.pool
+		let result
 
 		try {
-			const result = await pool.exec('get', [url])
-			return result
+			result = await getCache(url)
 		} catch (err) {
 			Console.error(err)
-			return
-		} finally {
-			freePool.terminate()
 		}
+
+		return result
 	} // get
 
 	const achieve = async (): Promise<ISSRResult> => {
@@ -117,48 +108,39 @@ const CacheManager = (url: string) => {
 				status: params.html ? 200 : 503,
 			}
 
-		const freePool = workerManager.getFreePool()
-		const pool = freePool.pool
+		let result
 
 		try {
-			const result = await pool.exec('set', [params])
-			return result
+			result = setCache(params)
 		} catch (err) {
 			Console.error(err)
-			return
-		} finally {
-			freePool.terminate()
 		}
+
+		return result
 	} // set
 
 	const renew = async () => {
-		const freePool = workerManager.getFreePool()
-		const pool = freePool.pool
+		let result
 
 		try {
-			const result = await pool.exec('renew', [url])
-			return result
+			result = await renewCache(url)
 		} catch (err) {
 			Console.error(err)
-			return
-		} finally {
-			freePool.terminate()
 		}
+
+		return result
 	} // renew
 
 	const remove = async (url: string) => {
 		if (!enableToCache) return
-		const freePool = workerManager.getFreePool()
-		const pool = freePool.pool
 
 		try {
-			await pool.exec('remove', [url])
+			await removeCache(url)
 		} catch (err) {
 			Console.error(err)
-			return
-		} finally {
-			freePool.terminate()
 		}
+
+		return
 	} // remove
 
 	return {

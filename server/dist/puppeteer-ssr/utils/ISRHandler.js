@@ -38,8 +38,6 @@ function _optionalChain(ops) {
 	}
 	return value
 }
-var _path = require('path')
-var _path2 = _interopRequireDefault(_path)
 
 var _constants = require('../../constants')
 var _serverconfig = require('../../server.config')
@@ -47,23 +45,15 @@ var _serverconfig2 = _interopRequireDefault(_serverconfig)
 var _ConsoleHandler = require('../../utils/ConsoleHandler')
 var _ConsoleHandler2 = _interopRequireDefault(_ConsoleHandler)
 var _InitEnv = require('../../utils/InitEnv')
-var _WorkerManager = require('../../utils/WorkerManager')
-var _WorkerManager2 = _interopRequireDefault(_WorkerManager)
 
 var _constants3 = require('../constants')
 
 var _BrowserManager = require('./BrowserManager')
 var _BrowserManager2 = _interopRequireDefault(_BrowserManager)
-var _CacheManager = require('./CacheManager')
-var _CacheManager2 = _interopRequireDefault(_CacheManager)
-
-const workerManager = _WorkerManager2.default.init(
-	_path2.default.resolve(
-		__dirname + `/OptimizeHtml.worker.${_constants.resourceExtension}`
-	),
-	{ minWorkers: 1, maxWorkers: 2 },
-	['optimizeContent', 'compressContent']
-)
+var _utils = require('./CacheManager.worker/utils')
+var _utils2 = _interopRequireDefault(_utils)
+var _utils3 = require('./OptimizeHtml.worker/utils')
+var _OptimizeHtmlworker = require('./OptimizeHtml.worker')
 
 const browserManager = (() => {
 	if (_InitEnv.ENV_MODE === 'development') return undefined
@@ -175,7 +165,7 @@ const waitResponse = (() => {
 							_6(url.split('?')[0], {
 								// waitUntil: 'networkidle2',
 								waitUntil: 'load',
-								timeout: 0,
+								timeout: 7000,
 							}),
 						'access',
 						(_7) => _7.then,
@@ -197,30 +187,38 @@ const waitResponse = (() => {
 					])
 				})
 
-				const waitForNavigate = async () => {
-					if (hasRedirected) {
-						hasRedirected = false
-						return new Promise(async (resolveAfterNavigate) => {
-							try {
-								await _optionalChain([
-									safePage,
-									'call',
-									(_11) => _11(),
-									'optionalAccess',
-									(_12) => _12.waitForSelector,
-									'call',
-									(_13) => _13('body'),
-								])
-								await waitForNavigate()
+				const waitForNavigate = (() => {
+					let counter = 0
+					return async () => {
+						if (hasRedirected) {
+							if (counter < 3) {
+								counter++
+								hasRedirected = false
+								return new Promise(async (resolveAfterNavigate) => {
+									try {
+										await _optionalChain([
+											safePage,
+											'call',
+											(_11) => _11(),
+											'optionalAccess',
+											(_12) => _12.waitForSelector,
+											'call',
+											(_13) => _13('body'),
+										])
+										const navigateResult = await waitForNavigate()
 
-								resolveAfterNavigate('finish')
-							} catch (err) {
-								_ConsoleHandler2.default.error(err.message)
-								resolve(null)
+										resolveAfterNavigate(navigateResult)
+									} catch (err) {
+										_ConsoleHandler2.default.error(err.message)
+										resolveAfterNavigate('fail')
+									}
+								})
+							} else {
+								return 'fail'
 							}
-						})
+						} else return 'finish'
 					}
-				}
+				})()
 
 				await waitForNavigate()
 
@@ -319,7 +317,7 @@ const ISRHandler = async ({ hasCache, url }) => {
 	const startGenerating = Date.now()
 	if (_getRestOfDuration(startGenerating, gapDurationDefault) <= 0) return
 
-	const cacheManager = _CacheManager2.default.call(void 0, url)
+	const cacheManager = _utils2.default.call(void 0, url)
 
 	let restOfDuration = _getRestOfDuration(startGenerating, gapDurationDefault)
 
@@ -483,7 +481,7 @@ const ISRHandler = async ({ hasCache, url }) => {
 					}),
 			])
 
-			await new Promise(async (res) => {
+			await new Promise(async (res, rej) => {
 				_ConsoleHandler2.default.log(`Start to crawl: ${url}`)
 
 				let response
@@ -491,29 +489,19 @@ const ISRHandler = async ({ hasCache, url }) => {
 				try {
 					response = await waitResponse(page, url, restOfDuration)
 				} catch (err) {
-					if (err.name !== 'TimeoutError') {
-						isGetHtmlProcessError = true
-						_ConsoleHandler2.default.log('ISRHandler line 285:')
-						_ConsoleHandler2.default.error(err)
-						_optionalChain([
-							safePage,
-							'call',
-							(_44) => _44(),
-							'optionalAccess',
-							(_45) => _45.close,
-							'call',
-							(_46) => _46(),
-						])
-						return res(false)
-					}
+					_ConsoleHandler2.default.log('ISRHandler line 341:')
+					_ConsoleHandler2.default.error('err name: ', err.name)
+					_ConsoleHandler2.default.error('err message: ', err.message)
+					isGetHtmlProcessError = true
+					rej(new Error('Internal Error'))
 				} finally {
 					status = _nullishCoalesce(
 						_optionalChain([
 							response,
 							'optionalAccess',
-							(_47) => _47.status,
+							(_44) => _44.status,
 							'optionalCall',
-							(_48) => _48(),
+							(_45) => _45(),
 						]),
 						() => status
 					)
@@ -530,11 +518,11 @@ const ISRHandler = async ({ hasCache, url }) => {
 			_optionalChain([
 				safePage,
 				'call',
-				(_49) => _49(),
+				(_46) => _46(),
 				'optionalAccess',
-				(_50) => _50.close,
+				(_47) => _47.close,
 				'call',
-				(_51) => _51(),
+				(_48) => _48(),
 			])
 			return {
 				status: 500,
@@ -553,22 +541,22 @@ const ISRHandler = async ({ hasCache, url }) => {
 				await _optionalChain([
 					safePage,
 					'call',
-					(_52) => _52(),
+					(_49) => _49(),
 					'optionalAccess',
-					(_53) => _53.content,
+					(_50) => _50.content,
 					'call',
-					(_54) => _54(),
+					(_51) => _51(),
 				]),
 				async () => ''
 			) // serialized HTML of page DOM.
 			_optionalChain([
 				safePage,
 				'call',
-				(_55) => _55(),
+				(_52) => _52(),
 				'optionalAccess',
-				(_56) => _56.close,
+				(_53) => _53.close,
 				'call',
-				(_57) => _57(),
+				(_54) => _54(),
 			])
 		} catch (err) {
 			_ConsoleHandler2.default.log('ISRHandler line 315:')
@@ -588,24 +576,24 @@ const ISRHandler = async ({ hasCache, url }) => {
 			(_optionalChain([
 				_serverconfig2.default,
 				'access',
-				(_58) => _58.crawl,
+				(_55) => _55.crawl,
 				'access',
-				(_59) => _59.routes,
+				(_56) => _56.routes,
 				'access',
-				(_60) => _60[pathname],
+				(_57) => _57[pathname],
 				'optionalAccess',
-				(_61) => _61.optimize,
+				(_58) => _58.optimize,
 			]) ||
 				_optionalChain([
 					_serverconfig2.default,
 					'access',
-					(_62) => _62.crawl,
+					(_59) => _59.crawl,
 					'access',
-					(_63) => _63.custom,
+					(_60) => _60.custom,
 					'optionalCall',
-					(_64) => _64(pathname),
+					(_61) => _61(pathname),
 					'optionalAccess',
-					(_65) => _65.optimize,
+					(_62) => _62.optimize,
 				]) ||
 				_serverconfig2.default.crawl.optimize) &&
 			enableOptimizeAndCompressIfRemoteCrawlerFail
@@ -614,53 +602,46 @@ const ISRHandler = async ({ hasCache, url }) => {
 			(_optionalChain([
 				_serverconfig2.default,
 				'access',
-				(_66) => _66.crawl,
+				(_63) => _63.crawl,
 				'access',
-				(_67) => _67.routes,
+				(_64) => _64.routes,
 				'access',
-				(_68) => _68[pathname],
+				(_65) => _65[pathname],
 				'optionalAccess',
-				(_69) => _69.compress,
+				(_66) => _66.compress,
 			]) ||
 				_optionalChain([
 					_serverconfig2.default,
 					'access',
-					(_70) => _70.crawl,
+					(_67) => _67.crawl,
 					'access',
-					(_71) => _71.custom,
+					(_68) => _68.custom,
 					'optionalCall',
-					(_72) => _72(pathname),
+					(_69) => _69(pathname),
 					'optionalAccess',
-					(_73) => _73.compress,
+					(_70) => _70.compress,
 				]) ||
 				_serverconfig2.default.crawl.compress) &&
 			enableOptimizeAndCompressIfRemoteCrawlerFail
 
-		// let optimizeHTMLContentPool
-
 		let isRaw = false
-
-		const freePool = workerManager.getFreePool()
-		const pool = freePool.pool
 
 		try {
 			if (enableToOptimize)
-				html = await pool.exec('optimizeContent', [
+				html = await _OptimizeHtmlworker.optimizeContent.call(
+					void 0,
 					html,
-					true,
-					enableToOptimize,
-				])
+					true
+				)
 
 			if (enableToCompress)
-				html = await pool.exec('compressContent', [html, enableToCompress])
+				html = await _utils3.compressContent.call(void 0, html)
 		} catch (err) {
 			isRaw = true
 			_ConsoleHandler2.default.log('--------------------')
 			_ConsoleHandler2.default.log('ISRHandler line 368:')
 			_ConsoleHandler2.default.log('error url', url.split('?')[0])
 			_ConsoleHandler2.default.error(err)
-		} finally {
-			freePool.terminate()
 		}
 
 		result = await cacheManager.set({

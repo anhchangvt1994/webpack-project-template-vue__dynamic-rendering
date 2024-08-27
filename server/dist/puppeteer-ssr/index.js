@@ -30,7 +30,7 @@ var _path = require('path')
 var _path2 = _interopRequireDefault(_path)
 var _zlib = require('zlib')
 
-var _CacheManager = require('../api/utils/CacheManager')
+var _utils = require('../api/utils/CacheManager/utils')
 var _constants = require('../constants')
 var _serverconfig = require('../server.config')
 var _serverconfig2 = _interopRequireDefault(_serverconfig)
@@ -359,7 +359,7 @@ const puppeteerSSRService = (async () => {
 
 					tmpStoreKey = _StringHelper.hashCode.call(void 0, req.url)
 
-					tmpAPIStore = await _CacheManager.getStore.call(void 0, tmpStoreKey)
+					tmpAPIStore = await _utils.getStore.call(void 0, tmpStoreKey)
 
 					if (tmpAPIStore) return tmpAPIStore.data
 
@@ -380,7 +380,7 @@ const puppeteerSSRService = (async () => {
 								: '?device=' + deviceType
 						}`
 					)
-					tmpAPIStore = await _CacheManager.getStore.call(void 0, tmpStoreKey)
+					tmpAPIStore = await _utils.getStore.call(void 0, tmpStoreKey)
 
 					if (tmpAPIStore) return tmpAPIStore.data
 
@@ -392,10 +392,7 @@ const puppeteerSSRService = (async () => {
 				if (apiStoreData) {
 					if (apiStoreData.length) {
 						for (const cacheKey of apiStoreData) {
-							const apiCache = await _CacheManager.getData.call(
-								void 0,
-								cacheKey
-							)
+							const apiCache = await _utils.getData.call(void 0, cacheKey)
 							if (!apiCache || !apiCache.cache || apiCache.cache.status !== 200)
 								continue
 
@@ -406,12 +403,12 @@ const puppeteerSSRService = (async () => {
 
 				let html = _fs2.default.readFileSync(filePath, 'utf8') || ''
 
-				html = html.replace(
-					'</head>',
-					`<script>window.API_STORE = ${JSON.stringify(
-						WindowAPIStore
-					)}</script></head>`
-				)
+				// html = html.replace(
+				// 	'</head>',
+				// 	`<script>window.API_STORE = ${JSON.stringify(
+				// 		WindowAPIStore
+				// 	)}</script></head>`
+				// )
 
 				const body = (() => {
 					if (!enableContentEncoding) return html

@@ -31,7 +31,7 @@ var _path2 = _interopRequireDefault(_path)
 
 var _zlib = require('zlib')
 
-var _CacheManager = require('../api/utils/CacheManager')
+var _utils = require('../api/utils/CacheManager/utils')
 var _constants = require('../constants')
 var _DetectBot = require('../middlewares/uws/DetectBot')
 var _DetectBot2 = _interopRequireDefault(_DetectBot)
@@ -415,12 +415,12 @@ const puppeteerSSRService = (async () => {
 									res.end(body || '', true)
 								} else {
 									res
-										.writeStatus(String(result.status))
+										// .writeStatus(String(result.status))
 										.writeHeader('Content-Type', 'text/html; charset=utf-8')
 
-									if (enableContentEncoding && result.status === 200) {
-										res.writeHeader('Content-Encoding', contentEncoding)
-									}
+									// if (enableContentEncoding && result.status === 200) {
+									// 	res.writeHeader('Content-Encoding', contentEncoding)
+									// }
 									res.end(`${result.status} Error`, true)
 								}
 							} else {
@@ -501,10 +501,7 @@ const puppeteerSSRService = (async () => {
 
 							tmpStoreKey = _StringHelper.hashCode.call(void 0, url)
 
-							tmpAPIStore = await _CacheManager.getStore.call(
-								void 0,
-								tmpStoreKey
-							)
+							tmpAPIStore = await _utils.getStore.call(void 0, tmpStoreKey)
 
 							if (tmpAPIStore) return tmpAPIStore.data
 
@@ -527,10 +524,7 @@ const puppeteerSSRService = (async () => {
 								}`
 							)
 
-							tmpAPIStore = await _CacheManager.getStore.call(
-								void 0,
-								tmpStoreKey
-							)
+							tmpAPIStore = await _utils.getStore.call(void 0, tmpStoreKey)
 
 							if (tmpAPIStore) return tmpAPIStore.data
 
@@ -542,10 +536,7 @@ const puppeteerSSRService = (async () => {
 						if (apiStoreData) {
 							if (apiStoreData.length) {
 								for (const cacheKey of apiStoreData) {
-									const apiCache = await _CacheManager.getData.call(
-										void 0,
-										cacheKey
-									)
+									const apiCache = await _utils.getData.call(void 0, cacheKey)
 									if (
 										!apiCache ||
 										!apiCache.cache ||
@@ -562,9 +553,9 @@ const puppeteerSSRService = (async () => {
 
 						html = html.replace(
 							'</head>',
-							`<script>window.API_STORE = ${JSON.stringify(
-								WindowAPIStore
-							)}</script></head>`
+							`<script>window.API_STORE = ${JSON.stringify({
+								WindowAPIStore,
+							})}</script></head>`
 						)
 
 						const body = (() => {
@@ -611,18 +602,20 @@ const puppeteerSSRService = (async () => {
 							res.end(body, true)
 						})
 					} catch (err) {
-						console.log(err)
-						res.cork(() => {
-							res
-								.writeStatus('404')
-								.writeHeader(
-									'Content-Type',
-									reqHeaderAccept === 'application/json'
-										? 'application/json'
-										: 'text/html; charset=utf-8'
-								)
-								.end('File not found!', true)
-						})
+						_ConsoleHandler2.default.log(err)
+						if (!res.writableEnded) {
+							res.cork(() => {
+								res
+									.writeStatus('404')
+									.writeHeader(
+										'Content-Type',
+										reqHeaderAccept === 'application/json'
+											? 'application/json'
+											: 'text/html; charset=utf-8'
+									)
+									.end('File not found!', true)
+							})
+						}
 					}
 				}
 			}

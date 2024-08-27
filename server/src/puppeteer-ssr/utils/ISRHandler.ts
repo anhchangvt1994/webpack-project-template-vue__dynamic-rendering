@@ -1,17 +1,14 @@
-import path from 'path'
 import { Page } from 'puppeteer-core'
 import {
 	BANDWIDTH_LEVEL,
 	BANDWIDTH_LEVEL_LIST,
 	POWER_LEVEL,
 	POWER_LEVEL_LIST,
-	resourceExtension,
 	userDataPath,
 } from '../../constants'
 import ServerConfig from '../../server.config'
 import Console from '../../utils/ConsoleHandler'
 import { ENV_MODE } from '../../utils/InitEnv'
-import WorkerManager from '../../utils/WorkerManager'
 import {
 	CACHEABLE_STATUS_CODE,
 	DURATION_TIMEOUT,
@@ -20,13 +17,9 @@ import {
 } from '../constants'
 import { ISSRResult } from '../types'
 import BrowserManager, { IBrowser } from './BrowserManager'
-import CacheManager from './CacheManager'
-
-const workerManager = WorkerManager.init(
-	path.resolve(__dirname + `/OptimizeHtml.worker.${resourceExtension}`),
-	{ minWorkers: 1, maxWorkers: 2 },
-	['optimizeContent', 'compressContent']
-)
+import CacheManager from './CacheManager.worker/utils'
+import { compressContent } from './OptimizeHtml.worker/utils'
+import { optimizeContent } from './OptimizeHtml.worker'
 
 const browserManager = (() => {
 	if (ENV_MODE === 'development') return undefined as unknown as IBrowser
@@ -125,7 +118,7 @@ const waitResponse = (() => {
 						?.goto(url.split('?')[0], {
 							// waitUntil: 'networkidle2',
 							waitUntil: 'load',
-							timeout: 0,
+							timeout: 7000,
 						})
 						.then((res) => {
 							setTimeout(() => resolveAfterPageLoad(res), firstWaitingDuration)
@@ -135,22 +128,30 @@ const waitResponse = (() => {
 						})
 				})
 
-				const waitForNavigate = async () => {
-					if (hasRedirected) {
-						hasRedirected = false
-						return new Promise(async (resolveAfterNavigate) => {
-							try {
-								await safePage()?.waitForSelector('body')
-								await waitForNavigate()
+				const waitForNavigate = (() => {
+					let counter = 0
+					return async () => {
+						if (hasRedirected) {
+							if (counter < 3) {
+								counter++
+								hasRedirected = false
+								return new Promise(async (resolveAfterNavigate) => {
+									try {
+										await safePage()?.waitForSelector('body')
+										const navigateResult = await waitForNavigate()
 
-								resolveAfterNavigate('finish')
-							} catch (err) {
-								Console.error(err.message)
-								resolve(null)
+										resolveAfterNavigate(navigateResult)
+									} catch (err) {
+										Console.error(err.message)
+										resolveAfterNavigate('fail')
+									}
+								})
+							} else {
+								return 'fail'
 							}
-						})
+						} else return 'finish'
 					}
-				}
+				})()
 
 				await waitForNavigate()
 
@@ -318,7 +319,7 @@ const ISRHandler = async ({ hasCache, url }: IISRHandlerParam) => {
 				service: 'puppeteer',
 			})
 
-			await new Promise(async (res) => {
+			await new Promise(async (res, rej) => {
 				Console.log(`Start to crawl: ${url}`)
 
 				let response
@@ -326,13 +327,11 @@ const ISRHandler = async ({ hasCache, url }: IISRHandlerParam) => {
 				try {
 					response = await waitResponse(page, url, restOfDuration)
 				} catch (err) {
-					if (err.name !== 'TimeoutError') {
-						isGetHtmlProcessError = true
-						Console.log('ISRHandler line 285:')
-						Console.error(err)
-						safePage()?.close()
-						return res(false)
-					}
+					Console.log('ISRHandler line 341:')
+					Console.error('err name: ', err.name)
+					Console.error('err message: ', err.message)
+					isGetHtmlProcessError = true
+					rej(new Error('Internal Error'))
 				} finally {
 					status = response?.status?.() ?? status
 					Console.log(`Internal crawler status: ${status}`)
@@ -387,31 +386,18 @@ const ISRHandler = async ({ hasCache, url }: IISRHandlerParam) => {
 				ServerConfig.crawl.compress) &&
 			enableOptimizeAndCompressIfRemoteCrawlerFail
 
-		// let optimizeHTMLContentPool
-
 		let isRaw = false
 
-		const freePool = workerManager.getFreePool()
-		const pool = freePool.pool
-
 		try {
-			if (enableToOptimize)
-				html = await pool.exec('optimizeContent', [
-					html,
-					true,
-					enableToOptimize,
-				])
+			if (enableToOptimize) html = await optimizeContent(html, true)
 
-			if (enableToCompress)
-				html = await pool.exec('compressContent', [html, enableToCompress])
+			if (enableToCompress) html = await compressContent(html)
 		} catch (err) {
 			isRaw = true
 			Console.log('--------------------')
 			Console.log('ISRHandler line 368:')
 			Console.log('error url', url.split('?')[0])
 			Console.error(err)
-		} finally {
-			freePool.terminate()
 		}
 
 		result = await cacheManager.set({

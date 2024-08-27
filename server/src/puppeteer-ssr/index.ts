@@ -5,7 +5,7 @@ import { brotliCompressSync, brotliDecompressSync, gzipSync } from 'zlib'
 import {
 	getData as getDataCache,
 	getStore as getStoreCache,
-} from '../api/utils/CacheManager'
+} from '../api/utils/CacheManager/utils'
 import { SERVER_LESS } from '../constants'
 import ServerConfig from '../server.config'
 import { IBotInfo } from '../types'
@@ -329,12 +329,12 @@ const puppeteerSSRService = (async () => {
 
 				let html = fs.readFileSync(filePath, 'utf8') || ''
 
-				html = html.replace(
-					'</head>',
-					`<script>window.API_STORE = ${JSON.stringify(
-						WindowAPIStore
-					)}</script></head>`
-				)
+				// html = html.replace(
+				// 	'</head>',
+				// 	`<script>window.API_STORE = ${JSON.stringify(
+				// 		WindowAPIStore
+				// 	)}</script></head>`
+				// )
 
 				const body = (() => {
 					if (!enableContentEncoding) return html

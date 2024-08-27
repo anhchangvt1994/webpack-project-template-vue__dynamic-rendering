@@ -7,12 +7,12 @@ import {
 import { brotliCompressSync, gzipSync } from 'zlib'
 import {
 	getStore as getStoreCache,
-	setStore as setStoreCache,
 	getData as getDataCache,
+	setStore as setStoreCache,
 	setData as setDataCache,
 	removeData as removeDataCache,
 	updateDataStatus as updateDataCacheStatus,
-} from './utils/CacheManager'
+} from './utils/CacheManager/utils'
 import Console from '../utils/ConsoleHandler'
 import { decode } from '../utils/StringHelper'
 import ServerConfig from '../server.config'
@@ -260,17 +260,21 @@ const apiService = (async () => {
 
 							const data = convertData(cache, contentEncoding)
 
-							res.cork(() => {
-								res.writableEnded = true
-								res
-									.writeStatus(
-										`${cache.status}${cache.message ? ' ' + cache.message : ''}`
-									)
-									.writeHeader('Content-Type', 'application/json')
-									.writeHeader('Cache-Control', 'no-store')
-									.writeHeader('Content-Encoding', contentEncoding)
-									.end(data, true)
-							})
+							if (!res.writableEnded) {
+								res.cork(() => {
+									res.writableEnded = true
+									res
+										.writeStatus(
+											`${cache.status}${
+												cache.message ? ' ' + cache.message : ''
+											}`
+										)
+										.writeHeader('Content-Type', 'application/json')
+										.writeHeader('Cache-Control', 'no-store')
+										.writeHeader('Content-Encoding', contentEncoding)
+										.end(data, true)
+								})
+							}
 						} // IF expiredTime is valid
 					} // IF has apiCache
 				} // IF requestInfo.expiredTime > 0

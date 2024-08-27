@@ -28,20 +28,20 @@ var _fs = require('fs')
 var _fs2 = _interopRequireDefault(_fs)
 var _path = require('path')
 var _path2 = _interopRequireDefault(_path)
-var _constants = require('../../constants')
-var _serverconfig = require('../../server.config')
+var _constants = require('../../../constants')
+var _serverconfig = require('../../../server.config')
 var _serverconfig2 = _interopRequireDefault(_serverconfig)
-var _ConsoleHandler = require('../../utils/ConsoleHandler')
+var _ConsoleHandler = require('../../../utils/ConsoleHandler')
 var _ConsoleHandler2 = _interopRequireDefault(_ConsoleHandler)
-var _WorkerManager = require('../../utils/WorkerManager')
+var _WorkerManager = require('../../../utils/WorkerManager')
 var _WorkerManager2 = _interopRequireDefault(_WorkerManager)
 
-var _utils = require('./Cache.worker/utils')
+var _utils = require('../Cache.worker/utils')
 
 const workerManager = _WorkerManager2.default.init(
 	_path2.default.resolve(
 		__dirname,
-		`./Cache.worker/index.${_constants.resourceExtension}`
+		`./../Cache.worker/index.${_constants.resourceExtension}`
 	),
 	{
 		minWorkers: 1,
@@ -118,18 +118,19 @@ const CacheManager = (url) => {
 				isInit: true,
 			}
 
-		const freePool = workerManager.getFreePool()
+		const freePool = await workerManager.getFreePool()
 		const pool = freePool.pool
+		let result
 
 		try {
-			const result = await pool.exec('get', [url])
-			return result
+			result = await pool.exec('get', [url])
 		} catch (err) {
 			_ConsoleHandler2.default.error(err)
-			return
-		} finally {
-			freePool.terminate()
 		}
+
+		freePool.terminate()
+
+		return result
 	} // get
 
 	const achieve = async () => {
@@ -185,48 +186,51 @@ const CacheManager = (url) => {
 				status: params.html ? 200 : 503,
 			}
 
-		const freePool = workerManager.getFreePool()
+		const freePool = await workerManager.getFreePool()
 		const pool = freePool.pool
+		let result
 
 		try {
-			const result = await pool.exec('set', [params])
-			return result
+			result = await pool.exec('set', [params])
 		} catch (err) {
 			_ConsoleHandler2.default.error(err)
-			return
-		} finally {
-			freePool.terminate()
 		}
+
+		freePool.terminate()
+
+		return result
 	} // set
 
 	const renew = async () => {
-		const freePool = workerManager.getFreePool()
+		const freePool = await workerManager.getFreePool()
 		const pool = freePool.pool
+		let result
 
 		try {
-			const result = await pool.exec('renew', [url])
-			return result
+			result = await pool.exec('renew', [url])
 		} catch (err) {
 			_ConsoleHandler2.default.error(err)
-			return
-		} finally {
-			freePool.terminate()
 		}
+
+		freePool.terminate()
+
+		return result
 	} // renew
 
 	const remove = async (url) => {
 		if (!enableToCache) return
-		const freePool = workerManager.getFreePool()
+		const freePool = await workerManager.getFreePool()
 		const pool = freePool.pool
 
 		try {
 			await pool.exec('remove', [url])
 		} catch (err) {
 			_ConsoleHandler2.default.error(err)
-			return
-		} finally {
-			freePool.terminate()
 		}
+
+		freePool.terminate()
+
+		return
 	} // remove
 
 	return {
