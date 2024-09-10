@@ -36,7 +36,7 @@ NOTE
   - [Remote crawler](/READMORE/remote-crawler.md)
   - [Proxy API](/READMORE/proxy-api.md)
 
-6. [Deployment guide](/READMORE/deploy-guide.md)
+6. [Deployment guide](/READMORE/deployment.md)
 
 7. [Q&A](/READMORE/Q&A.md)
 
