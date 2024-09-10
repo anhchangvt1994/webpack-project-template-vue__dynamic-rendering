@@ -15,7 +15,7 @@ import { getCookieFromResponse, setCookie } from '../utils/CookieHandler'
 import { ENV_MODE } from '../utils/InitEnv'
 import { hashCode } from '../utils/StringHelper'
 import { CACHEABLE_STATUS_CODE } from './constants'
-import { convertUrlHeaderToQueryString, getUrl } from './utils/ForamatUrl'
+import { convertUrlHeaderToQueryString, getUrl } from './utils/FormatUrl'
 import ISRGenerator from './utils/ISRGenerator.next'
 import ISRHandler from './utils/ISRHandler.worker'
 

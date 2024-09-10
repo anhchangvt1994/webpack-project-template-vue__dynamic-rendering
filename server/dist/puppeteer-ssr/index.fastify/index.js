@@ -43,7 +43,7 @@ var _CookieHandler = require('../../utils/CookieHandler')
 var _InitEnv = require('../../utils/InitEnv')
 var _StringHelper = require('../../utils/StringHelper')
 
-var _ForamatUrl = require('../utils/ForamatUrl')
+var _FormatUrl = require('../utils/FormatUrl')
 var _ISRGeneratornext = require('../utils/ISRGenerator.next')
 var _ISRGeneratornext2 = _interopRequireDefault(_ISRGeneratornext)
 var _ISRHandlerworker = require('../utils/ISRHandler.worker')
@@ -233,9 +233,9 @@ const puppeteerSSRService = (async () => {
 					enableToCrawl &&
 					headers.service !== 'puppeteer'
 				) {
-					const url = _ForamatUrl.convertUrlHeaderToQueryString.call(
+					const url = _FormatUrl.convertUrlHeaderToQueryString.call(
 						void 0,
-						_ForamatUrl.getUrl.call(void 0, req),
+						_FormatUrl.getUrl.call(void 0, req),
 						res,
 						!botInfo.isBot
 					)
@@ -275,7 +275,7 @@ const puppeteerSSRService = (async () => {
 					}
 				}
 
-				const correctPathname = _ForamatUrl.getPathname.call(void 0, req)
+				const correctPathname = _FormatUrl.getPathname.call(void 0, req)
 				const pointsTo = _optionalChain([
 					_serverconfig2.default,
 					'access',
@@ -287,7 +287,7 @@ const puppeteerSSRService = (async () => {
 				])
 
 				if (pointsTo) {
-					const url = _ForamatUrl.convertUrlHeaderToQueryString.call(
+					const url = _FormatUrl.convertUrlHeaderToQueryString.call(
 						void 0,
 						pointsTo,
 						res,

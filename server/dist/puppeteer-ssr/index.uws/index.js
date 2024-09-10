@@ -53,7 +53,7 @@ var _ConsoleHandler2 = _interopRequireDefault(_ConsoleHandler)
 var _InitEnv = require('../../utils/InitEnv')
 var _StringHelper = require('../../utils/StringHelper')
 
-var _ForamatUrluws = require('../utils/ForamatUrl.uws')
+var _FormatUrluws = require('../utils/FormatUrl.uws')
 var _ISRGeneratornext = require('../utils/ISRGenerator.next')
 var _ISRGeneratornext2 = _interopRequireDefault(_ISRGeneratornext)
 var _ISRHandlerworker = require('../utils/ISRHandler.worker')
@@ -301,9 +301,9 @@ const puppeteerSSRService = (async () => {
 				enableToCrawl &&
 				req.getHeader('service') !== 'puppeteer'
 			) {
-				const url = _ForamatUrluws.convertUrlHeaderToQueryString.call(
+				const url = _FormatUrluws.convertUrlHeaderToQueryString.call(
 					void 0,
-					_ForamatUrluws.getUrl.call(void 0, res, req),
+					_FormatUrluws.getUrl.call(void 0, res, req),
 					res,
 					!botInfo.isBot
 				)
@@ -355,11 +355,7 @@ const puppeteerSSRService = (async () => {
 			}
 
 			if (!res.writableEnded) {
-				const correctPathname = _ForamatUrluws.getPathname.call(
-					void 0,
-					res,
-					req
-				)
+				const correctPathname = _FormatUrluws.getPathname.call(void 0, res, req)
 				const pointsTo = _optionalChain([
 					_serverconfig2.default,
 					'access',
@@ -371,7 +367,7 @@ const puppeteerSSRService = (async () => {
 				])
 
 				if (pointsTo) {
-					const url = _ForamatUrluws.convertUrlHeaderToQueryString.call(
+					const url = _FormatUrluws.convertUrlHeaderToQueryString.call(
 						void 0,
 						pointsTo,
 						res,

@@ -22,7 +22,7 @@ import {
 	convertUrlHeaderToQueryString,
 	getPathname,
 	getUrl,
-} from '../utils/ForamatUrl.uws'
+} from '../utils/FormatUrl.uws'
 import ISRGenerator from '../utils/ISRGenerator.next'
 import ISSRHandler from '../utils/ISRHandler.worker'
 import { handleResultAfterISRGenerator } from './utils'

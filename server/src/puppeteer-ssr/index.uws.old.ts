@@ -19,7 +19,7 @@ import Console from '../utils/ConsoleHandler'
 import { ENV, ENV_MODE, MODE, PROCESS_ENV } from '../utils/InitEnv'
 import { hashCode } from '../utils/StringHelper'
 import { CACHEABLE_STATUS_CODE } from './constants'
-import { convertUrlHeaderToQueryString, getUrl } from './utils/ForamatUrl.uws'
+import { convertUrlHeaderToQueryString, getUrl } from './utils/FormatUrl.uws'
 import ISRGenerator from './utils/ISRGenerator.next'
 import ISSRHandler from './utils/ISRHandler.worker'
 
