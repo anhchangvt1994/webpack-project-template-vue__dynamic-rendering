@@ -1,36 +1,73 @@
-import fs from 'fs'
-import path from 'path'
-import { HttpResponse, TemplatedApp } from 'uWebSockets.js'
-import { brotliCompressSync, brotliDecompressSync, gzipSync } from 'zlib'
-import {
-	getData as getDataCache,
-	getStore as getStoreCache,
-} from '../api/utils/CacheManager/utils'
-import { COOKIE_EXPIRED, SERVER_LESS } from '../constants'
-import DetectBotMiddle from '../middlewares/uws/DetectBot'
-import DetectDeviceMiddle from '../middlewares/uws/DetectDevice'
-import DetectLocaleMiddle from '../middlewares/uws/DetectLocale'
-import DetectRedirectMiddle from '../middlewares/uws/DetectRedirect'
-import DetectStaticMiddle from '../middlewares/uws/DetectStatic'
-import ServerConfig from '../server.config'
-import { IBotInfo } from '../types'
-import CleanerService from '../utils/CleanerService'
-import Console from '../utils/ConsoleHandler'
-import { ENV, ENV_MODE, MODE, PROCESS_ENV } from '../utils/InitEnv'
-import { hashCode } from '../utils/StringHelper'
-import { CACHEABLE_STATUS_CODE } from './constants'
-import { convertUrlHeaderToQueryString, getUrl } from './utils/ForamatUrl.uws'
-import ISRGenerator from './utils/ISRGenerator.next'
-import SSRHandler from './utils/ISRHandler'
+'use strict'
+Object.defineProperty(exports, '__esModule', { value: true })
+function _interopRequireDefault(obj) {
+	return obj && obj.__esModule ? obj : { default: obj }
+}
+function _optionalChain(ops) {
+	let lastAccessLHS = undefined
+	let value = ops[0]
+	let i = 1
+	while (i < ops.length) {
+		const op = ops[i]
+		const fn = ops[i + 1]
+		i += 2
+		if ((op === 'optionalAccess' || op === 'optionalCall') && value == null) {
+			return undefined
+		}
+		if (op === 'access' || op === 'optionalAccess') {
+			lastAccessLHS = value
+			value = fn(value)
+		} else if (op === 'call' || op === 'optionalCall') {
+			value = fn((...args) => value.call(lastAccessLHS, ...args))
+			lastAccessLHS = undefined
+		}
+	}
+	return value
+}
+var _fs = require('fs')
+var _fs2 = _interopRequireDefault(_fs)
+var _path = require('path')
+var _path2 = _interopRequireDefault(_path)
 
-const COOKIE_EXPIRED_SECOND = COOKIE_EXPIRED / 1000
+var _zlib = require('zlib')
+
+var _utils = require('../../api/utils/CacheManager/utils')
+var _constants = require('../../constants')
+var _DetectBot = require('../../middlewares/uws/DetectBot')
+var _DetectBot2 = _interopRequireDefault(_DetectBot)
+var _DetectDevice = require('../../middlewares/uws/DetectDevice')
+var _DetectDevice2 = _interopRequireDefault(_DetectDevice)
+var _DetectLocale = require('../../middlewares/uws/DetectLocale')
+var _DetectLocale2 = _interopRequireDefault(_DetectLocale)
+var _DetectRedirect = require('../../middlewares/uws/DetectRedirect')
+var _DetectRedirect2 = _interopRequireDefault(_DetectRedirect)
+var _DetectStatic = require('../../middlewares/uws/DetectStatic')
+var _DetectStatic2 = _interopRequireDefault(_DetectStatic)
+var _serverconfig = require('../../server.config')
+var _serverconfig2 = _interopRequireDefault(_serverconfig)
+
+var _CleanerService = require('../../utils/CleanerService')
+var _CleanerService2 = _interopRequireDefault(_CleanerService)
+var _ConsoleHandler = require('../../utils/ConsoleHandler')
+var _ConsoleHandler2 = _interopRequireDefault(_ConsoleHandler)
+var _InitEnv = require('../../utils/InitEnv')
+var _StringHelper = require('../../utils/StringHelper')
+
+var _ForamatUrluws = require('../utils/ForamatUrl.uws')
+var _ISRGeneratornext = require('../utils/ISRGenerator.next')
+var _ISRGeneratornext2 = _interopRequireDefault(_ISRGeneratornext)
+var _ISRHandlerworker = require('../utils/ISRHandler.worker')
+var _ISRHandlerworker2 = _interopRequireDefault(_ISRHandlerworker)
+var _utils3 = require('./utils')
+
+const COOKIE_EXPIRED_SECOND = _constants.COOKIE_EXPIRED / 1000
 
 const puppeteerSSRService = (async () => {
-	let _app: TemplatedApp
+	let _app
 	const webScrapingService = 'web-scraping-service'
 	const cleanerService = 'cleaner-service'
 
-	const _setCookie = (res: HttpResponse) => {
+	const _setCookie = (res) => {
 		res
 			.writeHeader(
 				'set-cookie',
@@ -60,7 +97,7 @@ const puppeteerSSRService = (async () => {
 		return res
 	} // _setCookie
 
-	const _resetCookie = (res: HttpResponse) => {
+	const _resetCookie = (res) => {
 		res
 			.writeHeader('set-cookie', `EnvironmentInfo=;Max-Age=0;Path=/`)
 			.writeHeader('set-cookie', `BotInfo=;Max-Age=0;Path=/`)
@@ -70,7 +107,7 @@ const puppeteerSSRService = (async () => {
 	} // _resetCookie
 
 	const _allRequestHandler = () => {
-		if (SERVER_LESS) {
+		if (_constants.SERVER_LESS) {
 			_app
 				.get('/web-scraping', async function (res, req) {
 					if (req.getHeader('authorization') !== webScrapingService)
@@ -87,10 +124,10 @@ const puppeteerSSRService = (async () => {
 
 						res.onAborted(() => {
 							res.writableEnded = true
-							Console.log('Request aborted')
+							_ConsoleHandler2.default.log('Request aborted')
 						})
 
-						const result = await SSRHandler({
+						const result = await _ISRHandlerworker2.default.call(void 0, {
 							startGenerating,
 							hasCache: isFirstRequest,
 							url,
@@ -111,7 +148,7 @@ const puppeteerSSRService = (async () => {
 								'Welcome to MTr Cleaner Service, please provide authorization to use it.',
 								true
 							)
-					else if (!SERVER_LESS)
+					else if (!_constants.SERVER_LESS)
 						res
 							.writeStatus('200')
 							.end(
@@ -120,12 +157,12 @@ const puppeteerSSRService = (async () => {
 					else {
 						res.onAborted(() => {
 							res.writableEnded = true
-							Console.log('Request aborted')
+							_ConsoleHandler2.default.log('Request aborted')
 						})
 
-						await CleanerService()
+						await _CleanerService2.default.call(void 0, true)
 
-						Console.log('Finish clean service!')
+						_ConsoleHandler2.default.log('Finish clean service!')
 
 						res.cork(() => {
 							res.writeStatus('200').end('Finish clean service!', true)
@@ -134,33 +171,58 @@ const puppeteerSSRService = (async () => {
 				})
 		}
 		_app.get('/*', async function (res, req) {
-			DetectStaticMiddle(res, req)
+			_DetectStatic2.default.call(void 0, res, req)
 
 			// NOTE - Check if static will send static file
 			if (res.writableEnded) return
 
 			// NOTE - Check and create base url
-			if (!PROCESS_ENV.BASE_URL)
-				PROCESS_ENV.BASE_URL = `${
+			if (!_InitEnv.PROCESS_ENV.BASE_URL)
+				_InitEnv.PROCESS_ENV.BASE_URL = `${
 					req.getHeader('x-forwarded-proto')
 						? req.getHeader('x-forwarded-proto')
+						: _InitEnv.PROCESS_ENV.IS_SERVER
+						? 'https'
 						: 'http'
 				}://${req.getHeader('host')}`
 
 			// NOTE - Detect, setup BotInfo and LocaleInfo
-			DetectBotMiddle(res, req)
-			DetectLocaleMiddle(res, req)
+			_DetectBot2.default.call(void 0, res, req)
+			_DetectLocale2.default.call(void 0, res, req)
 
-			const botInfo: IBotInfo = res.cookies?.botInfo
+			const botInfo = _optionalChain([
+				res,
+				'access',
+				(_) => _.cookies,
+				'optionalAccess',
+				(_2) => _2.botInfo,
+			])
 			const { enableToCrawl, enableToCache } = (() => {
-				let enableToCrawl = ServerConfig.crawl.enable
-				let enableToCache = enableToCrawl && ServerConfig.crawl.cache.enable
+				let enableToCrawl = _serverconfig2.default.crawl.enable
+				let enableToCache =
+					enableToCrawl && _serverconfig2.default.crawl.cache.enable
 
 				const crawlOptionPerRoute =
-					ServerConfig.crawl.routes[req.getUrl()] ||
-					ServerConfig.crawl.routes[res.urlForCrawler] ||
-					ServerConfig.crawl.custom?.(req.getUrl()) ||
-					ServerConfig.crawl.custom?.(res.urlForCrawler)
+					_serverconfig2.default.crawl.routes[req.getUrl()] ||
+					_serverconfig2.default.crawl.routes[res.urlForCrawler] ||
+					_optionalChain([
+						_serverconfig2.default,
+						'access',
+						(_3) => _3.crawl,
+						'access',
+						(_4) => _4.custom,
+						'optionalCall',
+						(_5) => _5(req.getUrl()),
+					]) ||
+					_optionalChain([
+						_serverconfig2.default,
+						'access',
+						(_6) => _6.crawl,
+						'access',
+						(_7) => _7.custom,
+						'optionalCall',
+						(_8) => _8(res.urlForCrawler),
+					])
 
 				if (crawlOptionPerRoute) {
 					enableToCrawl = crawlOptionPerRoute.enable
@@ -174,16 +236,17 @@ const puppeteerSSRService = (async () => {
 			})()
 
 			if (
-				ServerConfig.isRemoteCrawler &&
-				((ServerConfig.crawlerSecretKey &&
-					req.getQuery('crawlerSecretKey') !== ServerConfig.crawlerSecretKey) ||
+				_serverconfig2.default.isRemoteCrawler &&
+				((_serverconfig2.default.crawlerSecretKey &&
+					req.getQuery('crawlerSecretKey') !==
+						_serverconfig2.default.crawlerSecretKey) ||
 					(!botInfo.isBot && !enableToCache))
 			) {
 				return res.writeStatus('403').end('403 Forbidden', true)
 			}
 
 			// NOTE - Check redirect or not
-			const isRedirect = DetectRedirectMiddle(res, req)
+			const isRedirect = _DetectRedirect2.default.call(void 0, res, req)
 
 			/**
 			 * NOTE
@@ -197,7 +260,7 @@ const puppeteerSSRService = (async () => {
 				return
 
 			// NOTE - Detect DeviceInfo
-			DetectDeviceMiddle(res, req)
+			_DetectDevice2.default.call(void 0, res, req)
 
 			// NOTE - Set cookies for EnvironmentInfo
 			res.cookies.environmentInfo = (() => {
@@ -207,9 +270,9 @@ const puppeteerSSRService = (async () => {
 				if (tmpEnvironmentInfo) return JSON.parse(tmpEnvironmentInfo)
 
 				return {
-					ENV,
-					MODE,
-					ENV_MODE,
+					ENV: _InitEnv.ENV,
+					MODE: _InitEnv.MODE,
+					ENV_MODE: _InitEnv.ENV_MODE,
 				}
 			})()
 
@@ -218,25 +281,29 @@ const puppeteerSSRService = (async () => {
 				const tmpHeaderAcceptEncoding = req.getHeader('accept-encoding') || ''
 				if (tmpHeaderAcceptEncoding.indexOf('br') !== -1) return 'br'
 				else if (tmpHeaderAcceptEncoding.indexOf('gzip') !== -1) return 'gzip'
-				return '' as 'br' | 'gzip' | ''
+				return ''
 			})()
 
-			Console.log('<---puppeteer/index.uws.ts--->')
-			Console.log('enableContentEncoding: ', enableContentEncoding)
-			Console.log(
+			_ConsoleHandler2.default.log('<---puppeteer/index.uws.ts--->')
+			_ConsoleHandler2.default.log(
+				'enableContentEncoding: ',
+				enableContentEncoding
+			)
+			_ConsoleHandler2.default.log(
 				`req.getHeader('accept-encoding'): `,
 				req.getHeader('accept-encoding')
 			)
-			Console.log('contentEncoding: ', contentEncoding)
-			Console.log('<---puppeteer/index.uws.ts--->')
+			_ConsoleHandler2.default.log('contentEncoding: ', contentEncoding)
+			_ConsoleHandler2.default.log('<---puppeteer/index.uws.ts--->')
 
 			if (
-				ENV_MODE !== 'development' &&
+				_InitEnv.ENV_MODE !== 'development' &&
 				enableToCrawl &&
 				req.getHeader('service') !== 'puppeteer'
 			) {
-				const url = convertUrlHeaderToQueryString(
-					getUrl(res, req),
+				const url = _ForamatUrluws.convertUrlHeaderToQueryString.call(
+					void 0,
+					_ForamatUrluws.getUrl.call(void 0, res, req),
 					res,
 					!botInfo.isBot
 				)
@@ -244,144 +311,105 @@ const puppeteerSSRService = (async () => {
 				if (botInfo.isBot) {
 					res.onAborted(() => {
 						res.writableEnded = true
-						Console.log('Request aborted')
+						_ConsoleHandler2.default.log('Request aborted')
 					})
 
 					try {
-						const result = await ISRGenerator({
+						const result = await _ISRGeneratornext2.default.call(void 0, {
 							url,
 						})
 
 						res.cork(() => {
-							if (result) {
-								// Add Server-Timing! See https://w3c.github.io/server-timing/.
-								if (
-									(CACHEABLE_STATUS_CODE[result.status] ||
-										result.status === 503) &&
-									result.response
-								) {
-									try {
-										res = _setCookie(res)
-										const body = (() => {
-											let tmpBody: string | Buffer = ''
-
-											if (enableContentEncoding) {
-												tmpBody = result.html
-													? contentEncoding === 'br'
-														? brotliCompressSync(result.html)
-														: contentEncoding === 'gzip'
-														? gzipSync(result.html)
-														: result.html
-													: (() => {
-															let tmpContent: Buffer | string = fs.readFileSync(
-																result.response
-															)
-
-															if (contentEncoding === 'br') return tmpContent
-															else
-																tmpContent =
-																	brotliDecompressSync(tmpContent).toString()
-
-															if (result.status === 200) {
-																if (contentEncoding === 'gzip')
-																	tmpContent = gzipSync(tmpContent)
-															}
-
-															return tmpContent
-													  })()
-											} else if (result.response.indexOf('.br') !== -1) {
-												const content = fs.readFileSync(result.response)
-
-												tmpBody = brotliDecompressSync(content).toString()
-											} else {
-												tmpBody = fs.readFileSync(result.response)
-											}
-
-											return tmpBody
-										})()
-
-										res
-											.writeStatus(String(result.status))
-											.writeHeader('Content-Type', 'text/html; charset=utf-8')
-
-										if (enableContentEncoding && result.status === 200) {
-											res.writeHeader('Content-Encoding', contentEncoding)
-										}
-
-										if (result.status === 503)
-											res.writeHeader('Retry-After', '120')
-
-										res.end(body, true)
-									} catch {
-										res
-											.writeStatus('504')
-											.writeHeader('Content-Type', 'text/html; charset=utf-8')
-											.end('504 Gateway Timeout', true)
-									}
-								} else if (result.html) {
-									res
-										.writeStatus(String(result.status))
-										.writeHeader('Content-Type', 'text/html; charset=utf-8')
-
-									if (enableContentEncoding && result.status === 200) {
-										res.writeHeader('Content-Encoding', contentEncoding)
-									}
-
-									if (result.status === 200) {
-										res
-											.writeHeader(
-												'Server-Timing',
-												`Prerender;dur=50;desc="Headless render time (ms)"`
-											)
-											.writeHeader('Cache-Control', 'no-store')
-									}
-
-									const body = enableContentEncoding
-										? brotliCompressSync(result.html)
-										: result.html
-
-									res.end(body || '', true)
-								} else {
-									res
-										// .writeStatus(String(result.status))
-										.writeHeader('Content-Type', 'text/html; charset=utf-8')
-
-									// if (enableContentEncoding && result.status === 200) {
-									// 	res.writeHeader('Content-Encoding', contentEncoding)
-									// }
-									res.end(`${result.status} Error`, true)
-								}
-							} else {
-								res
-									.writeStatus('504')
-									.writeHeader('Content-Type', 'text/html; charset=utf-8')
-									.end('504 Gateway Timeout', true)
-							}
+							_utils3.handleResultAfterISRGenerator.call(void 0, res, {
+								result,
+								enableContentEncoding,
+								contentEncoding,
+							})
 						})
 					} catch (err) {
-						Console.error('url', url)
-						Console.error(err)
+						_ConsoleHandler2.default.error('url', url)
+						_ConsoleHandler2.default.error(err)
 						// NOTE - Error: uWS.HttpResponse must not be accessed after uWS.HttpResponse.onAborted callback, or after a successful response. See documentation for uWS.HttpResponse and consult the user manual.
 						if (!res.writableEnded)
 							res.writeStatus('500').end('Server Error!', true)
 					}
 
 					res.writableEnded = true
-				} else if (!botInfo.isBot && enableToCache) {
+				} else {
 					try {
-						if (SERVER_LESS) {
-							await ISRGenerator({
+						if (_constants.SERVER_LESS) {
+							await _ISRGeneratornext2.default.call(void 0, {
 								url,
 							})
 						} else {
-							ISRGenerator({
+							_ISRGeneratornext2.default.call(void 0, {
 								url,
 								isSkipWaiting: true,
 							})
 						}
 					} catch (err) {
-						Console.error('url', url)
-						Console.error(err)
+						_ConsoleHandler2.default.error('url', url)
+						_ConsoleHandler2.default.error(err)
+					}
+				}
+			}
+
+			if (!res.writableEnded) {
+				const correctPathname = _ForamatUrluws.getPathname.call(
+					void 0,
+					res,
+					req
+				)
+				const pointsTo = _optionalChain([
+					_serverconfig2.default,
+					'access',
+					(_9) => _9.routes,
+					'optionalAccess',
+					(_10) => _10[correctPathname],
+					'optionalAccess',
+					(_11) => _11.pointsTo,
+				])
+
+				if (pointsTo) {
+					const url = _ForamatUrluws.convertUrlHeaderToQueryString.call(
+						void 0,
+						pointsTo,
+						res,
+						false
+					)
+
+					if (url) {
+						res.onAborted(() => {
+							res.writableEnded = true
+							_ConsoleHandler2.default.log('Request aborted')
+						})
+
+						try {
+							const result = await _ISRGeneratornext2.default.call(void 0, {
+								url,
+								forceToCrawl: true,
+							})
+
+							res.cork(() => {
+								if (result) {
+									res.cork(() => {
+										_utils3.handleResultAfterISRGenerator.call(void 0, res, {
+											result,
+											enableContentEncoding,
+											contentEncoding,
+										})
+									})
+								}
+							})
+						} catch (err) {
+							_ConsoleHandler2.default.error(err.message)
+							_ConsoleHandler2.default.error('url', url)
+							// NOTE - Error: uWS.HttpResponse must not be accessed after uWS.HttpResponse.onAborted callback, or after a successful response. See documentation for uWS.HttpResponse and consult the user manual.
+							if (!res.writableEnded)
+								res.writeStatus('500').end('Server Error!', true)
+						}
+
+						res.writableEnded = true
 					}
 				}
 			}
@@ -410,12 +438,12 @@ const puppeteerSSRService = (async () => {
 					const reqHeaderAccept = req.getHeader('accept')
 					res.onAborted(() => {
 						res.writableEnded = true
-						Console.log('Request aborted')
+						_ConsoleHandler2.default.log('Request aborted')
 					})
 					try {
 						const filePath =
-							(req.getHeader('static-html-path') as string) ||
-							path.resolve(__dirname, '../../../dist/index.html')
+							req.getHeader('static-html-path') ||
+							_path2.default.resolve(__dirname, '../../../../dist/index.html')
 						const url = (() => {
 							const urlWithoutQuery = req.getUrl()
 							const query = req.getQuery()
@@ -427,15 +455,24 @@ const puppeteerSSRService = (async () => {
 							let tmpStoreKey
 							let tmpAPIStore
 
-							tmpStoreKey = hashCode(url)
+							tmpStoreKey = _StringHelper.hashCode.call(void 0, url)
 
-							tmpAPIStore = await getStoreCache(tmpStoreKey)
+							tmpAPIStore = await _utils.getStore.call(void 0, tmpStoreKey)
 
 							if (tmpAPIStore) return tmpAPIStore.data
 
-							const deviceType = res.cookies?.deviceInfo?.type
+							const deviceType = _optionalChain([
+								res,
+								'access',
+								(_12) => _12.cookies,
+								'optionalAccess',
+								(_13) => _13.deviceInfo,
+								'optionalAccess',
+								(_14) => _14.type,
+							])
 
-							tmpStoreKey = hashCode(
+							tmpStoreKey = _StringHelper.hashCode.call(
+								void 0,
 								`${url}${
 									url.includes('?') && deviceType
 										? '&device=' + deviceType
@@ -443,7 +480,7 @@ const puppeteerSSRService = (async () => {
 								}`
 							)
 
-							tmpAPIStore = await getStoreCache(tmpStoreKey)
+							tmpAPIStore = await _utils.getStore.call(void 0, tmpStoreKey)
 
 							if (tmpAPIStore) return tmpAPIStore.data
 
@@ -455,7 +492,7 @@ const puppeteerSSRService = (async () => {
 						if (apiStoreData) {
 							if (apiStoreData.length) {
 								for (const cacheKey of apiStoreData) {
-									const apiCache = await getDataCache(cacheKey)
+									const apiCache = await _utils.getData.call(void 0, cacheKey)
 									if (
 										!apiCache ||
 										!apiCache.cache ||
@@ -468,7 +505,7 @@ const puppeteerSSRService = (async () => {
 							}
 						}
 
-						let html = fs.readFileSync(filePath, 'utf8') || ''
+						let html = _fs2.default.readFileSync(filePath, 'utf8') || ''
 
 						html = html.replace(
 							'</head>',
@@ -482,9 +519,9 @@ const puppeteerSSRService = (async () => {
 
 							switch (true) {
 								case contentEncoding === 'br':
-									return brotliCompressSync(html)
+									return _zlib.brotliCompressSync.call(void 0, html)
 								case contentEncoding === 'gzip':
-									return gzipSync(html)
+									return _zlib.gzipSync.call(void 0, html)
 								default:
 									return html
 							}
@@ -521,7 +558,7 @@ const puppeteerSSRService = (async () => {
 							res.end(body, true)
 						})
 					} catch (err) {
-						Console.log(err)
+						_ConsoleHandler2.default.log(err)
 						if (!res.writableEnded) {
 							res.cork(() => {
 								res
@@ -542,12 +579,15 @@ const puppeteerSSRService = (async () => {
 	}
 
 	return {
-		init(app: TemplatedApp) {
-			if (!app) return Console.warn('You need provide uWebSockets app!')
+		init(app) {
+			if (!app)
+				return _ConsoleHandler2.default.warn(
+					'You need provide uWebSockets app!'
+				)
 			_app = app
 			_allRequestHandler()
 		},
 	}
 })()
 
-export default puppeteerSSRService
+exports.default = puppeteerSSRService

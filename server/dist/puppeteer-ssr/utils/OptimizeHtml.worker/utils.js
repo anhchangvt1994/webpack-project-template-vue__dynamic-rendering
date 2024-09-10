@@ -29,7 +29,7 @@ var _InitEnv = require('../../../utils/InitEnv')
 var _constants3 = require('../../constants')
 
 const compressContent = async (html) => {
-	if (!html) return ''
+	if (!html || _InitEnv.PROCESS_ENV.DISABLE_COMPRESS) return html
 	// console.log('start compress')
 	if (Buffer.isBuffer(html))
 		html = _zlib.brotliDecompressSync.call(void 0, html).toString()
@@ -60,7 +60,7 @@ const compressContent = async (html) => {
 exports.compressContent = compressContent // compressContent
 
 const optimizeContent = async (html, isFullOptimize = false) => {
-	if (!html) return ''
+	if (!html || _InitEnv.PROCESS_ENV.DISABLE_OPTIMIZE) return html
 	// console.log('start optimize')
 
 	if (Buffer.isBuffer(html))
@@ -69,11 +69,7 @@ const optimizeContent = async (html, isFullOptimize = false) => {
 	html = html.replace(_constants3.regexRemoveScriptTag, '')
 	html = html.replace(_constants3.regexRemoveSpecialTag, '')
 
-	if (
-		_constants.POWER_LEVEL === _constants.POWER_LEVEL_LIST.ONE ||
-		!isFullOptimize
-	)
-		return html
+	if (_InitEnv.PROCESS_ENV.DISABLE_DEEP_OPTIMIZE) return html
 	else {
 		let tmpHTML = html
 		try {
@@ -265,7 +261,7 @@ const optimizeContent = async (html, isFullOptimize = false) => {
 exports.optimizeContent = optimizeContent // optimizeContent
 
 const shallowOptimizeContent = async (html) => {
-	if (!html) return ''
+	if (!html || _InitEnv.PROCESS_ENV.DISABLE_OPTIMIZE) return html
 
 	if (Buffer.isBuffer(html))
 		html = _zlib.brotliDecompressSync.call(void 0, html).toString()
@@ -274,7 +270,6 @@ const shallowOptimizeContent = async (html) => {
 		.replace(_constants3.regexRemoveScriptTag, '')
 		.replace(_constants3.regexRemoveSpecialTag, '')
 		.replace(_constants3.regexRemoveIconTagFirst, '')
-		.replace(_constants3.regexRemoveClassAndStyleAttrs, '')
 		.replace(_constants3.regexHandleAttrsHtmlTag, (match, tag, curAttrs) => {
 			let newAttrs = curAttrs
 
@@ -323,13 +318,54 @@ const shallowOptimizeContent = async (html) => {
 
 			return `<img ${newAttrs}>`
 		})
+		.replace(_constants3.regexRemoveClassAndStyleAttrs, '')
+		.replace(
+			_constants3.regexHandleAttrsInteractiveTag,
+			(math, tag, curAttrs, negative, content, endTag) => {
+				let newAttrs = `style="display: inline-block;min-width: 48px;min-height: 48px;" ${curAttrs.trim()}`
+				let newTag = tag
+				let tmpEndTag = tag === 'input' ? '' : endTag === tag ? endTag : tag
+				let tmpContent = content
+				let result
+
+				switch (true) {
+					case newTag === 'a' && !curAttrs.includes('href='):
+						newTag = 'button'
+						newAttrs = `type="button" ${newAttrs}`
+						tmpEndTag = 'button'
+						break
+					case newTag === 'a' && /href(\s|$)|href=""/g.test(curAttrs):
+						newTag = 'button'
+						newAttrs = `type="button" ${newAttrs.replace(
+							/href(\s|$)|href=""/g,
+							''
+						)}`
+						tmpEndTag = 'button'
+						break
+					default:
+						break
+				}
+
+				result =
+					result || tmpEndTag
+						? `<${newTag} ${newAttrs} ${negative}>${tmpContent}</${tmpEndTag}>`
+						: `<${newTag} ${negative} ${newAttrs}>`
+
+				return result
+			}
+		)
 
 	return html
 }
 exports.shallowOptimizeContent = shallowOptimizeContent // shallowOptimizeContent
 
 const deepOptimizeContent = async (html) => {
-	if (!html) return ''
+	if (
+		!html ||
+		_InitEnv.PROCESS_ENV.DISABLE_OPTIMIZE ||
+		_InitEnv.PROCESS_ENV.DISABLE_DEEP_OPTIMIZE
+	)
+		return html
 
 	if (Buffer.isBuffer(html))
 		html = _zlib.brotliDecompressSync.call(void 0, html).toString()
@@ -342,29 +378,11 @@ const deepOptimizeContent = async (html) => {
 			.replace(
 				_constants3.regexHandleAttrsInteractiveTag,
 				(math, tag, curAttrs, negative, content, endTag) => {
-					let newAttrs = `style="display: inline-block;min-width: 48px;min-height: 48px;" ${curAttrs.trim()}`
+					let newAttrs = curAttrs.trim()
 					let newTag = tag
 					let tmpEndTag = tag === 'input' ? '' : endTag === tag ? endTag : tag
 					let tmpContent = content
 					let result
-
-					switch (true) {
-						case newTag === 'a' && !curAttrs.includes('href='):
-							newTag = 'button'
-							newAttrs = `type="button" ${newAttrs}`
-							tmpEndTag = 'button'
-							break
-						case newTag === 'a' && /href(\s|$)|href=""/g.test(curAttrs):
-							newTag = 'button'
-							newAttrs = `type="button" ${newAttrs.replace(
-								/href(\s|$)|href=""/g,
-								''
-							)}`
-							tmpEndTag = 'button'
-							break
-						default:
-							break
-					}
 
 					switch (true) {
 						case newTag === 'a':

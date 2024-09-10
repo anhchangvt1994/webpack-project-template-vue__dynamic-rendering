@@ -17,7 +17,7 @@ import { hashCode } from '../utils/StringHelper'
 import { CACHEABLE_STATUS_CODE } from './constants'
 import { convertUrlHeaderToQueryString, getUrl } from './utils/ForamatUrl'
 import ISRGenerator from './utils/ISRGenerator.next'
-import ISRHandler from './utils/ISRHandler'
+import ISRHandler from './utils/ISRHandler.worker'
 
 const _resetCookie = (res) => {
 	setCookie(res, `BotInfo=;Max-Age=0;Path=/`)
@@ -69,7 +69,7 @@ const puppeteerSSRService = (async () => {
 								'MTr cleaner service can not run in none serverless environment'
 							)
 
-					await CleanerService()
+					await CleanerService(true)
 
 					Console.log('Finish clean service!')
 
@@ -194,7 +194,7 @@ const puppeteerSSRService = (async () => {
 													)
 
 													if (contentEncoding === 'br') return tmpContent
-													else
+													else if (tmpContent && Buffer.isBuffer(tmpContent))
 														tmpContent =
 															brotliDecompressSync(tmpContent).toString()
 
@@ -208,7 +208,8 @@ const puppeteerSSRService = (async () => {
 									} else if (result.response.indexOf('.br') !== -1) {
 										const content = fs.readFileSync(result.response)
 
-										tmpBody = brotliDecompressSync(content).toString()
+										if (content && Buffer.isBuffer(content))
+											tmpBody = brotliDecompressSync(content).toString()
 									} else {
 										tmpBody = fs.readFileSync(result.response)
 									}

@@ -37,7 +37,9 @@ export const fetchData = async (
 		result = { status: 500, data: {}, message: 'input is required' }
 	}
 
-	freePool.terminate()
+	freePool.terminate({
+		force: true,
+	})
 
 	return result
 } // fetchData
@@ -59,7 +61,9 @@ export const refreshData = async (cacheKeyList: string[]) => {
 		Console.error(err)
 	}
 
-	freePool.terminate()
+	freePool.terminate({
+		force: true,
+	})
 
 	return result
 } // refreshData

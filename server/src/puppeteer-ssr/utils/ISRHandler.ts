@@ -1,11 +1,5 @@
 import { Page } from 'puppeteer-core'
-import {
-	BANDWIDTH_LEVEL,
-	BANDWIDTH_LEVEL_LIST,
-	POWER_LEVEL,
-	POWER_LEVEL_LIST,
-	userDataPath,
-} from '../../constants'
+import { BANDWIDTH_LEVEL, BANDWIDTH_LEVEL_LIST } from '../../constants'
 import ServerConfig from '../../server.config'
 import Console from '../../utils/ConsoleHandler'
 import { ENV_MODE } from '../../utils/InitEnv'
@@ -14,17 +8,21 @@ import {
 	DURATION_TIMEOUT,
 	regexNotFoundPageID,
 	regexQueryStringSpecialInfo,
+	WINDOW_VIEWPORT_HEIGHT,
+	WINDOW_VIEWPORT_WIDTH,
 } from '../constants'
 import { ISSRResult } from '../types'
 import BrowserManager, { IBrowser } from './BrowserManager'
 import CacheManager from './CacheManager.worker/utils'
+import {
+	shallowOptimizeContent,
+	deepOptimizeContent,
+} from './OptimizeHtml.worker'
 import { compressContent } from './OptimizeHtml.worker/utils'
-import { optimizeContent } from './OptimizeHtml.worker'
+const { parentPort, isMainThread } = require('worker_threads')
 
 const browserManager = (() => {
 	if (ENV_MODE === 'development') return undefined as unknown as IBrowser
-	if (POWER_LEVEL === POWER_LEVEL_LIST.THREE)
-		return BrowserManager(() => `${userDataPath}/user_data_${Date.now()}`)
 	return BrowserManager()
 })()
 
@@ -40,7 +38,7 @@ const _getRestOfDuration = (startGenerating, gapDuration = 0) => {
 	return DURATION_TIMEOUT - gapDuration - (Date.now() - startGenerating)
 } // _getRestOfDuration
 
-const _getSafePage = (page: Page | undefined) => {
+const _getSafePage = (page: Page) => {
 	const SafePage = page
 
 	return () => {
@@ -89,15 +87,15 @@ const fetchData = async (
 
 const waitResponse = (() => {
 	const firstWaitingDuration =
-		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 100 : 500
+		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 500 : 500
 	const defaultRequestWaitingDuration =
-		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 100 : 500
+		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 500 : 500
 	const requestServedFromCacheDuration =
-		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 100 : 250
+		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 500 : 500
 	const requestFailDuration =
-		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 100 : 250
+		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 500 : 500
 	const maximumTimeout =
-		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 60000 : 60000
+		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 10000 : 10000
 
 	return async (page: Page, url: string, duration: number) => {
 		let hasRedirected = false
@@ -113,12 +111,13 @@ const waitResponse = (() => {
 		let response
 		try {
 			response = await new Promise(async (resolve, reject) => {
+				// WorkerPool.workerEmit('waitResponse_00')
 				const result = await new Promise<any>((resolveAfterPageLoad) => {
 					safePage()
 						?.goto(url.split('?')[0], {
 							// waitUntil: 'networkidle2',
 							waitUntil: 'load',
-							timeout: 7000,
+							timeout: 12000,
 						})
 						.then((res) => {
 							setTimeout(() => resolveAfterPageLoad(res), firstWaitingDuration)
@@ -128,6 +127,9 @@ const waitResponse = (() => {
 						})
 				})
 
+				// console.log(`finish page load: `, url.split('?')[0])
+
+				// WorkerPool.workerEmit('waitResponse_01')
 				const waitForNavigate = (() => {
 					let counter = 0
 					return async () => {
@@ -138,6 +140,9 @@ const waitResponse = (() => {
 								return new Promise(async (resolveAfterNavigate) => {
 									try {
 										await safePage()?.waitForSelector('body')
+										// await new Promise((resWaitForNavigate) =>
+										// 	setTimeout(resWaitForNavigate, 2000)
+										// )
 										const navigateResult = await waitForNavigate()
 
 										resolveAfterNavigate(navigateResult)
@@ -153,7 +158,13 @@ const waitResponse = (() => {
 					}
 				})()
 
-				await waitForNavigate()
+				const navigateResult = await waitForNavigate()
+
+				// console.log(`finish page navigate: `, url.split('?')[0])
+
+				// WorkerPool.workerEmit('waitResponse_02')
+
+				if (navigateResult === 'fail') return resolve(result)
 
 				safePage()?.removeAllListeners('response')
 
@@ -185,12 +196,15 @@ const waitResponse = (() => {
 					setTimeout(resolveAfterPageLoadInFewSecond, maximumTimeout)
 				})
 
+				// console.log(`finish all page: `, url.split('?')[0])
+
 				setTimeout(() => {
 					resolve(result)
-				}, 100)
+				}, 500)
 			})
 		} catch (err) {
-			Console.log('ISRHandler line 156:')
+			// console.log(err.message)
+			// console.log('-------')
 			throw err
 		}
 
@@ -200,7 +214,11 @@ const waitResponse = (() => {
 
 const gapDurationDefault = 1500
 
-const ISRHandler = async ({ hasCache, url }: IISRHandlerParam) => {
+const ISRHandler = async (params: IISRHandlerParam) => {
+	if (!params) return
+
+	const { hasCache, url } = params
+
 	const startGenerating = Date.now()
 	if (_getRestOfDuration(startGenerating, gapDurationDefault) <= 0) return
 
@@ -275,51 +293,55 @@ const ISRHandler = async ({ hasCache, url }: IISRHandlerParam) => {
 		browserManager &&
 		(!ServerConfig.crawler || [404, 500].includes(status))
 	) {
-		enableOptimizeAndCompressIfRemoteCrawlerFail = true
-		Console.log('Create new page')
-		const page = await browserManager.newPage()
-		const safePage = _getSafePage(page)
+		const browser = await browserManager.get()
 
-		Console.log('Create new page success!')
+		if (browser && browser.connected) {
+			enableOptimizeAndCompressIfRemoteCrawlerFail = true
+			Console.log('Create new page')
+			const page = await browser.newPage()
+			const safePage = _getSafePage(page)
 
-		if (!page) {
-			if (!page && hasCache) {
-				const tmpResult = await cacheManager.achieve()
+			Console.log('Create new page success!')
 
-				return tmpResult
-			}
-			return
-		}
+			if (!page) {
+				if (!page && hasCache) {
+					const tmpResult = await cacheManager.achieve()
 
-		let isGetHtmlProcessError = false
-
-		try {
-			await safePage()?.waitForNetworkIdle({ idleTime: 150 })
-			await safePage()?.setRequestInterception(true)
-			safePage()?.on('request', (req) => {
-				const resourceType = req.resourceType()
-
-				if (resourceType === 'stylesheet') {
-					req.respond({ status: 200, body: 'aborted' })
-				} else if (
-					/(socket.io.min.js)+(?:$)|data:image\/[a-z]*.?\;base64/.test(url) ||
-					/googletagmanager.com|connect.facebook.net|asia.creativecdn.com|static.hotjar.com|deqik.com|contineljs.com|googleads.g.doubleclick.net|analytics.tiktok.com|google.com|gstatic.com|static.airbridge.io|googleadservices.com|google-analytics.com|sg.mmstat.com|t.contentsquare.net|accounts.google.com|browser.sentry-cdn.com|bat.bing.com|tr.snapchat.com|ct.pinterest.com|criteo.com|webchat.caresoft.vn|tags.creativecdn.com|script.crazyegg.com|tags.tiqcdn.com|trc.taboola.com|securepubads.g.doubleclick.net/.test(
-						req.url()
-					) ||
-					['font', 'image', 'media', 'imageset'].includes(resourceType)
-				) {
-					req.abort()
-				} else {
-					req.continue()
+					return tmpResult
 				}
-			})
+				return
+			}
 
-			await safePage()?.setExtraHTTPHeaders({
-				...specialInfo,
-				service: 'puppeteer',
-			})
+			try {
+				await safePage()?.waitForNetworkIdle({ idleTime: 150 })
+				await safePage()?.setViewport({
+					width: WINDOW_VIEWPORT_WIDTH,
+					height: WINDOW_VIEWPORT_HEIGHT,
+				})
+				await safePage()?.setRequestInterception(true)
+				safePage()?.on('request', (req) => {
+					const resourceType = req.resourceType()
 
-			await new Promise(async (res, rej) => {
+					if (resourceType === 'stylesheet') {
+						req.respond({ status: 200, body: 'aborted' })
+					} else if (
+						/(socket.io.min.js)+(?:$)|data:image\/[a-z]*.?\;base64/.test(url) ||
+						/googletagmanager.com|connect.facebook.net|asia.creativecdn.com|static.hotjar.com|deqik.com|contineljs.com|googleads.g.doubleclick.net|analytics.tiktok.com|google.com|gstatic.com|static.airbridge.io|googleadservices.com|google-analytics.com|sg.mmstat.com|t.contentsquare.net|accounts.google.com|browser.sentry-cdn.com|bat.bing.com|tr.snapchat.com|ct.pinterest.com|criteo.com|webchat.caresoft.vn|tags.creativecdn.com|script.crazyegg.com|tags.tiqcdn.com|trc.taboola.com|securepubads.g.doubleclick.net|partytown/.test(
+							req.url()
+						) ||
+						['font', 'image', 'media', 'imageset'].includes(resourceType)
+					) {
+						req.abort()
+					} else {
+						req.continue()
+					}
+				})
+
+				await safePage()?.setExtraHTTPHeaders({
+					...specialInfo,
+					service: 'puppeteer',
+				})
+
 				Console.log(`Start to crawl: ${url}`)
 
 				let response
@@ -330,43 +352,70 @@ const ISRHandler = async ({ hasCache, url }: IISRHandlerParam) => {
 					Console.log('ISRHandler line 341:')
 					Console.error('err name: ', err.name)
 					Console.error('err message: ', err.message)
-					isGetHtmlProcessError = true
-					rej(new Error('Internal Error'))
+					throw new Error('Internal Error')
 				} finally {
 					status = response?.status?.() ?? status
 					Console.log(`Internal crawler status: ${status}`)
-
-					res(true)
 				}
-			})
-		} catch (err) {
-			Console.log('ISRHandler line 297:')
-			Console.log('Crawler is fail!')
-			Console.error(err)
-			cacheManager.remove(url)
-			safePage()?.close()
-			return {
-				status: 500,
+			} catch (err) {
+				Console.log('ISRHandler line 297:')
+				Console.log('Crawler is fail!')
+				Console.error(err)
+				cacheManager.remove(url)
+				safePage()?.close()
+				browser.emit('closePage', url)
+				if (!isMainThread) {
+					parentPort.postMessage({
+						name: 'closePage',
+						wsEndpoint: browser.wsEndpoint(),
+						url,
+					})
+				}
+				if (params.hasCache) {
+					cacheManager.rename({
+						url,
+					})
+				}
+
+				return {
+					status: 500,
+				}
 			}
-		}
 
-		if (isGetHtmlProcessError) {
-			cacheManager.remove(url)
-			return {
-				status: 500,
+			try {
+				html = (await safePage()?.content()) ?? '' // serialized HTML of page DOM.
+				safePage()?.close()
+				browser.emit('closePage', url)
+				if (!isMainThread) {
+					parentPort.postMessage({
+						name: 'closePage',
+						wsEndpoint: browser.wsEndpoint(),
+						url,
+					})
+				}
+			} catch (err) {
+				Console.log('ISRHandler line 315:')
+				Console.error(err)
+				safePage()?.close()
+				browser.emit('closePage', url)
+				if (!isMainThread) {
+					parentPort.postMessage({
+						name: 'closePage',
+						wsEndpoint: browser.wsEndpoint(),
+						url,
+					})
+				}
+				if (params.hasCache) {
+					cacheManager.rename({
+						url,
+					})
+				}
+
+				return
 			}
-		}
 
-		try {
-			html = (await safePage()?.content()) ?? '' // serialized HTML of page DOM.
-			safePage()?.close()
-		} catch (err) {
-			Console.log('ISRHandler line 315:')
-			Console.error(err)
-			return
+			status = html && regexNotFoundPageID.test(html) ? 404 : 200
 		}
-
-		status = html && regexNotFoundPageID.test(html) ? 404 : 200
 	}
 
 	restOfDuration = _getRestOfDuration(startGenerating)
@@ -387,17 +436,22 @@ const ISRHandler = async ({ hasCache, url }: IISRHandlerParam) => {
 			enableOptimizeAndCompressIfRemoteCrawlerFail
 
 		let isRaw = false
-
 		try {
-			if (enableToOptimize) html = await optimizeContent(html, true)
+			if (enableToOptimize) html = await shallowOptimizeContent(html)
+
+			if (enableToOptimize) html = await deepOptimizeContent(html)
 
 			if (enableToCompress) html = await compressContent(html)
+			// console.log('finish optimize and compress: ', url.split('?')[0])
+			// console.log('-------')
 		} catch (err) {
 			isRaw = true
 			Console.log('--------------------')
 			Console.log('ISRHandler line 368:')
 			Console.log('error url', url.split('?')[0])
 			Console.error(err)
+			// console.log('fail optimize and compress: ', url.split('?')[0])
+			// console.log('-------')
 		}
 
 		result = await cacheManager.set({

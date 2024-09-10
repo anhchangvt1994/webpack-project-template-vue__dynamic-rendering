@@ -3,7 +3,7 @@
 	"name": "puppeteer-ssr",
 	"version": "1.0.0",
 	"description": "puppeteer-ssr",
-	"main": "index.ts",
+	"main": "./index/index.ts",
 	"scripts": {},
 	"author": "",
 	"license": "ISC",

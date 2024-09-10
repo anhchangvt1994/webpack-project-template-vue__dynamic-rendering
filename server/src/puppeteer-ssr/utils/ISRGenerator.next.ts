@@ -17,7 +17,7 @@ interface IISRGeneratorParams {
 	isSkipWaiting?: boolean
 }
 
-const limitRequestToCrawl = 4
+const limitRequestToCrawl = 3
 let totalRequestsToCrawl = 0
 const waitingToCrawlList = new Map<string, IISRGeneratorParams>()
 const limitRequestWaitingToCrawl = 1
@@ -97,10 +97,10 @@ const SSRGenerator = async ({
 
 	const certainLimitRequestToCrawl = getCertainLimitRequestToCrawl()
 
+	// console.log(result)
 	// console.log('certainLimitRequestToCrawl: ', certainLimitRequestToCrawl)
 	// console.log('totalRequestsToCrawl: ', totalRequestsToCrawl)
 	// console.log('totalRequestsWaitingToCrawl: ', totalRequestsWaitingToCrawl)
-	// console.log('-------')
 
 	if (result) {
 		const NonNullableResult = result
@@ -114,9 +114,9 @@ const SSRGenerator = async ({
 			Date.now() - new Date(NonNullableResult.updatedAt).getTime() >
 			renewTime
 		) {
-			cacheManager.renew().then((result) => {
+			cacheManager.renew().then((hasRenew) => {
 				if (
-					!result.hasRenew &&
+					!hasRenew &&
 					(totalRequestsToCrawl < certainLimitRequestToCrawl ||
 						ISRHandlerParams.forceToCrawl)
 				) {
@@ -150,7 +150,7 @@ const SSRGenerator = async ({
 							} else {
 								totalRequestsToCrawl =
 									totalRequestsToCrawl > certainLimitRequestToCrawl
-										? certainLimitRequestToCrawl - 2
+										? totalRequestsToCrawl - certainLimitRequestToCrawl - 1
 										: totalRequestsToCrawl - 1
 							}
 
@@ -163,7 +163,7 @@ const SSRGenerator = async ({
 								waitingToCrawlList.delete(nextCrawlItem.url)
 
 								SSRGenerator({
-									isSkipWaiting,
+									isSkipWaiting: true,
 									forceToCrawl: true,
 									...nextCrawlItem,
 								})
@@ -180,7 +180,7 @@ const SSRGenerator = async ({
 							} else {
 								totalRequestsToCrawl =
 									totalRequestsToCrawl > certainLimitRequestToCrawl
-										? certainLimitRequestToCrawl - 2
+										? totalRequestsToCrawl - certainLimitRequestToCrawl - 1
 										: totalRequestsToCrawl - 1
 							}
 
@@ -193,7 +193,7 @@ const SSRGenerator = async ({
 								waitingToCrawlList.delete(nextCrawlItem.url)
 
 								SSRGenerator({
-									isSkipWaiting,
+									isSkipWaiting: true,
 									forceToCrawl: true,
 									...nextCrawlItem,
 								})
@@ -203,6 +203,8 @@ const SSRGenerator = async ({
 					waitingToCrawlList.set(ISRHandlerParams.url, ISRHandlerParams)
 				}
 			})
+
+			result = await cacheManager.achieve()
 		}
 	} else if (
 		totalRequestsToCrawl < certainLimitRequestToCrawl ||
@@ -221,6 +223,9 @@ const SSRGenerator = async ({
 			const isValidToScraping = NonNullableResult.isInit
 
 			if (isValidToScraping) {
+				await cacheManager.remove(ISRHandlerParams.url)
+				cacheManager.get()
+
 				if (waitingToCrawlList.has(ISRHandlerParams.url)) {
 					waitingToCrawlList.delete(ISRHandlerParams.url)
 				}
@@ -249,7 +254,7 @@ const SSRGenerator = async ({
 								} else {
 									totalRequestsToCrawl =
 										totalRequestsToCrawl > certainLimitRequestToCrawl
-											? certainLimitRequestToCrawl - 2
+											? totalRequestsToCrawl - certainLimitRequestToCrawl - 1
 											: totalRequestsToCrawl - 1
 								}
 
@@ -262,7 +267,7 @@ const SSRGenerator = async ({
 									waitingToCrawlList.delete(nextCrawlItem.url)
 
 									SSRGenerator({
-										isSkipWaiting,
+										isSkipWaiting: true,
 										forceToCrawl: true,
 										...nextCrawlItem,
 									})
@@ -279,7 +284,7 @@ const SSRGenerator = async ({
 								} else {
 									totalRequestsToCrawl =
 										totalRequestsToCrawl > certainLimitRequestToCrawl
-											? certainLimitRequestToCrawl - 2
+											? totalRequestsToCrawl - certainLimitRequestToCrawl - 1
 											: totalRequestsToCrawl - 1
 								}
 
@@ -292,7 +297,7 @@ const SSRGenerator = async ({
 									waitingToCrawlList.delete(nextCrawlItem.url)
 
 									SSRGenerator({
-										isSkipWaiting,
+										isSkipWaiting: true,
 										forceToCrawl: true,
 										...nextCrawlItem,
 									})
@@ -323,7 +328,7 @@ const SSRGenerator = async ({
 					const tmpResult = await cacheManager.achieve()
 					result = tmpResult || result
 				}
-			} else if (!isSkipWaiting && !ISRHandlerParams.forceToCrawl) {
+			} else if (!isSkipWaiting) {
 				const restOfDuration = getRestOfDuration(startGenerating, 2000)
 
 				if (restOfDuration >= 500) {
@@ -335,9 +340,20 @@ const SSRGenerator = async ({
 								: 200
 
 						setTimeout(async () => {
-							const tmpResult = await cacheManager.achieve()
+							const tmpResult = await cacheManager.get()
 
-							if (tmpResult && tmpResult.response) return res(tmpResult)
+							if (tmpResult) {
+								if (tmpResult.response && tmpResult.status === 200)
+									return res(tmpResult)
+								else if (tmpResult.isInit)
+									res(
+										await SSRGenerator({
+											...ISRHandlerParams,
+											isSkipWaiting: false,
+											forceToCrawl: true,
+										})
+									)
+							}
 
 							waitingDuration += duration
 
@@ -355,7 +371,7 @@ const SSRGenerator = async ({
 					if (!ISRHandlerParams.forceToCrawl) {
 						totalRequestsToCrawl =
 							totalRequestsToCrawl > certainLimitRequestToCrawl
-								? certainLimitRequestToCrawl - 2
+								? totalRequestsToCrawl - certainLimitRequestToCrawl - 1
 								: totalRequestsToCrawl - 1
 					}
 				}

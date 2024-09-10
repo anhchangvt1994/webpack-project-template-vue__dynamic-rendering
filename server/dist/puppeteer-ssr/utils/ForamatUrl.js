@@ -113,3 +113,34 @@ const getUrl = (req) => {
 	).trim()
 }
 exports.getUrl = getUrl // getUrl
+
+const getPathname = (req) => {
+	if (!req) return ''
+
+	const pathname = (() => {
+		let tmpPathName
+		if (req.headers['redirect'])
+			tmpPathName = _optionalChain([
+				JSON,
+				'access',
+				(_11) => _11.parse,
+				'call',
+				(_12) => _12(req.headers['redirect']),
+				'optionalAccess',
+				(_13) => _13.path,
+			])
+
+		return _optionalChain([
+			tmpPathName || req.url,
+			'optionalAccess',
+			(_14) => _14.split,
+			'call',
+			(_15) => _15('?'),
+			'optionalAccess',
+			(_16) => _16[0],
+		])
+	})()
+
+	return pathname
+}
+exports.getPathname = getPathname // getPathname

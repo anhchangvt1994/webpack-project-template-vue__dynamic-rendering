@@ -47,3 +47,9 @@ export const getUrl = (res: HttpResponse, req: HttpRequest) => {
 		PROCESS_ENV.BASE_URL + pathname
 	).trim()
 } // getUrl
+
+export const getPathname = (res: HttpResponse, req: HttpRequest) => {
+	if (!res || !req) return
+
+	return res.urlForCrawler || req.getUrl()
+} // getPathname

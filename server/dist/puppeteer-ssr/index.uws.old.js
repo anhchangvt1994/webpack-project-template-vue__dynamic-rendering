@@ -56,8 +56,8 @@ var _constants3 = require('./constants')
 var _ForamatUrluws = require('./utils/ForamatUrl.uws')
 var _ISRGeneratornext = require('./utils/ISRGenerator.next')
 var _ISRGeneratornext2 = _interopRequireDefault(_ISRGeneratornext)
-var _ISRHandler = require('./utils/ISRHandler')
-var _ISRHandler2 = _interopRequireDefault(_ISRHandler)
+var _ISRHandlerworker = require('./utils/ISRHandler.worker')
+var _ISRHandlerworker2 = _interopRequireDefault(_ISRHandlerworker)
 
 const COOKIE_EXPIRED_SECOND = _constants.COOKIE_EXPIRED / 1000
 
@@ -126,7 +126,7 @@ const puppeteerSSRService = (async () => {
 							_ConsoleHandler2.default.log('Request aborted')
 						})
 
-						const result = await _ISRHandler2.default.call(void 0, {
+						const result = await _ISRHandlerworker2.default.call(void 0, {
 							startGenerating,
 							hasCache: isFirstRequest,
 							url,
@@ -159,7 +159,7 @@ const puppeteerSSRService = (async () => {
 							_ConsoleHandler2.default.log('Request aborted')
 						})
 
-						await _CleanerService2.default.call(void 0)
+						await _CleanerService2.default.call(void 0, true)
 
 						_ConsoleHandler2.default.log('Finish clean service!')
 
@@ -180,6 +180,8 @@ const puppeteerSSRService = (async () => {
 				_InitEnv.PROCESS_ENV.BASE_URL = `${
 					req.getHeader('x-forwarded-proto')
 						? req.getHeader('x-forwarded-proto')
+						: _InitEnv.PROCESS_ENV.IS_SERVER
+						? 'https'
 						: 'http'
 				}://${req.getHeader('host')}`
 
@@ -342,7 +344,10 @@ const puppeteerSSRService = (async () => {
 															)
 
 															if (contentEncoding === 'br') return tmpContent
-															else
+															else if (
+																tmpContent &&
+																Buffer.isBuffer(tmpContent)
+															)
 																tmpContent = _zlib.brotliDecompressSync
 																	.call(void 0, tmpContent)
 																	.toString()
@@ -362,9 +367,11 @@ const puppeteerSSRService = (async () => {
 													result.response
 												)
 
-												tmpBody = _zlib.brotliDecompressSync
-													.call(void 0, content)
-													.toString()
+												if (content && Buffer.isBuffer(content)) {
+													tmpBody = _zlib.brotliDecompressSync
+														.call(void 0, content)
+														.toString()
+												}
 											} else {
 												tmpBody = _fs2.default.readFileSync(result.response)
 											}
@@ -384,7 +391,8 @@ const puppeteerSSRService = (async () => {
 											res.writeHeader('Retry-After', '120')
 
 										res.end(body, true)
-									} catch (e) {
+									} catch (err) {
+										console.log(err)
 										res
 											.writeStatus('504')
 											.writeHeader('Content-Type', 'text/html; charset=utf-8')
@@ -415,7 +423,7 @@ const puppeteerSSRService = (async () => {
 									res.end(body || '', true)
 								} else {
 									res
-										// .writeStatus(String(result.status))
+										.writeStatus(String(result.status))
 										.writeHeader('Content-Type', 'text/html; charset=utf-8')
 
 									// if (enableContentEncoding && result.status === 200) {

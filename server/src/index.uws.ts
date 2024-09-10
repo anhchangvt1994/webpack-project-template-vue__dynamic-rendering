@@ -55,13 +55,6 @@ const startServer = async () => {
 	}
 
 	app.any('/*', (res, req) => {
-		if (!PROCESS_ENV.BASE_URL)
-			PROCESS_ENV.BASE_URL = `${
-				req.getHeader('x-forwarded-proto')
-					? req.getHeader('x-forwarded-proto')
-					: 'http'
-			}://${req.getHeader('host')}`
-
 		setupCors(res)
 
 		res.end('', true) // end the request

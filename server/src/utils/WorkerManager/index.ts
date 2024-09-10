@@ -1,10 +1,14 @@
 import WorkerPool from 'workerpool'
 import Pool from 'workerpool/src/Pool'
-import Console from './ConsoleHandler'
+import { workerManagerPath } from '../../constants'
+import Console from '../ConsoleHandler'
+import { getTextData, setTextData } from '../FileHandler'
+const { workerData } = require('worker_threads')
 
 interface IInitOptions {
 	minWorkers: number
 	maxWorkers: number
+	enableGlobalCounter?: boolean
 	workerTerminateTimeout?: number
 }
 
@@ -13,6 +17,8 @@ interface IGetFreePool {
 	terminate: (options?: { force?: boolean; delay?: number }) => void
 }
 
+const workerOrder = workerData?.order || 0
+
 const WorkerManager = (() => {
 	return {
 		init: (
@@ -20,16 +26,17 @@ const WorkerManager = (() => {
 			options?: IInitOptions,
 			instanceTaskList?: string[]
 		) => {
-			options = {
+			const initOptions = {
 				minWorkers: 1,
 				maxWorkers: 1,
+				enableGlobalCounter: false,
 				workerTerminateTimeout: 0,
 				...(options || {}),
 			}
 
 			let rootCounter = 0
 
-			let curPool = WorkerPool.pool(workerPath, options)
+			let curPool = WorkerPool.pool(workerPath, initOptions)
 
 			let terminate: {
 				run: IGetFreePool['terminate']
@@ -49,6 +56,56 @@ const WorkerManager = (() => {
 				Console.error(err)
 			}
 
+			const _getCounterIncreased = async () => {
+				if (!initOptions.enableGlobalCounter) return rootCounter++
+
+				let counter = await new Promise<number>((res) => {
+					let tmpCounter: number
+					setTimeout(
+						() => {
+							tmpCounter = Number(
+								getTextData(`${workerManagerPath}/counter.txt`) || 0
+							)
+							tmpCounter++
+
+							setTextData(
+								`${workerManagerPath}/counter.txt`,
+								tmpCounter.toString()
+							)
+							res(tmpCounter)
+						},
+						workerOrder > 1 ? workerOrder * 1000 : 0
+					)
+				})
+
+				return counter
+			} // _getCounterIncreased
+
+			const _getCounterDecreased = async () => {
+				if (!initOptions.enableGlobalCounter) return rootCounter--
+
+				let counter = await new Promise<number>((res) => {
+					let tmpCounter: number
+					setTimeout(
+						() => {
+							tmpCounter = Number(
+								getTextData(`${workerManagerPath}/counter.txt`) || 0
+							)
+							tmpCounter = tmpCounter ? tmpCounter - 1 : 0
+
+							setTextData(
+								`${workerManagerPath}/counter.txt`,
+								tmpCounter.toString()
+							)
+							res(tmpCounter)
+						},
+						workerOrder > 1 ? workerOrder * 1000 : 0
+					)
+				})
+
+				return counter
+			} // _getCounterDecreased
+
 			const _getTerminate = (
 				pool: Pool
 			): {
@@ -63,12 +120,12 @@ const WorkerManager = (() => {
 							delay: 10000,
 							...options,
 						}
-						rootCounter--
 
+						_getCounterDecreased()
+
+						if (timeout) clearTimeout(timeout)
 						timeout = setTimeout(async () => {
-							curPool = WorkerPool.pool(workerPath, {
-								...options,
-							})
+							curPool = WorkerPool.pool(workerPath, initOptions)
 							terminate = _getTerminate(curPool)
 
 							try {
@@ -83,13 +140,9 @@ const WorkerManager = (() => {
 
 								if (!pool.stats().activeTasks) {
 									pool.terminate(options.force)
-								} else {
-									setTimeout(() => {
-										pool.terminate(options.force)
-									}, 5000)
 								}
 							} catch (err) {
-								Console.error(err)
+								Console.error(err.message)
 							}
 						}, options.delay)
 					},
@@ -110,14 +163,16 @@ const WorkerManager = (() => {
 						...options,
 					}
 
-					rootCounter++
-
-					terminate.cancel()
+					const counter = await _getCounterIncreased()
 
 					if (options.delay) {
-						const duration = (options.delay as number) * (rootCounter - 1)
+						const duration = (options.delay as number) * (counter - 1)
 
 						await new Promise((res) => setTimeout(res, duration))
+
+						terminate.cancel()
+					} else {
+						terminate.cancel()
 					}
 
 					return {

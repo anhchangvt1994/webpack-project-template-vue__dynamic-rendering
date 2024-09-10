@@ -36,7 +36,9 @@ export const getData = async (key: string, options?: IGetCacheOptionsParam) => {
 		Console.error(err)
 	}
 
-	freePool.terminate()
+	freePool.terminate({
+		force: true,
+	})
 
 	return result
 } // getData
@@ -60,7 +62,9 @@ export const getStore = async (
 		Console.error(err)
 	}
 
-	freePool.terminate()
+	freePool.terminate({
+		force: true,
+	})
 
 	return result
 } // getStore
@@ -80,7 +84,9 @@ export const setData = async (
 		Console.error(err)
 	}
 
-	freePool.terminate()
+	freePool.terminate({
+		force: true,
+	})
 
 	return result
 } // setData
@@ -104,7 +110,9 @@ export const setStore = async (key: string, content: any) => {
 		Console.error(err)
 	}
 
-	freePool.terminate()
+	freePool.terminate({
+		force: true,
+	})
 
 	return result
 } // setStore
@@ -120,7 +128,9 @@ export const removeData = async (key: string) => {
 		Console.error(err)
 	}
 
-	freePool.terminate()
+	freePool.terminate({
+		force: true,
+	})
 
 	return result
 } // removeData
@@ -136,7 +146,9 @@ export const removeStore = async (key: string) => {
 		Console.error(err)
 	}
 
-	freePool.terminate()
+	freePool.terminate({
+		force: true,
+	})
 
 	return result
 } // removeStore
@@ -151,5 +163,7 @@ export const updateDataStatus = async (key: string, newStatus?: IStatus) => {
 		Console.error(err)
 	}
 
-	freePool.terminate()
+	freePool.terminate({
+		force: true,
+	})
 } // updateDataStatus

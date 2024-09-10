@@ -128,7 +128,9 @@ const CacheManager = (url) => {
 			_ConsoleHandler2.default.error(err)
 		}
 
-		freePool.terminate()
+		freePool.terminate({
+			force: true,
+		})
 
 		return result
 	} // get
@@ -196,7 +198,9 @@ const CacheManager = (url) => {
 			_ConsoleHandler2.default.error(err)
 		}
 
-		freePool.terminate()
+		freePool.terminate({
+			force: true,
+		})
 
 		return result
 	} // set
@@ -212,7 +216,9 @@ const CacheManager = (url) => {
 			_ConsoleHandler2.default.error(err)
 		}
 
-		freePool.terminate()
+		freePool.terminate({
+			force: true,
+		})
 
 		return result
 	} // renew
@@ -228,7 +234,9 @@ const CacheManager = (url) => {
 			_ConsoleHandler2.default.error(err)
 		}
 
-		freePool.terminate()
+		freePool.terminate({
+			force: true,
+		})
 
 		return
 	} // remove

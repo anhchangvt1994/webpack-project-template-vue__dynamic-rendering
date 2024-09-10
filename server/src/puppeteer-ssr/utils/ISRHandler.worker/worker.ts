@@ -82,13 +82,13 @@ const fetchData = async (
 
 const waitResponse = (() => {
 	const firstWaitingDuration =
-		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 250 : 500
+		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 1000 : 500
 	const defaultRequestWaitingDuration =
-		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 250 : 500
+		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 1000 : 500
 	const requestServedFromCacheDuration =
-		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 250 : 250
+		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 1000 : 500
 	const requestFailDuration =
-		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 250 : 250
+		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 1000 : 500
 	const maximumTimeout =
 		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 15000 : 15000
 
@@ -113,7 +113,7 @@ const waitResponse = (() => {
 						?.goto(url.split('?')[0], {
 							// waitUntil: 'networkidle2',
 							waitUntil: 'load',
-							timeout: 10000,
+							timeout: 30000,
 						})
 						.then((res) => {
 							setTimeout(() => resolveAfterPageLoad(res), firstWaitingDuration)
@@ -196,7 +196,7 @@ const waitResponse = (() => {
 
 				setTimeout(() => {
 					resolve(result)
-				}, 100)
+				}, 500)
 			})
 		} catch (err) {
 			// console.log(err.message)
@@ -276,6 +276,7 @@ const ISRHandler = async (params: IISRHandlerParam) => {
 				status = result.status
 				html = result.data
 			}
+
 			Console.log('External crawler status: ', status)
 		} catch (err) {
 			enableOptimizeAndCompressIfRemoteCrawlerFail = true
@@ -285,127 +286,151 @@ const ISRHandler = async (params: IISRHandlerParam) => {
 		}
 	}
 
-	const browser = wsEndpoint
-		? await puppeteer.connect({ browserWSEndpoint: wsEndpoint })
-		: undefined
+	if (wsEndpoint && (!ServerConfig.crawler || [404, 500].includes(status))) {
+		const browser = await puppeteer.connect({ browserWSEndpoint: wsEndpoint })
 
-	if (browser && (!ServerConfig.crawler || [404, 500].includes(status))) {
-		enableOptimizeAndCompressIfRemoteCrawlerFail = true
-		Console.log('Create new page')
-		const page = await browser.newPage()
-		const safePage = _getSafePage(page)
+		if (browser && browser.connected) {
+			enableOptimizeAndCompressIfRemoteCrawlerFail = true
+			Console.log('Create new page')
+			const page = await browser.newPage()
+			const safePage = _getSafePage(page)
 
-		Console.log('Create new page success!')
+			Console.log('Create new page success!')
 
-		if (!page) {
-			if (!page && hasCache) {
-				const tmpResult = await cacheManager.achieve()
+			if (!page) {
+				if (!page && hasCache) {
+					const tmpResult = await cacheManager.achieve()
 
-				return tmpResult
-			}
-			return
-		}
-
-		let isGetHtmlProcessError = false
-
-		try {
-			await safePage()?.waitForNetworkIdle({ idleTime: 150 })
-			await safePage()?.setViewport({
-				width: WINDOW_VIEWPORT_WIDTH,
-				height: WINDOW_VIEWPORT_HEIGHT,
-			})
-			await safePage()?.setRequestInterception(true)
-			safePage()?.on('request', (req) => {
-				const resourceType = req.resourceType()
-
-				if (resourceType === 'stylesheet') {
-					req.respond({ status: 200, body: 'aborted' })
-				} else if (
-					/(socket.io.min.js)+(?:$)|data:image\/[a-z]*.?\;base64/.test(url) ||
-					/googletagmanager.com|connect.facebook.net|asia.creativecdn.com|static.hotjar.com|deqik.com|contineljs.com|googleads.g.doubleclick.net|analytics.tiktok.com|google.com|gstatic.com|static.airbridge.io|googleadservices.com|google-analytics.com|sg.mmstat.com|t.contentsquare.net|accounts.google.com|browser.sentry-cdn.com|bat.bing.com|tr.snapchat.com|ct.pinterest.com|criteo.com|webchat.caresoft.vn|tags.creativecdn.com|script.crazyegg.com|tags.tiqcdn.com|trc.taboola.com|securepubads.g.doubleclick.net|partytown/.test(
-						req.url()
-					) ||
-					['font', 'image', 'media', 'imageset'].includes(resourceType)
-				) {
-					req.abort()
-				} else {
-					req.continue()
+					return tmpResult
 				}
-			})
-
-			await safePage()?.setExtraHTTPHeaders({
-				...specialInfo,
-				service: 'puppeteer',
-			})
-
-			Console.log(`Start to crawl: ${url}`)
-
-			let response
+				return
+			}
 
 			try {
-				response = await waitResponse(page, url, restOfDuration)
+				await safePage()?.waitForNetworkIdle({ idleTime: 150 })
+				await safePage()?.setViewport({
+					width: WINDOW_VIEWPORT_WIDTH,
+					height: WINDOW_VIEWPORT_HEIGHT,
+				})
+				await safePage()?.setRequestInterception(true)
+				safePage()?.on('request', (req) => {
+					const resourceType = req.resourceType()
+
+					if (resourceType === 'stylesheet') {
+						req.respond({ status: 200, body: 'aborted' })
+					} else if (
+						/(socket.io.min.js)+(?:$)|data:image\/[a-z]*.?\;base64/.test(url) ||
+						/googletagmanager.com|connect.facebook.net|asia.creativecdn.com|static.hotjar.com|deqik.com|contineljs.com|googleads.g.doubleclick.net|analytics.tiktok.com|google.com|gstatic.com|static.airbridge.io|googleadservices.com|google-analytics.com|sg.mmstat.com|t.contentsquare.net|accounts.google.com|browser.sentry-cdn.com|bat.bing.com|tr.snapchat.com|ct.pinterest.com|criteo.com|webchat.caresoft.vn|tags.creativecdn.com|script.crazyegg.com|tags.tiqcdn.com|trc.taboola.com|securepubads.g.doubleclick.net|partytown/.test(
+							req.url()
+						) ||
+						['font', 'image', 'media', 'imageset'].includes(resourceType)
+					) {
+						req.abort()
+					} else {
+						req.continue()
+					}
+				})
+
+				await safePage()?.setExtraHTTPHeaders({
+					...specialInfo,
+					service: 'puppeteer',
+				})
+
+				Console.log(`Start to crawl: ${url}`)
+
+				let response
+
+				try {
+					response = await waitResponse(page, url, restOfDuration)
+				} catch (err) {
+					Console.log('ISRHandler line 341:')
+					Console.error('err name: ', err.name)
+					Console.error('err message: ', err.message)
+					throw new Error('Internal Error')
+				} finally {
+					status = response?.status?.() ?? status
+					Console.log(`Internal crawler status: ${status}`)
+				}
 			} catch (err) {
-				Console.log('ISRHandler line 341:')
-				Console.error('err name: ', err.name)
-				Console.error('err message: ', err.message)
-				isGetHtmlProcessError = true
-				throw new Error('Internal Error')
-			} finally {
-				status = response?.status?.() ?? status
-				Console.log(`Internal crawler status: ${status}`)
-			}
-		} catch (err) {
-			Console.log('ISRHandler line 297:')
-			Console.log('Crawler is fail!')
-			Console.error(err)
-			cacheManager.remove(url)
-			safePage()?.close()
-			WorkerPool.workerEmit('closePage')
-			return {
-				status: 500,
-			}
-		}
+				Console.log('ISRHandler line 297:')
+				Console.log('Crawler is fail!')
+				Console.error(err)
+				cacheManager.remove(url)
+				safePage()?.close()
+				if (params.hasCache) {
+					cacheManager.rename({
+						url,
+					})
+				}
 
-		if (isGetHtmlProcessError) {
-			cacheManager.remove(url)
-			return {
-				status: 500,
+				return {
+					status: 500,
+				}
 			}
-		}
 
-		try {
-			html = (await safePage()?.content()) ?? '' // serialized HTML of page DOM.
-			safePage()?.close()
-		} catch (err) {
-			Console.log('ISRHandler line 315:')
-			Console.error(err)
-			WorkerPool.workerEmit('closePage')
-			return
-		}
+			try {
+				html = (await safePage()?.content()) ?? '' // serialized HTML of page DOM.
+				safePage()?.close()
+			} catch (err) {
+				Console.log('ISRHandler line 315:')
+				Console.error(err)
+				safePage()?.close()
+				if (params.hasCache) {
+					cacheManager.rename({
+						url,
+					})
+				}
 
-		status = html && regexNotFoundPageID.test(html) ? 404 : 200
+				return
+			}
+
+			status = html && regexNotFoundPageID.test(html) ? 404 : 200
+		}
 	}
 
 	restOfDuration = _getRestOfDuration(startGenerating)
 
 	let result: ISSRResult
 	if (CACHEABLE_STATUS_CODE[status]) {
-		const pathname = new URL(url).pathname
-		const enableToOptimize =
-			(ServerConfig.crawl.routes[pathname]?.optimize ||
-				ServerConfig.crawl.custom?.(pathname)?.optimize ||
-				ServerConfig.crawl.optimize) &&
-			enableOptimizeAndCompressIfRemoteCrawlerFail
+		WorkerPool.workerEmit({
+			name: 'html',
+			value: html,
+		})
 
-		const enableToCompress =
-			(ServerConfig.crawl.routes[pathname]?.compress ||
-				ServerConfig.crawl.custom?.(pathname)?.compress ||
-				ServerConfig.crawl.compress) &&
-			enableOptimizeAndCompressIfRemoteCrawlerFail
+		const pathname = new URL(url).pathname
+
+		const crawlCustomOption = ServerConfig.crawl.custom?.(url)
+
+		const enableToOptimize = (() => {
+			const options =
+				crawlCustomOption ??
+				ServerConfig.crawl.routes[pathname] ??
+				ServerConfig.crawl
+
+			return options.optimize && enableOptimizeAndCompressIfRemoteCrawlerFail
+		})()
+
+		const enableToCompress = (() => {
+			const options =
+				crawlCustomOption ??
+				ServerConfig.crawl.routes[pathname] ??
+				ServerConfig.crawl
+
+			return options.compress && enableOptimizeAndCompressIfRemoteCrawlerFail
+		})()
 
 		let isRaw = false
 		try {
+			if (
+				crawlCustomOption &&
+				typeof crawlCustomOption.onContentCrawled === 'function'
+			) {
+				html = crawlCustomOption.onContentCrawled({ html }) as string
+			}
+
 			if (enableToOptimize) html = await shallowOptimizeContent(html)
+
+			if (enableToCompress) html = await compressContent(html)
 
 			WorkerPool.workerEmit({
 				name: 'html',
@@ -413,8 +438,6 @@ const ISRHandler = async (params: IISRHandlerParam) => {
 			})
 
 			if (enableToOptimize) html = await deepOptimizeContent(html)
-
-			if (enableToCompress) html = await compressContent(html)
 			// console.log('finish optimize and compress: ', url.split('?')[0])
 			// console.log('-------')
 		} catch (err) {
@@ -434,14 +457,11 @@ const ISRHandler = async (params: IISRHandlerParam) => {
 		})
 	} else {
 		cacheManager.remove(url)
-		WorkerPool.workerEmit('closePage')
 		return {
 			status,
 			html: status === 404 ? 'Page not found!' : html,
 		}
 	}
-
-	WorkerPool.workerEmit('closePage')
 
 	return result
 }

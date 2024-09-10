@@ -17,6 +17,7 @@ import Console from '../utils/ConsoleHandler'
 import { decode } from '../utils/StringHelper'
 import ServerConfig from '../server.config'
 import { fetchData, refreshData } from './utils/FetchManager'
+import apiLighthouse from './routes/lighthouse/index.uws'
 
 const handleArrayBuffer = (message: ArrayBuffer | string) => {
 	if (message instanceof ArrayBuffer) {
@@ -341,6 +342,10 @@ const apiService = (async () => {
 	return {
 		init(app: TemplatedApp) {
 			if (!app) return Console.warn('You need provide uWebsockets app!')
+
+			// NOTE - Handle API Lighthouse
+			apiLighthouse.init(app)
+
 			_app = {
 				all: (pattern, handler) => {
 					app.get(pattern, handler)

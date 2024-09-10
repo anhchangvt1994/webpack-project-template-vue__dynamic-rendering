@@ -3,7 +3,6 @@ import path from 'path'
 import WorkerPool from 'workerpool'
 
 import { brotliDecompressSync } from 'zlib'
-import { resourceExtension } from '../../constants'
 import Console from '../ConsoleHandler'
 import { deleteResource as deleteResourceWithWorker } from './utils'
 
@@ -17,7 +16,7 @@ type IFileInfo =
 	| undefined
 
 const deleteResource = (path: string) => {
-	return deleteResourceWithWorker(path, WorkerPool)
+	return deleteResourceWithWorker(path)
 } //  deleteResource
 
 const getFileInfo = async (file: string): Promise<IFileInfo> => {
@@ -181,9 +180,7 @@ const scanToCleanBrowsers = async (
 
 					// NOTE - Remove without check pages
 					try {
-						await WorkerPool.pool(
-							path.resolve(__dirname, `./index.${resourceExtension}`)
-						)?.exec('deleteResource', [absolutePath])
+						deleteResource(absolutePath)
 					} catch (err) {
 						Console.error(err)
 					} finally {
@@ -202,7 +199,10 @@ const scanToCleanBrowsers = async (
 	})
 } // scanToCleanBrowsers
 
-const scanToCleanPages = async (dirPath: string, durationValidToKeep = 1) => {
+const scanToCleanPages = async (
+	dirPath: string,
+	durationValidToKeep = 21600
+) => {
 	await new Promise(async (res) => {
 		if (fs.existsSync(dirPath)) {
 			let counter = 0
@@ -294,6 +294,7 @@ const scanToCleanAPIDataCache = async (dirPath: string) => {
 					}
 				}
 
+				if (timeout) clearTimeout(timeout)
 				timeout = setTimeout(() => {
 					resolve('complete')
 				}, 100)
@@ -335,6 +336,7 @@ const scanToCleanAPIStoreCache = async (dirPath: string) => {
 					if (!fileInfo?.size) continue
 
 					if (curTime - new Date(fileInfo.requestedAt).getTime() >= 300000) {
+						if (timeout) clearTimeout(timeout)
 						try {
 							fs.unlink(absolutePath, () => {})
 						} catch (err) {
@@ -347,6 +349,7 @@ const scanToCleanAPIStoreCache = async (dirPath: string) => {
 					}
 				}
 
+				if (timeout) clearTimeout(timeout)
 				timeout = setTimeout(() => {
 					resolve('complete')
 				}, 100)

@@ -22,7 +22,11 @@ export type IFileInfo =
 	| undefined
 
 if (!fs.existsSync(pagesPath)) {
-	fs.mkdirSync(pagesPath)
+	try {
+		fs.mkdirSync(pagesPath)
+	} catch (err) {
+		Console.error(err)
+	}
 }
 
 export const regexKeyConverter =
@@ -182,7 +186,8 @@ export const get = async (
 			requestedAt: info?.requestedAt ?? curTime,
 			ttRenderMs: 200,
 			available: false,
-			isInit: false,
+			isInit:
+				Date.now() - new Date(info?.createdAt ?? curTime).getTime() >= 38000,
 			isRaw,
 		}
 	}
@@ -295,17 +300,57 @@ export const renew = async (url) => {
 export const remove = (url: string) => {
 	if (!url) return Console.log('Url can not empty!')
 	const key = getKey(url)
-	let file = `${pagesPath}/${key}.raw.br`
 
-	if (!fs.existsSync(file)) {
-		Console.log('Does not exist file reference url!')
-		return
-	}
+	const curFile = (() => {
+		switch (true) {
+			case fs.existsSync(`${pagesPath}/${key}.raw.br`):
+				return `${pagesPath}/${key}.raw.br`
+			case fs.existsSync(`${pagesPath}/${key}.br`):
+				return `${pagesPath}/${key}.br`
+			case fs.existsSync(`${pagesPath}/${key}.renew.br`):
+				return `${pagesPath}/${key}.renew.br`
+			default:
+				return
+		}
+	})()
+
+	if (!curFile) return
 
 	try {
-		fs.unlinkSync(file)
+		fs.unlinkSync(curFile)
 	} catch (err) {
 		console.error(err)
 		throw err
 	}
 } // remove
+
+export const rename = (params: { url: string; type?: 'raw' | 'renew' }) => {
+	if (!params || !params.url) return Console.log('Url can not empty!')
+
+	const key = getKey(params.url)
+	const file = `${pagesPath}/${key}${params.type ? '.' + params.type : ''}.br`
+
+	if (!fs.existsSync(file)) {
+		const curFile = (() => {
+			switch (true) {
+				case fs.existsSync(`${pagesPath}/${key}.raw.br`):
+					return `${pagesPath}/${key}.raw.br`
+				case fs.existsSync(`${pagesPath}/${key}.br`):
+					return `${pagesPath}/${key}.br`
+				case fs.existsSync(`${pagesPath}/${key}.renew.br`):
+					return `${pagesPath}/${key}.renew.br`
+				default:
+					return
+			}
+		})()
+
+		if (!curFile) return
+
+		try {
+			fs.renameSync(curFile, file)
+		} catch (err) {
+			Console.error(err)
+			return
+		}
+	}
+} // rename

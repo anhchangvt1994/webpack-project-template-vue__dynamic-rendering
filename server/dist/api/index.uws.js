@@ -41,6 +41,8 @@ var _StringHelper = require('../utils/StringHelper')
 var _serverconfig = require('../server.config')
 var _serverconfig2 = _interopRequireDefault(_serverconfig)
 var _FetchManager = require('./utils/FetchManager')
+var _indexuws = require('./routes/lighthouse/index.uws')
+var _indexuws2 = _interopRequireDefault(_indexuws)
 
 const handleArrayBuffer = (message) => {
 	if (message instanceof ArrayBuffer) {
@@ -406,6 +408,10 @@ const apiService = (async () => {
 				return _ConsoleHandler2.default.warn(
 					'You need provide uWebsockets app!'
 				)
+
+			// NOTE - Handle API Lighthouse
+			_indexuws2.default.init(app)
+
 			_app = {
 				all: (pattern, handler) => {
 					app.get(pattern, handler)

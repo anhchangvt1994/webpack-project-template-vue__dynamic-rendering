@@ -12,6 +12,7 @@ import {
 	set as setCache,
 	renew as renewCache,
 	remove as removeCache,
+	rename as renameCache,
 } from '../Cache.worker/utils'
 
 const maintainFile = path.resolve(__dirname, '../../../maintain.html')
@@ -139,9 +140,17 @@ const CacheManager = (url: string) => {
 		} catch (err) {
 			Console.error(err)
 		}
-
-		return
 	} // remove
+
+	const rename = async (params: { url: string; type?: 'raw' | 'renew' }) => {
+		if (!enableToCache) return
+
+		try {
+			await renameCache(params)
+		} catch (err) {
+			Console.error(err)
+		}
+	} // rename
 
 	return {
 		achieve,
@@ -149,6 +158,7 @@ const CacheManager = (url: string) => {
 		set,
 		renew,
 		remove,
+		rename,
 	}
 }
 

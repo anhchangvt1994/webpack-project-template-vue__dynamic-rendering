@@ -1,65 +1,65 @@
 import path from 'path'
-import { resourceExtension, userDataPath } from '../../../constants'
-import { getStore } from '../../../store'
+import { resourceExtension } from '../../../constants'
 import Console from '../../../utils/ConsoleHandler'
 import WorkerManager from '../../../utils/WorkerManager'
 import BrowserManager from '../BrowserManager'
-import { type IISRHandlerWorkerParam } from './types'
-import { ISSRResult } from '../../types'
 import CacheManager from '../CacheManager.worker/utils'
+import { type IISRHandlerWorkerParam } from './types'
+import ServerConfig from '../../../server.config'
+const { parentPort, isMainThread } = require('worker_threads')
 
 const workerManager = WorkerManager.init(
 	path.resolve(__dirname, `./worker.${resourceExtension}`),
 	{
 		minWorkers: 1,
 		maxWorkers: 5,
+		enableGlobalCounter: !isMainThread,
 	},
 	['ISRHandler']
 )
 
-const browserManager = BrowserManager(
-	() => `${userDataPath}/user_data_${Date.now()}`
-)
+const browserManager = BrowserManager()
 
 const ISRHandler = async (params: IISRHandlerWorkerParam) => {
-	if (!params.url) return
-
-	const browser = await browserManager?.get()
-
-	if (!browser || !browser.connected) return
-
-	const wsEndpoint = getStore('browser')?.wsEndpoint
-
-	if (!wsEndpoint) return
+	if (!browserManager || !params.url) return
 
 	const freePool = await workerManager.getFreePool({
-		delay: 150,
+		delay: 500,
 	})
+
+	const browser = await browserManager.get()
+
+	const wsEndpoint =
+		browser && browser.connected ? browser.wsEndpoint() : undefined
+
+	if (!wsEndpoint && !ServerConfig.crawler) {
+		freePool.terminate({
+			force: true,
+		})
+		return
+	}
+
 	const pool = freePool.pool
 
-	const timeoutToCloseBrowserPage = setTimeout(() => {
-		browser.emit('closePage', true)
-	}, 30000)
-
 	let result
+	const cacheManager = CacheManager(params.url)
 
 	try {
 		result = await new Promise(async (res, rej) => {
 			let html
 			const timeout = setTimeout(async () => {
 				if (html) {
-					const cacheManager = CacheManager(params.url)
 					const tmpResult = await cacheManager.set({
 						html,
 						url: params.url,
-						isRaw: true,
+						isRaw: !params.hasCache,
 					})
 
 					res(tmpResult)
 				} else {
 					res(undefined)
 				}
-			}, 12000)
+			}, 35000)
 			try {
 				const tmpResult = await pool.exec(
 					'ISRHandler',
@@ -72,11 +72,7 @@ const ISRHandler = async (params: IISRHandlerWorkerParam) => {
 					{
 						on: (payload) => {
 							if (!payload) return
-
-							if (payload === 'closePage') {
-								clearTimeout(timeoutToCloseBrowserPage)
-								browser.emit('closePage', params.url.split('?')[0])
-							} else if (
+							if (
 								typeof payload === 'object' &&
 								payload.name === 'html' &&
 								payload.value
@@ -94,13 +90,28 @@ const ISRHandler = async (params: IISRHandlerWorkerParam) => {
 			}
 		})
 	} catch (err) {
+		// clearTimeout(timeoutToCloseBrowserPage)
 		Console.error(err)
+	}
+
+	const url = params.url.split('?')[0]
+	browser?.emit('closePage', url)
+	if (!isMainThread) {
+		parentPort.postMessage({
+			name: 'closePage',
+			wsEndpoint,
+			url,
+		})
 	}
 
 	freePool.terminate({
 		force: true,
 		// delay: 30000,
 	})
+
+	if (!result || result.status !== 200) {
+		cacheManager.remove(params.url)
+	}
 
 	return result
 } // getData

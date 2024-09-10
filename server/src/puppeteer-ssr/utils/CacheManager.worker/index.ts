@@ -60,7 +60,9 @@ const CacheManager = (url: string) => {
 			Console.error(err)
 		}
 
-		freePool.terminate()
+		freePool.terminate({
+			force: true,
+		})
 
 		return result
 	} // get
@@ -128,7 +130,9 @@ const CacheManager = (url: string) => {
 			Console.error(err)
 		}
 
-		freePool.terminate()
+		freePool.terminate({
+			force: true,
+		})
 
 		return result
 	} // set
@@ -144,7 +148,9 @@ const CacheManager = (url: string) => {
 			Console.error(err)
 		}
 
-		freePool.terminate()
+		freePool.terminate({
+			force: true,
+		})
 
 		return result
 	} // renew
@@ -160,7 +166,9 @@ const CacheManager = (url: string) => {
 			Console.error(err)
 		}
 
-		freePool.terminate()
+		freePool.terminate({
+			force: true,
+		})
 
 		return
 	} // remove

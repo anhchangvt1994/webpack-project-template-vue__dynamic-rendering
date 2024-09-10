@@ -199,9 +199,17 @@ const CacheManager = (url) => {
 		} catch (err) {
 			_ConsoleHandler2.default.error(err)
 		}
-
-		return
 	} // remove
+
+	const rename = async (params) => {
+		if (!enableToCache) return
+
+		try {
+			await _utils.rename.call(void 0, params)
+		} catch (err) {
+			_ConsoleHandler2.default.error(err)
+		}
+	} // rename
 
 	return {
 		achieve,
@@ -209,6 +217,7 @@ const CacheManager = (url) => {
 		set,
 		renew,
 		remove,
+		rename,
 	}
 }
 

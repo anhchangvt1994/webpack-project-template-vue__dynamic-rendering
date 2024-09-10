@@ -39,7 +39,9 @@ const getData = async (key, options) => {
 		_ConsoleHandler2.default.error(err)
 	}
 
-	freePool.terminate()
+	freePool.terminate({
+		force: true,
+	})
 
 	return result
 }
@@ -66,7 +68,9 @@ const getStore = async (key, options) => {
 		_ConsoleHandler2.default.error(err)
 	}
 
-	freePool.terminate()
+	freePool.terminate({
+		force: true,
+	})
 
 	return result
 }
@@ -89,7 +93,9 @@ const setData = async (key, content, options) => {
 		_ConsoleHandler2.default.error(err)
 	}
 
-	freePool.terminate()
+	freePool.terminate({
+		force: true,
+	})
 
 	return result
 }
@@ -114,7 +120,9 @@ const setStore = async (key, content) => {
 		_ConsoleHandler2.default.error(err)
 	}
 
-	freePool.terminate()
+	freePool.terminate({
+		force: true,
+	})
 
 	return result
 }
@@ -131,7 +139,9 @@ const removeData = async (key) => {
 		_ConsoleHandler2.default.error(err)
 	}
 
-	freePool.terminate()
+	freePool.terminate({
+		force: true,
+	})
 
 	return result
 }
@@ -148,7 +158,9 @@ const removeStore = async (key) => {
 		_ConsoleHandler2.default.error(err)
 	}
 
-	freePool.terminate()
+	freePool.terminate({
+		force: true,
+	})
 
 	return result
 }
@@ -164,6 +176,8 @@ const updateDataStatus = async (key, newStatus) => {
 		_ConsoleHandler2.default.error(err)
 	}
 
-	freePool.terminate()
+	freePool.terminate({
+		force: true,
+	})
 }
 exports.updateDataStatus = updateDataStatus // updateDataStatus

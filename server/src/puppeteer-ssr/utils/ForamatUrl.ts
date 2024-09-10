@@ -57,3 +57,17 @@ export const getUrl = (req) => {
 			: req.protocol + '://' + req.get('host') + pathname)
 	).trim()
 } // getUrl
+
+export const getPathname = (req) => {
+	if (!req) return ''
+
+	const pathname = (() => {
+		let tmpPathName
+		if (req.headers['redirect'])
+			tmpPathName = JSON.parse(req.headers['redirect'] as string)?.path
+
+		return (tmpPathName || req.url)?.split('?')?.[0]
+	})()
+
+	return pathname
+} // getPathname

@@ -1,9 +1,19 @@
+interface IWorkerInfo {
+	counter: number
+}
+
+export interface IWorkerInfoList {
+	[key: string]: IWorkerInfo
+}
+
 export interface IStores {
 	browser: {
 		userDataPath?: string
 		reserveUserDataPath?: string
 		wsEndpoint?: string
-		[key: string]: string | number | undefined
+	}
+	threadAdvanceInfo: {
+		order: number
 	}
 	totalRequestToCrawl: number
 	headers: {
@@ -11,7 +21,6 @@ export interface IStores {
 		deviceInfo?: string
 		localeInfo?: string
 		accept?: string
-		[key: string]: string | number | undefined
 	}
 	promise: {
 		executablePath?: Promise<string>

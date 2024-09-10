@@ -111,3 +111,10 @@ const getUrl = (res, req) => {
 	).trim()
 }
 exports.getUrl = getUrl // getUrl
+
+const getPathname = (res, req) => {
+	if (!res || !req) return
+
+	return res.urlForCrawler || req.getUrl()
+}
+exports.getPathname = getPathname // getPathname
