@@ -37,7 +37,6 @@ NOTE
   - [Proxy API](/READMORE/proxy-api.md)
 
 6. [Deployment guide](/READMORE/deployment.md)
-
 7. [Q&A](/READMORE/Q&A.md)
 
 <h2 id="install">Install</h2>
