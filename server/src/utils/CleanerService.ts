@@ -193,7 +193,11 @@ const CleanerService = async (force = false) => {
 			const freePool = await workerManager.getFreePool()
 			const pool = freePool.pool
 
-			return pool.exec('deleteResource', [path])
+			return pool.exec('deleteResource', [path]).finally(() => {
+				freePool.terminate({
+					force: true,
+				})
+			})
 		}
 
 		try {
