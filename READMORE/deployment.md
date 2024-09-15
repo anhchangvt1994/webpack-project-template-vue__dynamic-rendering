@@ -18,9 +18,11 @@ The nice hardware
 
 1. [Install benefits](#install-benefits)
 2. [Clone and install the project](#clone-install)
-3. [Setup the project](#setup)
+3. [Setup the system](#setup-system)
+3. [Setup the project](#setup-project)
 4. [Start the project](#start)
-5. [Bonus](#bonus)
+6. [Issues](#issue)
+7. [Bonus](#bonus)
 
 <h2 id="install-benefits">Install benefits</h2>
 
@@ -69,7 +71,7 @@ yarn
 yarn build
 ```
 
-<h2 id="setup">Setup the project</h2>
+<h2 id="setup-system">Setup the system</h2>
 
 ##### Setup for the minimum hardware
 
@@ -131,6 +133,7 @@ sudo mkswap /swapfile
 sudo swapon /swapfile
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 ```
+<h2 id="setup-project">Setup the project</h2>
 
 - Setup `server/src/index.uws.worker.ts`
 
@@ -165,6 +168,35 @@ _createWorkerListener(worker2)
 // })
 ```
 
+- Setup `server.config.ts` (If you have nice hardware, please skip it)
+
+```typescript
+const ServerConfig = defineServerConfig({
+  crawl: {
+    enable: true,
+    ...,
+
+    // Setup time and renewTime of `cache` option as below
+    cache: {
+      enable: true,
+      time: 'infinite', // never remove
+      renewTime: 3600, // renew after 1 hour
+      ...
+    },
+  },
+  ...,
+})
+
+export default ServerConfig
+```
+
+- Setup `ISRGenerator.next.ts` (If you have nice hardware, please skip it)
+
+```typescript
+// change litmiRequestToCrawl from 3 to 2 (line 20)
+const limitRequestToCrawl = 2
+```
+
 <h2 id="start">Start the project</h2>
 
 ```bash
@@ -183,6 +215,53 @@ sudo apt install htop
 
 # use htop like this to follow process of project
 htop -p $(pgrep -d',' -f web-scraping)
+```
+
+<h2 id="issues">Issues</h2>
+
+`Puppeteer can not be launched`
+
+IF you reboot or your system auto start cause any reasons. Maybe you must to go to  project, and do some steps to ensure the project work normally.
+
+```bash
+cd <your-project-path>
+
+# setup 2 this global environment variables again
+export PUPPETEER_SKIP_DOWNLOAD=true
+export USE_CHROME_AWS_LAMBDA=true
+
+# remove node_modules and install again
+rm -rf node_modules
+yarn
+
+# check z-ram, swap-space
+swapon --show
+
+# restart the nginx
+sudo systemctl restart nginx
+
+# start the project
+yarn start:pm2:worker
+```
+
+---
+
+`Can not restart nginx cause port 80 is busy`
+
+After your system restarted, maybe the `nginx` will be crashed. In that case, you have to restart the `nginx`, but maybe you can not restart the `nginx` cause port 80 is busy. To resolve the issue, follow the below solution.
+
+```bash
+# check what service which using port 80
+sudo lsof -i :80
+
+# stop that service
+sudo systemctl stop <service-name>
+
+# force to destroy port 80 if can not find the service which using it
+sudo fuser -k 80/tcp
+
+# restart the nginx
+sudo systemctl restart nginx
 ```
 
 <h2 id="bonus">Bonus</h2>
