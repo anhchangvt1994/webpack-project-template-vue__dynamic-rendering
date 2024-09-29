@@ -71,6 +71,7 @@ declare global {
   const onServerPrefetch: typeof import('vue')['onServerPrefetch']
   const onUnmounted: typeof import('vue')['onUnmounted']
   const onUpdated: typeof import('vue')['onUpdated']
+  const onWatcherCleanup: typeof import('vue')['onWatcherCleanup']
   const provide: typeof import('vue')['provide']
   const reactive: typeof import('vue')['reactive']
   const readonly: typeof import('vue')['readonly']
@@ -117,12 +118,15 @@ declare global {
   const useAttrs: typeof import('vue')['useAttrs']
   const useCssModule: typeof import('vue')['useCssModule']
   const useCssVars: typeof import('vue')['useCssVars']
+  const useId: typeof import('vue')['useId']
+  const useModel: typeof import('vue')['useModel']
   const useRoute: typeof import('vue-router')['useRoute']
   const useRouter: typeof import('vue-router')['useRouter']
   const useSentenceCase: typeof import('composable/useStringHelper.ts')['useSentenceCase']
   const useSlots: typeof import('vue')['useSlots']
   const useSlug: typeof import('composable/useStringHelper.ts')['useSlug']
   const useSlugWithoutDash: typeof import('composable/useStringHelper.ts')['useSlugWithoutDash']
+  const useTemplateRef: typeof import('vue')['useTemplateRef']
   const useTitleCase: typeof import('composable/useStringHelper.ts')['useTitleCase']
   const useUnsignedLetters: typeof import('composable/useStringHelper.ts')['useUnsignedLetters']
   const watch: typeof import('vue')['watch']
@@ -206,6 +210,7 @@ declare module 'vue' {
     readonly onServerPrefetch: UnwrapRef<typeof import('vue')['onServerPrefetch']>
     readonly onUnmounted: UnwrapRef<typeof import('vue')['onUnmounted']>
     readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
+    readonly onWatcherCleanup: UnwrapRef<typeof import('vue')['onWatcherCleanup']>
     readonly provide: UnwrapRef<typeof import('vue')['provide']>
     readonly reactive: UnwrapRef<typeof import('vue')['reactive']>
     readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
@@ -252,12 +257,15 @@ declare module 'vue' {
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
+    readonly useId: UnwrapRef<typeof import('vue')['useId']>
+    readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>
     readonly useSentenceCase: UnwrapRef<typeof import('composable/useStringHelper.ts')['useSentenceCase']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
     readonly useSlug: UnwrapRef<typeof import('composable/useStringHelper.ts')['useSlug']>
     readonly useSlugWithoutDash: UnwrapRef<typeof import('composable/useStringHelper.ts')['useSlugWithoutDash']>
+    readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
     readonly useTitleCase: UnwrapRef<typeof import('composable/useStringHelper.ts')['useTitleCase']>
     readonly useUnsignedLetters: UnwrapRef<typeof import('composable/useStringHelper.ts')['useUnsignedLetters']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
