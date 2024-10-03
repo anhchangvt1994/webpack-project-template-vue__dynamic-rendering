@@ -423,3 +423,22 @@ const isExist = (url) => {
 	)
 }
 exports.isExist = isExist // isExist
+
+const getStatus = (url) => {
+	if (!url) {
+		_ConsoleHandler2.default.log('Url can not empty!')
+		return
+	}
+
+	const key = exports.getKey.call(void 0, url)
+
+	switch (true) {
+		case _fs2.default.existsSync(`${_constants.pagesPath}/${key}.raw.br`):
+			return 'raw'
+		case _fs2.default.existsSync(`${_constants.pagesPath}/${key}.renew.br`):
+			return 'renew'
+		default:
+			return 'ok'
+	}
+}
+exports.getStatus = getStatus // getStatus

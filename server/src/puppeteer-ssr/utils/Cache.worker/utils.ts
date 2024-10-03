@@ -378,3 +378,23 @@ export const isExist = (url: string) => {
 		fs.existsSync(`${pagesPath}/${key}.renew.br`)
 	)
 } // isExist
+
+export const getStatus = (
+	url: string
+): ('raw' | 'renew' | 'ok') | undefined => {
+	if (!url) {
+		Console.log('Url can not empty!')
+		return
+	}
+
+	const key = getKey(url)
+
+	switch (true) {
+		case fs.existsSync(`${pagesPath}/${key}.raw.br`):
+			return 'raw'
+		case fs.existsSync(`${pagesPath}/${key}.renew.br`):
+			return 'renew'
+		default:
+			return 'ok'
+	}
+} // getStatus

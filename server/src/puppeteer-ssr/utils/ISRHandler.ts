@@ -455,7 +455,7 @@ const ISRHandler = async (params: IISRHandlerParam) => {
 
 		const enableToCompress =
 			(ServerConfig.crawl.routes[pathname]?.compress ||
-				ServerConfig.crawl.custom?.(pathname)?.compress ||
+				ServerConfig.crawl.custom?.(url)?.compress ||
 				ServerConfig.crawl.compress) &&
 			enableOptimizeAndCompressIfRemoteCrawlerFail
 

@@ -693,7 +693,7 @@ const ISRHandler = async (params) => {
 					'access',
 					(_69) => _69.custom,
 					'optionalCall',
-					(_70) => _70(pathname),
+					(_70) => _70(url),
 					'optionalAccess',
 					(_71) => _71.compress,
 				]) ||

@@ -9,7 +9,8 @@ import {
 	ICacheSetParams,
 	getKey as getCacheKey,
 	getFileInfo,
-	isExist,
+	isExist as isCacheExist,
+	getStatus as getCacheStatus,
 } from '../Cache.worker/utils'
 
 const workerManager = WorkerManager.init(
@@ -30,13 +31,13 @@ const CacheManager = (url: string) => {
 		ServerConfig.crawl.enable &&
 		(ServerConfig.crawl.routes[pathname] === undefined ||
 			ServerConfig.crawl.routes[pathname].enable ||
-			ServerConfig.crawl.custom?.(pathname) === undefined ||
-			ServerConfig.crawl.custom?.(pathname)?.enable) &&
+			ServerConfig.crawl.custom?.(url) === undefined ||
+			ServerConfig.crawl.custom?.(url)?.enable) &&
 		ServerConfig.crawl.cache.enable &&
 		(ServerConfig.crawl.routes[pathname] === undefined ||
 			ServerConfig.crawl.routes[pathname].cache.enable ||
-			ServerConfig.crawl.custom?.(pathname) === undefined ||
-			ServerConfig.crawl.custom?.(pathname)?.cache.enable)
+			ServerConfig.crawl.custom?.(url) === undefined ||
+			ServerConfig.crawl.custom?.(url)?.cache.enable)
 
 	const get = async () => {
 		if (!enableToCache)
@@ -201,9 +202,18 @@ const CacheManager = (url: string) => {
 		})
 	} // rename
 
+	const getStatus = () => {
+		return getCacheStatus(url)
+	} // getStatus
+
+	const isExist = () => {
+		return isCacheExist(url)
+	} // isExist
+
 	return {
 		achieve,
 		get,
+		getStatus,
 		set,
 		renew,
 		remove,

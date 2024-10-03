@@ -163,7 +163,7 @@ const SSRGenerator = async ({ isSkipWaiting = false, ...ISRHandlerParams }) => {
 						'access',
 						(_12) => _12.custom,
 						'optionalCall',
-						(_13) => _13(pathname),
+						(_13) => _13(ISRHandlerParams.url),
 						'optionalAccess',
 						(_14) => _14.cache,
 						'access',

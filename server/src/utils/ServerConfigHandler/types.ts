@@ -14,12 +14,14 @@ export interface IServerConfigOptional {
 			}
 		}
 
-		custom?: (url: string) => Omit<
-			NonNullable<IServerConfigOptional['locale']>,
-			'enable' | 'routes' | 'custom'
-		> & {
-			enable?: boolean
-		}
+		custom?: (url: string) =>
+			| (Omit<
+					NonNullable<IServerConfigOptional['locale']>,
+					'enable' | 'routes' | 'custom'
+			  > & {
+					enable?: boolean
+			  })
+			| void
 	}
 
 	isRemoteCrawler?: boolean
@@ -27,7 +29,7 @@ export interface IServerConfigOptional {
 	crawl?: {
 		enable: boolean
 
-		content?: 'desktop' | 'mobile'
+		content?: 'desktop' | 'mobile' | 'all'
 
 		optimize?: 'all' | Array<'shallow' | 'deep' | 'script' | 'style'>
 
@@ -103,12 +105,14 @@ export interface IServerConfig extends IServerConfigOptional {
 			>
 		}
 
-		custom?: (url: string) => Omit<
-			NonNullable<IServerConfig['locale']>,
-			'enable' | 'routes' | 'custom'
-		> & {
-			enable?: boolean
-		}
+		custom?: (url: string) =>
+			| (Omit<
+					NonNullable<IServerConfig['locale']>,
+					'enable' | 'routes' | 'custom'
+			  > & {
+					enable?: boolean
+			  })
+			| undefined
 	}
 
 	isRemoteCrawler: boolean

@@ -66,7 +66,7 @@ const CacheManager = (url) => {
 				'access',
 				(_2) => _2.custom,
 				'optionalCall',
-				(_3) => _3(pathname),
+				(_3) => _3(url),
 			]) === undefined ||
 			_optionalChain([
 				_serverconfig2.default,
@@ -75,7 +75,7 @@ const CacheManager = (url) => {
 				'access',
 				(_5) => _5.custom,
 				'optionalCall',
-				(_6) => _6(pathname),
+				(_6) => _6(url),
 				'optionalAccess',
 				(_7) => _7.enable,
 			])) &&
@@ -89,7 +89,7 @@ const CacheManager = (url) => {
 				'access',
 				(_9) => _9.custom,
 				'optionalCall',
-				(_10) => _10(pathname),
+				(_10) => _10(url),
 			]) === undefined ||
 			_optionalChain([
 				_serverconfig2.default,
@@ -98,7 +98,7 @@ const CacheManager = (url) => {
 				'access',
 				(_12) => _12.custom,
 				'optionalCall',
-				(_13) => _13(pathname),
+				(_13) => _13(url),
 				'optionalAccess',
 				(_14) => _14.cache,
 				'access',
@@ -268,14 +268,23 @@ const CacheManager = (url) => {
 		})
 	} // rename
 
+	const getStatus = () => {
+		return _utils.getStatus.call(void 0, url)
+	} // getStatus
+
+	const isExist = () => {
+		return _utils.isExist.call(void 0, url)
+	} // isExist
+
 	return {
 		achieve,
 		get,
+		getStatus,
 		set,
 		renew,
 		remove,
 		rename,
-		isExist: _utils.isExist,
+		isExist,
 	}
 }
 

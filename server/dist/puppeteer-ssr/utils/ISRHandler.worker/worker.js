@@ -109,11 +109,17 @@ const waitResponse = (() => {
 			? 1500
 			: 500
 	const defaultRequestWaitingDuration =
-		_constants.BANDWIDTH_LEVEL > _constants.BANDWIDTH_LEVEL_LIST.ONE ? 500 : 500
+		_constants.BANDWIDTH_LEVEL > _constants.BANDWIDTH_LEVEL_LIST.ONE
+			? 1000
+			: 500
 	const requestServedFromCacheDuration =
-		_constants.BANDWIDTH_LEVEL > _constants.BANDWIDTH_LEVEL_LIST.ONE ? 500 : 500
+		_constants.BANDWIDTH_LEVEL > _constants.BANDWIDTH_LEVEL_LIST.ONE
+			? 1000
+			: 500
 	const requestFailDuration =
-		_constants.BANDWIDTH_LEVEL > _constants.BANDWIDTH_LEVEL_LIST.ONE ? 500 : 500
+		_constants.BANDWIDTH_LEVEL > _constants.BANDWIDTH_LEVEL_LIST.ONE
+			? 1000
+			: 500
 	const maximumTimeout =
 		_constants.BANDWIDTH_LEVEL > _constants.BANDWIDTH_LEVEL_LIST.ONE
 			? 20000
@@ -580,50 +586,52 @@ const ISRHandler = async (params) => {
 				}
 			}
 
-			try {
-				html = await _asyncNullishCoalesce(
-					await _optionalChain([
+			if (_constants3.CACHEABLE_STATUS_CODE[status]) {
+				try {
+					html = await _asyncNullishCoalesce(
+						await _optionalChain([
+							safePage,
+							'call',
+							(_55) => _55(),
+							'optionalAccess',
+							(_56) => _56.content,
+							'call',
+							(_57) => _57(),
+						]),
+						async () => ''
+					) // serialized HTML of page DOM.
+					_optionalChain([
 						safePage,
 						'call',
-						(_55) => _55(),
+						(_58) => _58(),
 						'optionalAccess',
-						(_56) => _56.content,
+						(_59) => _59.close,
 						'call',
-						(_57) => _57(),
-					]),
-					async () => ''
-				) // serialized HTML of page DOM.
-				_optionalChain([
-					safePage,
-					'call',
-					(_58) => _58(),
-					'optionalAccess',
-					(_59) => _59.close,
-					'call',
-					(_60) => _60(),
-				])
-			} catch (err) {
-				_ConsoleHandler2.default.log('ISRHandler line 315:')
-				_ConsoleHandler2.default.error(err)
-				_optionalChain([
-					safePage,
-					'call',
-					(_61) => _61(),
-					'optionalAccess',
-					(_62) => _62.close,
-					'call',
-					(_63) => _63(),
-				])
-				if (params.hasCache) {
-					cacheManager.rename({
-						url,
-					})
+						(_60) => _60(),
+					])
+				} catch (err) {
+					_ConsoleHandler2.default.log('ISRHandler line 315:')
+					_ConsoleHandler2.default.error(err)
+					_optionalChain([
+						safePage,
+						'call',
+						(_61) => _61(),
+						'optionalAccess',
+						(_62) => _62.close,
+						'call',
+						(_63) => _63(),
+					])
+					if (params.hasCache) {
+						cacheManager.rename({
+							url,
+						})
+					}
+
+					return
 				}
 
-				return
+				status = html && _constants3.regexNotFoundPageID.test(html) ? 404 : 200
 			}
-
-			status = html && _constants3.regexNotFoundPageID.test(html) ? 404 : 200
 		}
 	}
 
@@ -631,10 +639,12 @@ const ISRHandler = async (params) => {
 
 	let result
 	if (_constants3.CACHEABLE_STATUS_CODE[status]) {
-		_workerpool2.default.workerEmit({
-			name: 'html',
-			value: html,
-		})
+		if (cacheManager.getStatus() !== 'renew') {
+			_workerpool2.default.workerEmit({
+				name: 'html',
+				value: html,
+			})
+		}
 
 		const pathname = new URL(url).pathname
 
@@ -709,13 +719,13 @@ const ISRHandler = async (params) => {
 			if (enableToCompress)
 				html = await _utils3.compressContent.call(void 0, html)
 
-			_workerpool2.default.workerEmit({
-				name: 'html',
-				value: html,
-			})
-
-			if (enableDeepOptimize)
+			if (enableDeepOptimize) {
+				_workerpool2.default.workerEmit({
+					name: 'html',
+					value: html,
+				})
 				html = await _utils3.deepOptimizeContent.call(void 0, html)
+			}
 			// console.log('finish optimize and compress: ', url.split('?')[0])
 			// console.log('-------')
 		} catch (err) {

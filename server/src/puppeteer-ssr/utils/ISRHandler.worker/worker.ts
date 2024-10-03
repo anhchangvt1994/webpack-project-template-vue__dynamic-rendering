@@ -86,11 +86,11 @@ const waitResponse = (() => {
 	const firstWaitingDuration =
 		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 1500 : 500
 	const defaultRequestWaitingDuration =
-		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 500 : 500
+		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 1000 : 500
 	const requestServedFromCacheDuration =
-		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 500 : 500
+		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 1000 : 500
 	const requestFailDuration =
-		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 500 : 500
+		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 1000 : 500
 	const maximumTimeout =
 		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 20000 : 20000
 
@@ -385,23 +385,25 @@ const ISRHandler = async (params: IISRHandlerParam) => {
 				}
 			}
 
-			try {
-				html = (await safePage()?.content()) ?? '' // serialized HTML of page DOM.
-				safePage()?.close()
-			} catch (err) {
-				Console.log('ISRHandler line 315:')
-				Console.error(err)
-				safePage()?.close()
-				if (params.hasCache) {
-					cacheManager.rename({
-						url,
-					})
+			if (CACHEABLE_STATUS_CODE[status]) {
+				try {
+					html = (await safePage()?.content()) ?? '' // serialized HTML of page DOM.
+					safePage()?.close()
+				} catch (err) {
+					Console.log('ISRHandler line 315:')
+					Console.error(err)
+					safePage()?.close()
+					if (params.hasCache) {
+						cacheManager.rename({
+							url,
+						})
+					}
+
+					return
 				}
 
-				return
+				status = html && regexNotFoundPageID.test(html) ? 404 : 200
 			}
-
-			status = html && regexNotFoundPageID.test(html) ? 404 : 200
 		}
 	}
 
@@ -409,10 +411,12 @@ const ISRHandler = async (params: IISRHandlerParam) => {
 
 	let result: ISSRResult
 	if (CACHEABLE_STATUS_CODE[status]) {
-		WorkerPool.workerEmit({
-			name: 'html',
-			value: html,
-		})
+		if (cacheManager.getStatus() !== 'renew') {
+			WorkerPool.workerEmit({
+				name: 'html',
+				value: html,
+			})
+		}
 
 		const pathname = new URL(url).pathname
 
@@ -470,12 +474,13 @@ const ISRHandler = async (params: IISRHandlerParam) => {
 
 			if (enableToCompress) html = await compressContent(html)
 
-			WorkerPool.workerEmit({
-				name: 'html',
-				value: html,
-			})
-
-			if (enableDeepOptimize) html = await deepOptimizeContent(html)
+			if (enableDeepOptimize) {
+				WorkerPool.workerEmit({
+					name: 'html',
+					value: html,
+				})
+				html = await deepOptimizeContent(html)
+			}
 			// console.log('finish optimize and compress: ', url.split('?')[0])
 			// console.log('-------')
 		} catch (err) {
