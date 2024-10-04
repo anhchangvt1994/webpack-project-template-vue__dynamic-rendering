@@ -1,18 +1,18 @@
 import { PuppeteerLaunchOptions } from 'puppeteer-core'
 import { SERVER_LESS, userDataPath } from '../constants'
 import { PROCESS_ENV } from '../utils/InitEnv'
-import ServerConfig from '../server.config'
+// import ServerConfig from '../server.config'
 
 // NOTE - Browser Options
 export const WINDOW_VIEWPORT_WIDTH = 1920
 // export const WINDOW_VIEWPORT_HEIGHT = 2160
 export const WINDOW_VIEWPORT_HEIGHT = 99999
-const _userAgent =
-	ServerConfig.crawl.content === 'desktop'
-		? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0'
-		: 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1'
+// const _userAgent =
+// ServerConfig.crawl.content === 'desktop'
+// 	? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0'
+// 	: 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1'
 export const optionArgs = [
-	`--user-agent=${_userAgent}`,
+	// `--user-agent=${_userAgent}`,
 	'--no-sandbox',
 	'--disable-setuid-sandbox',
 	`--window-size=${WINDOW_VIEWPORT_WIDTH},${WINDOW_VIEWPORT_HEIGHT}`,

@@ -5,6 +5,7 @@ import { PROCESS_ENV } from './utils/InitEnv'
 const ServerConfig = defineServerConfig({
 	crawl: {
 		enable: true,
+		optimize: ['shallow'],
 		routes: {
 			'/login': {
 				enable: false,

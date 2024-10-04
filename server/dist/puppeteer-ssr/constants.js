@@ -1,12 +1,8 @@
 'use strict'
 Object.defineProperty(exports, '__esModule', { value: true })
-function _interopRequireDefault(obj) {
-	return obj && obj.__esModule ? obj : { default: obj }
-}
 var _constants = require('../constants')
 var _InitEnv = require('../utils/InitEnv')
-var _serverconfig = require('../server.config')
-var _serverconfig2 = _interopRequireDefault(_serverconfig)
+// import ServerConfig from '../server.config'
 
 // NOTE - Browser Options
 const WINDOW_VIEWPORT_WIDTH = 1920
@@ -14,12 +10,12 @@ exports.WINDOW_VIEWPORT_WIDTH = WINDOW_VIEWPORT_WIDTH
 // export const WINDOW_VIEWPORT_HEIGHT = 2160
 const WINDOW_VIEWPORT_HEIGHT = 99999
 exports.WINDOW_VIEWPORT_HEIGHT = WINDOW_VIEWPORT_HEIGHT
-const _userAgent =
-	_serverconfig2.default.crawl.content === 'desktop'
-		? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0'
-		: 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1'
+// const _userAgent =
+// ServerConfig.crawl.content === 'desktop'
+// 	? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0'
+// 	: 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1'
 const optionArgs = [
-	`--user-agent=${_userAgent}`,
+	// `--user-agent=${_userAgent}`,
 	'--no-sandbox',
 	'--disable-setuid-sandbox',
 	`--window-size=${exports.WINDOW_VIEWPORT_WIDTH},${exports.WINDOW_VIEWPORT_HEIGHT}`,

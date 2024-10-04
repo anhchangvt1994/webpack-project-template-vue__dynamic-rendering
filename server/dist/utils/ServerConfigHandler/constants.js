@@ -10,11 +10,11 @@ const defaultServerConfig = {
 	isRemoteCrawler: false,
 	crawl: {
 		enable: true,
-		content: 'desktop',
+		content: ['desktop'],
 		cache: {
 			enable: true,
-			time: 4 * 3600,
-			renewTime: 3 * 60,
+			time: 4 * 3600, // 4 hours (second unit)
+			renewTime: 3 * 60, // 3 minutes (second unit)
 		},
 		compress: true,
 		optimize: ['script'],

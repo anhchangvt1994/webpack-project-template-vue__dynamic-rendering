@@ -8,6 +8,7 @@ var _ServerConfigHandler = require('./utils/ServerConfigHandler')
 const ServerConfig = _ServerConfigHandler.defineServerConfig.call(void 0, {
 	crawl: {
 		enable: true,
+		optimize: ['shallow'],
 		routes: {
 			'/login': {
 				enable: false,

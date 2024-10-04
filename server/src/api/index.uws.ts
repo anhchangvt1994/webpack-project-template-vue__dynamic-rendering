@@ -262,8 +262,8 @@ const apiService = (async () => {
 							const data = convertData(cache, contentEncoding)
 
 							if (!res.writableEnded) {
+								res.writableEnded = true
 								res.cork(() => {
-									res.writableEnded = true
 									res
 										.writeStatus(
 											`${cache.status}${
@@ -282,6 +282,7 @@ const apiService = (async () => {
 
 				if (!res.writableEnded) {
 					const fetchUrl = `${requestInfo.baseUrl}${requestInfo.endpoint}${strQueryString}`
+
 					const fetchAPITarget = fetchData(fetchUrl, {
 						method,
 						headers,
@@ -296,6 +297,7 @@ const apiService = (async () => {
 					} else removeDataCache(requestInfo.cacheKey)
 
 					const result = await fetchAPITarget
+
 					const data = convertData(result, contentEncoding)
 
 					if (enableCache) {
@@ -316,6 +318,7 @@ const apiService = (async () => {
 					}
 
 					if (!res.writAbleEnded) {
+						res.writAbleEnded = true
 						res.cork(() => {
 							if (result.cookies && result.cookies.length) {
 								for (const cookie of result.cookies) {

@@ -112,7 +112,7 @@ const waitResponse = (() => {
 				// WorkerPool.workerEmit('waitResponse_00')
 				const result = await new Promise<any>((resolveAfterPageLoad) => {
 					safePage()
-						?.goto(url.split('?')[0], {
+						?.goto(url, {
 							// waitUntil: 'networkidle2',
 							waitUntil: 'load',
 							timeout: 30000,
@@ -308,8 +308,15 @@ const ISRHandler = async (params: IISRHandlerParam) => {
 				return
 			}
 
+			const deviceInfo = JSON.parse(specialInfo.deviceInfo)
+
 			try {
 				await Promise.all([
+					safePage()?.setUserAgent(
+						deviceInfo.isMobile
+							? 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1'
+							: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0'
+					),
 					safePage()?.waitForNetworkIdle({ idleTime: 150 }),
 					safePage()?.setCacheEnabled(false),
 					safePage()?.setRequestInterception(true),

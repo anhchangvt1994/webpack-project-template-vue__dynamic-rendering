@@ -159,7 +159,7 @@ const waitResponse = (() => {
 						(_5) => _5.goto,
 						'call',
 						(_6) =>
-							_6(url.split('?')[0], {
+							_6(url, {
 								// waitUntil: 'networkidle2',
 								waitUntil: 'load',
 								timeout: 30000,
@@ -439,6 +439,8 @@ const ISRHandler = async (params) => {
 				return
 			}
 
+			const deviceInfo = JSON.parse(specialInfo.deviceInfo)
+
 			try {
 				await Promise.all([
 					_optionalChain([
@@ -446,37 +448,51 @@ const ISRHandler = async (params) => {
 						'call',
 						(_32) => _32(),
 						'optionalAccess',
-						(_33) => _33.waitForNetworkIdle,
+						(_33) => _33.setUserAgent,
 						'call',
-						(_34) => _34({ idleTime: 150 }),
+						(_34) =>
+							_34(
+								deviceInfo.isMobile
+									? 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1'
+									: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0'
+							),
 					]),
 					_optionalChain([
 						safePage,
 						'call',
 						(_35) => _35(),
 						'optionalAccess',
-						(_36) => _36.setCacheEnabled,
+						(_36) => _36.waitForNetworkIdle,
 						'call',
-						(_37) => _37(false),
+						(_37) => _37({ idleTime: 150 }),
 					]),
 					_optionalChain([
 						safePage,
 						'call',
 						(_38) => _38(),
 						'optionalAccess',
-						(_39) => _39.setRequestInterception,
+						(_39) => _39.setCacheEnabled,
 						'call',
-						(_40) => _40(true),
+						(_40) => _40(false),
 					]),
 					_optionalChain([
 						safePage,
 						'call',
 						(_41) => _41(),
 						'optionalAccess',
-						(_42) => _42.setViewport,
+						(_42) => _42.setRequestInterception,
 						'call',
-						(_43) =>
-							_43({
+						(_43) => _43(true),
+					]),
+					_optionalChain([
+						safePage,
+						'call',
+						(_44) => _44(),
+						'optionalAccess',
+						(_45) => _45.setViewport,
+						'call',
+						(_46) =>
+							_46({
 								width: _constants3.WINDOW_VIEWPORT_WIDTH,
 								height: _constants3.WINDOW_VIEWPORT_HEIGHT,
 							}),
@@ -484,12 +500,12 @@ const ISRHandler = async (params) => {
 					_optionalChain([
 						safePage,
 						'call',
-						(_44) => _44(),
+						(_47) => _47(),
 						'optionalAccess',
-						(_45) => _45.setExtraHTTPHeaders,
+						(_48) => _48.setExtraHTTPHeaders,
 						'call',
-						(_46) =>
-							_46({
+						(_49) =>
+							_49({
 								...specialInfo,
 								service: 'puppeteer',
 							}),
@@ -511,12 +527,12 @@ const ISRHandler = async (params) => {
 				_optionalChain([
 					safePage,
 					'call',
-					(_47) => _47(),
+					(_50) => _50(),
 					'optionalAccess',
-					(_48) => _48.on,
+					(_51) => _51.on,
 					'call',
-					(_49) =>
-						_49('request', (req) => {
+					(_52) =>
+						_52('request', (req) => {
 							const resourceType = req.resourceType()
 
 							if (resourceType === 'stylesheet') {
@@ -553,9 +569,9 @@ const ISRHandler = async (params) => {
 						_optionalChain([
 							response,
 							'optionalAccess',
-							(_50) => _50.status,
+							(_53) => _53.status,
 							'optionalCall',
-							(_51) => _51(),
+							(_54) => _54(),
 						]),
 						() => status
 					)
@@ -569,11 +585,11 @@ const ISRHandler = async (params) => {
 				_optionalChain([
 					safePage,
 					'call',
-					(_52) => _52(),
+					(_55) => _55(),
 					'optionalAccess',
-					(_53) => _53.close,
+					(_56) => _56.close,
 					'call',
-					(_54) => _54(),
+					(_57) => _57(),
 				])
 				if (params.hasCache) {
 					cacheManager.rename({
@@ -592,26 +608,14 @@ const ISRHandler = async (params) => {
 						await _optionalChain([
 							safePage,
 							'call',
-							(_55) => _55(),
+							(_58) => _58(),
 							'optionalAccess',
-							(_56) => _56.content,
+							(_59) => _59.content,
 							'call',
-							(_57) => _57(),
+							(_60) => _60(),
 						]),
 						async () => ''
 					) // serialized HTML of page DOM.
-					_optionalChain([
-						safePage,
-						'call',
-						(_58) => _58(),
-						'optionalAccess',
-						(_59) => _59.close,
-						'call',
-						(_60) => _60(),
-					])
-				} catch (err) {
-					_ConsoleHandler2.default.log('ISRHandler line 315:')
-					_ConsoleHandler2.default.error(err)
 					_optionalChain([
 						safePage,
 						'call',
@@ -620,6 +624,18 @@ const ISRHandler = async (params) => {
 						(_62) => _62.close,
 						'call',
 						(_63) => _63(),
+					])
+				} catch (err) {
+					_ConsoleHandler2.default.log('ISRHandler line 315:')
+					_ConsoleHandler2.default.error(err)
+					_optionalChain([
+						safePage,
+						'call',
+						(_64) => _64(),
+						'optionalAccess',
+						(_65) => _65.close,
+						'call',
+						(_66) => _66(),
 					])
 					if (params.hasCache) {
 						cacheManager.rename({
@@ -651,11 +667,11 @@ const ISRHandler = async (params) => {
 		const crawlCustomOption = _optionalChain([
 			_serverconfig2.default,
 			'access',
-			(_64) => _64.crawl,
+			(_67) => _67.crawl,
 			'access',
-			(_65) => _65.custom,
+			(_68) => _68.custom,
 			'optionalCall',
-			(_66) => _66(url),
+			(_69) => _69(url),
 		])
 
 		const optimizeOption = _nullishCoalesce(

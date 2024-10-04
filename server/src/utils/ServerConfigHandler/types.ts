@@ -29,7 +29,7 @@ export interface IServerConfigOptional {
 	crawl?: {
 		enable: boolean
 
-		content?: 'desktop' | 'mobile' | 'all'
+		content?: 'all' | Array<'desktop' | 'mobile'>
 
 		optimize?: 'all' | Array<'shallow' | 'deep' | 'script' | 'style'>
 
@@ -120,7 +120,7 @@ export interface IServerConfig extends IServerConfigOptional {
 	crawl: {
 		enable: boolean
 
-		content: 'desktop' | 'mobile'
+		content: 'all' | Array<'desktop' | 'mobile'>
 
 		optimize: 'all' | Array<'shallow' | 'deep' | 'script' | 'style'>
 

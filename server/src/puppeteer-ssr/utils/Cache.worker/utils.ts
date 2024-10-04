@@ -4,6 +4,7 @@ import { pagesPath } from '../../../constants'
 import path from 'path'
 import { brotliCompressSync } from 'zlib'
 import { ISSRResult } from '../../types'
+import crypto from 'crypto'
 import {
 	// decryptCrawlerKeyCache,
 	encryptCrawlerKeyCache,
@@ -36,22 +37,19 @@ if (!fs.existsSync(pagesPath)) {
 // 	/^https?:\/\/(www\.)?|^www\.|botInfo=([^&]*)&deviceInfo=([^&]*)&localeInfo=([^&]*)&environmentInfo=([^&]*)/g
 export const regexKeyConverter =
 	/www\.|botInfo=([^&]*)&deviceInfo=([^&]*)&localeInfo=([^&]*)&environmentInfo=([^&]*)/g
+export const regexKeyConverterWithoutLocaleInfo =
+	/www\.|botInfo=([^&]*)(?:\&)|localeInfo=([^&]*)(?:\&)|environmentInfo=([^&]*)/g
 
 export const getKey = (url) => {
-	if (!url) {
-		Console.error('Need provide "url" param!')
-		return
-	}
+	if (!url) return
 
 	url = url
 		.replace('/?', '?')
-		.replace(regexKeyConverter, '')
-		.replace(/\?(?:\&|)$/g, '')
+		.replace(regexKeyConverterWithoutLocaleInfo, '')
+		.replace(/,"os":"([^&]*)"/, '')
+		.replace(/(\?|\&)$/, '')
 
-	const urlEncrypted = encryptCrawlerKeyCache(url)
-	// const urlDecrypted = decryptCrawlerKeyCache(urlEncrypted)
-
-	return urlEncrypted
+	return crypto.createHash('md5').update(url).digest('hex')
 } // getKey
 
 export const getFileInfo = async (file: string): Promise<IFileInfo> => {

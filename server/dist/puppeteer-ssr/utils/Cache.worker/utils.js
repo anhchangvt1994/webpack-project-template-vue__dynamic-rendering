@@ -40,7 +40,8 @@ var _path = require('path')
 var _path2 = _interopRequireDefault(_path)
 var _zlib = require('zlib')
 
-var _CryptoHandler = require('../../../utils/CryptoHandler')
+var _crypto = require('crypto')
+var _crypto2 = _interopRequireDefault(_crypto)
 
 if (!_fs2.default.existsSync(_constants.pagesPath)) {
 	try {
@@ -55,22 +56,20 @@ if (!_fs2.default.existsSync(_constants.pagesPath)) {
 const regexKeyConverter =
 	/www\.|botInfo=([^&]*)&deviceInfo=([^&]*)&localeInfo=([^&]*)&environmentInfo=([^&]*)/g
 exports.regexKeyConverter = regexKeyConverter
+const regexKeyConverterWithoutLocaleInfo =
+	/www\.|botInfo=([^&]*)(?:\&)|localeInfo=([^&]*)(?:\&)|environmentInfo=([^&]*)/g
+exports.regexKeyConverterWithoutLocaleInfo = regexKeyConverterWithoutLocaleInfo
 
 const getKey = (url) => {
-	if (!url) {
-		_ConsoleHandler2.default.error('Need provide "url" param!')
-		return
-	}
+	if (!url) return
 
 	url = url
 		.replace('/?', '?')
-		.replace(exports.regexKeyConverter, '')
-		.replace(/\?(?:\&|)$/g, '')
+		.replace(exports.regexKeyConverterWithoutLocaleInfo, '')
+		.replace(/,"os":"([^&]*)"/, '')
+		.replace(/(\?|\&)$/, '')
 
-	const urlEncrypted = _CryptoHandler.encryptCrawlerKeyCache.call(void 0, url)
-	// const urlDecrypted = decryptCrawlerKeyCache(urlEncrypted)
-
-	return urlEncrypted
+	return _crypto2.default.createHash('md5').update(url).digest('hex')
 }
 exports.getKey = getKey // getKey
 
