@@ -49,7 +49,7 @@ export const getUrl = (req) => {
 	if (!req) return ''
 
 	return (
-		req.query.urlTesting ||
+		(PROCESS_ENV.ENABLE_URL_TESTING ? req.query.urlTesting : '') ||
 		(PROCESS_ENV.BASE_URL
 			? PROCESS_ENV.BASE_URL + req.originalUrl
 			: req.protocol + '://' + req.get('host') + req.originalUrl)

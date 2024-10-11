@@ -57,7 +57,7 @@ export const getUrl = (req) => {
 	})()
 
 	return (
-		req.query.urlTesting ||
+		(PROCESS_ENV.ENABLE_URL_TESTING ? req.query.urlTesting : '') ||
 		req.query.url ||
 		(PROCESS_ENV.BASE_URL
 			? PROCESS_ENV.BASE_URL + pathname

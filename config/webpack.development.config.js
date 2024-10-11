@@ -61,10 +61,12 @@ const WebpackDevelopmentConfiguration = async () => {
 			},
 			devMiddleware: { publicPath: '/', writeToDisk: true, index: false },
 			historyApiFallback: true,
-			proxy: {
-				context: (url, req) => !/.js.map|favicon.ico/g.test(url),
-				target: `http://localhost:${PUPPETEER_SSR_PORT}`,
-			},
+			proxy: [
+				{
+					context: (url, req) => !/.js.map|favicon.ico/g.test(url),
+					target: `http://localhost:${PUPPETEER_SSR_PORT}`,
+				},
+			],
 		},
 		module: {
 			rules: [

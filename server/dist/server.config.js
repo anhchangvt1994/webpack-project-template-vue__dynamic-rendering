@@ -1,8 +1,5 @@
 'use strict'
 Object.defineProperty(exports, '__esModule', { value: true })
-function _interopRequireDefault(obj) {
-	return obj && obj.__esModule ? obj : { default: obj }
-}
 var _ServerConfigHandler = require('./utils/ServerConfigHandler')
 
 const ServerConfig = _ServerConfigHandler.defineServerConfig.call(void 0, {
@@ -13,19 +10,7 @@ const ServerConfig = _ServerConfigHandler.defineServerConfig.call(void 0, {
 			'/login': {
 				enable: false,
 			},
-			'/': {
-				cache: {
-					time: 'infinite',
-				},
-			},
 		},
-
-		// cache: {
-		// 	enable: true,
-		// 	path: PROCESS_ENV.IS_SERVER
-		// 		? path.resolve(__dirname, '../../../cache')
-		// 		: '',
-		// },
 	},
 	api: {
 		list: {

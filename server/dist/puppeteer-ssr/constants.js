@@ -165,7 +165,7 @@ const CACHEABLE_STATUS_CODE = { 200: true, 302: true }
 exports.CACHEABLE_STATUS_CODE = CACHEABLE_STATUS_CODE
 
 const chromiumPath =
-	'https://github.com/Sparticuz/chromium/releases/download/v127.0.0/chromium-v127.0.0-pack.tar'
+	'https://github.com/Sparticuz/chromium/releases/download/v129.0.0/chromium-v129.0.0-pack.tar'
 exports.chromiumPath = chromiumPath
 
 const canUseLinuxChromium =
@@ -181,3 +181,5 @@ exports.puppeteer = puppeteer
 
 const DISABLE_SSR_CACHE = Boolean(_InitEnv.PROCESS_ENV.DISABLE_SSR_CACHE)
 exports.DISABLE_SSR_CACHE = DISABLE_SSR_CACHE
+const PM2_PROCESS_NAME = 'puppeteer-ssr'
+exports.PM2_PROCESS_NAME = PM2_PROCESS_NAME

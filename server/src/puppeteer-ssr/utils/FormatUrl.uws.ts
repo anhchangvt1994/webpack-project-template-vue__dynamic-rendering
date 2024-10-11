@@ -50,7 +50,7 @@ export const getUrl = (res: HttpResponse, req: HttpRequest) => {
 	const pathname = res.urlForCrawler
 
 	return (
-		req.getQuery('urlTesting') ||
+		(PROCESS_ENV.ENABLE_URL_TESTING ? req.getQuery('urlTesting') : '') ||
 		req.getQuery('url') ||
 		PROCESS_ENV.BASE_URL + pathname
 	).trim()

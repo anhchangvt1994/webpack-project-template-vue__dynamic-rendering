@@ -89,6 +89,10 @@ const puppeteerSSRService = (async () => {
 				}>,
 				res
 			) {
+				if (req.url.startsWith('/api')) {
+					return res.status(404).send('Not Found!')
+				}
+
 				const pathname = req.url?.split('?')[0]
 				const cookies = getCookieFromResponse(res)
 				const botInfo: IBotInfo = cookies?.['BotInfo']

@@ -91,7 +91,7 @@ const getUrl = (req) => {
 	if (!req) return ''
 
 	return (
-		req.query.urlTesting ||
+		(_InitEnv.PROCESS_ENV.ENABLE_URL_TESTING ? req.query.urlTesting : '') ||
 		(_InitEnv.PROCESS_ENV.BASE_URL
 			? _InitEnv.PROCESS_ENV.BASE_URL + req.originalUrl
 			: req.protocol + '://' + req.get('host') + req.originalUrl)

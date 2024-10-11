@@ -1,7 +1,7 @@
 import { Express } from 'express'
 import fs from 'fs'
 import path from 'path'
-import { brotliCompressSync, brotliDecompressSync, gzipSync } from 'zlib'
+import { brotliCompressSync, gzipSync } from 'zlib'
 import {
 	getData as getDataCache,
 	getStore as getStoreCache,
@@ -14,7 +14,6 @@ import Console from '../../utils/ConsoleHandler'
 import { getCookieFromResponse, setCookie } from '../../utils/CookieHandler'
 import { ENV_MODE } from '../../utils/InitEnv'
 import { hashCode } from '../../utils/StringHelper'
-import { CACHEABLE_STATUS_CODE } from '../constants'
 import {
 	convertUrlHeaderToQueryString,
 	getPathname,
@@ -82,6 +81,10 @@ const puppeteerSSRService = (async () => {
 				})
 		}
 		_app.get('*', async function (req, res, next) {
+			if (req.url.startsWith('/api')) {
+				return res.status(404).send('Not Found!')
+			}
+
 			const pathname = req.url?.split('?')[0]
 			const cookies = getCookieFromResponse(res)
 			const botInfo: IBotInfo = cookies?.['BotInfo']

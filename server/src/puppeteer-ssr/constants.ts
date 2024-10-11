@@ -139,7 +139,7 @@ export const regexNotFoundPageID = new RegExp(
 export const CACHEABLE_STATUS_CODE = { 200: true, 302: true }
 
 export const chromiumPath =
-	'https://github.com/Sparticuz/chromium/releases/download/v127.0.0/chromium-v127.0.0-pack.tar'
+	'https://github.com/Sparticuz/chromium/releases/download/v129.0.0/chromium-v129.0.0-pack.tar'
 
 export const canUseLinuxChromium =
 	PROCESS_ENV.PLATFORM.toLowerCase() === 'linux' ||
@@ -151,3 +151,4 @@ export const puppeteer = (() => {
 })()
 
 export const DISABLE_SSR_CACHE = Boolean(PROCESS_ENV.DISABLE_SSR_CACHE)
+export const PM2_PROCESS_NAME = 'puppeteer-ssr'

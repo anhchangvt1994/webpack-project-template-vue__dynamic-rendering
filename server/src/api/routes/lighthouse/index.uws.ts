@@ -5,9 +5,20 @@ import { ILighthouseResponse, IPageSpeedCategories } from './types'
 import { getPageSpeedUrl } from './worker'
 import { PROCESS_ENV } from '../../../utils/InitEnv'
 import { TARGET_OPTIMAL_URL } from './constants'
+import ServerConfig from '../../../server.config'
 
-const limitRequest = 2
+const limitRequest = ServerConfig.crawl.limit
 let totalRequests = 0
+const resetTotalRequestTimeout = (() => {
+	let timeout: NodeJS.Timeout
+
+	return () => {
+		if (timeout) clearTimeout(timeout)
+		timeout = setTimeout(() => {
+			totalRequests = 0
+		}, 50000)
+	}
+})()
 
 const apiLighthouse = (() => {
 	let _app: TemplatedApp
@@ -19,6 +30,7 @@ const apiLighthouse = (() => {
 				return
 			}
 
+			resetTotalRequestTimeout()
 			totalRequests++
 
 			res.onAborted(() => {

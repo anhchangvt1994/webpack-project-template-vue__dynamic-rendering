@@ -16,17 +16,19 @@ import { ISSRResult } from '../../types'
 import CacheManager from '../CacheManager.worker/utils'
 import {
 	compressContent,
-	shallowOptimizeContent,
 	deepOptimizeContent,
 	scriptOptimizeContent,
+	shallowOptimizeContent,
 	styleOptimizeContent,
 } from '../OptimizeHtml.worker/utils'
+import { getInternalHTML, getInternalScript } from './utils'
 
 interface IISRHandlerParam {
 	startGenerating: number
 	hasCache: boolean
 	url: string
 	wsEndpoint: string
+	baseUrl: string
 }
 
 const _getRestOfDuration = (startGenerating, gapDuration = 0) => {
@@ -83,18 +85,26 @@ const fetchData = async (
 } // fetchData
 
 const waitResponse = (() => {
-	const firstWaitingDuration =
-		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 1500 : 500
-	const defaultRequestWaitingDuration =
-		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 1000 : 500
-	const requestServedFromCacheDuration =
-		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 1000 : 500
-	const requestFailDuration =
-		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 1000 : 500
-	const maximumTimeout =
-		BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 20000 : 20000
-
 	return async (page: Page, url: string, duration: number) => {
+		const pathname = new URL(url).pathname
+
+		const crawlSpeedOption = (
+			ServerConfig.crawl.custom?.(url) ??
+			ServerConfig.crawl.routes[pathname] ??
+			ServerConfig.crawl
+		).speed
+
+		const firstWaitingDuration =
+			BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? crawlSpeedOption / 10 : 500
+		const defaultRequestWaitingDuration =
+			BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? crawlSpeedOption / 10 : 500
+		const requestServedFromCacheDuration =
+			BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? crawlSpeedOption / 10 : 500
+		const requestFailDuration =
+			BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? crawlSpeedOption / 10 : 500
+		const maximumTimeout =
+			BANDWIDTH_LEVEL > BANDWIDTH_LEVEL_LIST.ONE ? 20000 : 20000
+
 		// console.log(url.split('?')[0])
 		let hasRedirected = false
 		const safePage = _getSafePage(page)
@@ -215,7 +225,7 @@ const gapDurationDefault = 1500
 const ISRHandler = async (params: IISRHandlerParam) => {
 	if (!params) return
 
-	const { hasCache, url, wsEndpoint } = params
+	const { hasCache, url, wsEndpoint, baseUrl } = params
 
 	const startGenerating = Date.now()
 	if (_getRestOfDuration(startGenerating, gapDurationDefault) <= 0) return
@@ -342,11 +352,12 @@ const ISRHandler = async (params: IISRHandlerParam) => {
 				// 	service: 'puppeteer',
 				// })
 
-				safePage()?.on('request', (req) => {
+				safePage()?.on('request', async (req) => {
 					const resourceType = req.resourceType()
 
 					if (resourceType === 'stylesheet') {
-						req.respond({ status: 200, body: 'aborted' })
+						if (ServerConfig.crawl)
+							req.respond({ status: 200, body: 'aborted' })
 					} else if (
 						/(socket.io.min.js)+(?:$)|data:image\/[a-z]*.?\;base64/.test(url) ||
 						/googletagmanager.com|connect.facebook.net|asia.creativecdn.com|static.hotjar.com|deqik.com|contineljs.com|googleads.g.doubleclick.net|analytics.tiktok.com|google.com|gstatic.com|static.airbridge.io|googleadservices.com|google-analytics.com|sg.mmstat.com|t.contentsquare.net|accounts.google.com|browser.sentry-cdn.com|bat.bing.com|tr.snapchat.com|ct.pinterest.com|criteo.com|webchat.caresoft.vn|tags.creativecdn.com|script.crazyegg.com|tags.tiqcdn.com|trc.taboola.com|securepubads.g.doubleclick.net|partytown/.test(
@@ -356,7 +367,61 @@ const ISRHandler = async (params: IISRHandlerParam) => {
 					) {
 						req.abort()
 					} else {
-						req.continue()
+						const reqUrl = req.url()
+
+						if (resourceType === 'document' && reqUrl.startsWith(baseUrl)) {
+							const urlInfo = new URL(reqUrl)
+							const pointsTo = ServerConfig.routes?.[urlInfo.pathname]?.pointsTo
+
+							if (!pointsTo || pointsTo.startsWith(baseUrl)) {
+								getInternalHTML({ url: reqUrl })
+									.then((result) => {
+										if (!result)
+											req.respond({
+												body: 'File not found',
+												status: 404,
+												contentType: 'text/html',
+											})
+										else
+											req.respond({
+												body: result.body,
+												status: result.status,
+												contentType: 'text/html',
+											})
+									})
+									.catch((err) => {
+										Console.error(err)
+										req.continue()
+									})
+							} else {
+								req.continue()
+							}
+						} else if (
+							resourceType === 'script' &&
+							reqUrl.startsWith(baseUrl)
+						) {
+							getInternalScript({ url: reqUrl })
+								.then((result) => {
+									if (!result)
+										req.respond({
+											body: 'File not found',
+											status: 404,
+											contentType: 'application/javascript',
+										})
+									else
+										req.respond({
+											body: result.body,
+											status: result.status,
+											contentType: 'application/javascript',
+										})
+								})
+								.catch((err) => {
+									Console.error(err)
+									req.continue()
+								})
+						} else {
+							req.continue()
+						}
 					}
 				})
 

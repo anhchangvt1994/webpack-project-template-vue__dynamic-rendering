@@ -10,6 +10,8 @@ const defaultServerConfig = {
 	isRemoteCrawler: false,
 	crawl: {
 		enable: true,
+		limit: 3,
+		speed: 3000,
 		content: ['desktop'],
 		cache: {
 			enable: true,

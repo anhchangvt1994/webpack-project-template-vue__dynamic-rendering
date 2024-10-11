@@ -146,6 +146,10 @@ const puppeteerSSRService = (async () => {
 
 				res
 			) {
+				if (req.url.startsWith('/api')) {
+					return res.status(404).send('Not Found!')
+				}
+
 				const pathname = _optionalChain([
 					req,
 					'access',

@@ -46,7 +46,7 @@ const workerManager = (() => {
 	return _WorkerManager2.default.init(
 		_path2.default.resolve(
 			__dirname,
-			`./FollowResource.worker/index.${_constants.resourceExtension}`
+			`../FollowResource.worker/index.${_constants.resourceExtension}`
 		),
 		{
 			minWorkers: 1,
@@ -63,6 +63,7 @@ const workerManager = (() => {
 
 const cleanBrowsers = (() => {
 	let executablePath
+	let isFirstClean = true
 	return async (expiredTime = _InitEnv.PROCESS_ENV.RESET_RESOURCE ? 0 : 1) => {
 		if (!isMainThread || process.env.DISABLE_INTERNAL_CRAWLER || !workerManager)
 			return
@@ -114,10 +115,13 @@ const cleanBrowsers = (() => {
 				exports.cleanBrowsers.call(void 0, 5)
 			}, 300000)
 
-		if (process.env.MODE === 'development')
-			_optionalChain([exports.cleanBrowsers, 'optionalCall', (_) => _(0)])
-		else
-			_optionalChain([exports.cleanBrowsers, 'optionalCall', (_2) => _2(360)])
+		if (isFirstClean) {
+			isFirstClean = false
+			if (process.env.MODE === 'development')
+				_optionalChain([exports.cleanBrowsers, 'optionalCall', (_) => _(0)])
+			else
+				_optionalChain([exports.cleanBrowsers, 'optionalCall', (_2) => _2(60)])
+		}
 	}
 })()
 exports.cleanBrowsers = cleanBrowsers // cleanBrowsers

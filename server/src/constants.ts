@@ -6,22 +6,21 @@ import { ENV, PROCESS_ENV } from './utils/InitEnv'
 
 export const pagesPath = PROCESS_ENV.IS_SERVER
 	? (() => {
-			if (ServerConfig.crawl.cache.path) {
-				if (fs.existsSync(ServerConfig.crawl.cache.path))
-					return ServerConfig.crawl.cache.path
-				else {
+			let root = '/tmp'
+			if (ServerConfig.rootCache) {
+				if (fs.existsSync(ServerConfig.rootCache)) {
+					root = ServerConfig.rootCache
+				} else {
 					try {
-						fs.mkdirSync(ServerConfig.crawl.cache.path)
-
-						return ServerConfig.crawl.cache.path
+						fs.mkdirSync(ServerConfig.rootCache)
+						root = ServerConfig.rootCache
 					} catch (err) {
 						Console.error(err.message)
 					}
 				}
 			}
 
-			const tmpPath = '/tmp'
-			if (fs.existsSync(tmpPath)) return tmpPath + '/pages'
+			if (fs.existsSync(root)) return root + '/pages'
 
 			return path.resolve(__dirname, './puppeteer-ssr/utils/Cache.worker/pages')
 	  })()
@@ -29,8 +28,21 @@ export const pagesPath = PROCESS_ENV.IS_SERVER
 
 export const dataPath = PROCESS_ENV.IS_SERVER
 	? (() => {
-			const tmpPath = '/tmp'
-			if (fs.existsSync(tmpPath)) return tmpPath + '/data'
+			let root = '/tmp'
+			if (ServerConfig.rootCache) {
+				if (fs.existsSync(ServerConfig.rootCache)) {
+					root = ServerConfig.rootCache
+				} else {
+					try {
+						fs.mkdirSync(ServerConfig.rootCache)
+						root = ServerConfig.rootCache
+					} catch (err) {
+						Console.error(err.message)
+					}
+				}
+			}
+
+			if (fs.existsSync(root)) return root + '/data'
 
 			return path.resolve(__dirname, './api/utils/CacheManager/data')
 	  })()
@@ -38,8 +50,21 @@ export const dataPath = PROCESS_ENV.IS_SERVER
 
 export const storePath = PROCESS_ENV.IS_SERVER
 	? (() => {
-			const tmpPath = '/tmp'
-			if (fs.existsSync(tmpPath)) return tmpPath + '/store'
+			let root = '/tmp'
+			if (ServerConfig.rootCache) {
+				if (fs.existsSync(ServerConfig.rootCache)) {
+					root = ServerConfig.rootCache
+				} else {
+					try {
+						fs.mkdirSync(ServerConfig.rootCache)
+						root = ServerConfig.rootCache
+					} catch (err) {
+						Console.error(err.message)
+					}
+				}
+			}
+
+			if (fs.existsSync(root)) return root + '/store'
 
 			return path.resolve(__dirname, './api/utils/CacheManager/store')
 	  })()

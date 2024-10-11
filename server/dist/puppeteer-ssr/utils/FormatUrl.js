@@ -115,7 +115,7 @@ const getUrl = (req) => {
 	})()
 
 	return (
-		req.query.urlTesting ||
+		(_InitEnv.PROCESS_ENV.ENABLE_URL_TESTING ? req.query.urlTesting : '') ||
 		req.query.url ||
 		(_InitEnv.PROCESS_ENV.BASE_URL
 			? _InitEnv.PROCESS_ENV.BASE_URL + pathname

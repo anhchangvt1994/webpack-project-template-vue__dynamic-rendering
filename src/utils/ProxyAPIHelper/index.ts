@@ -14,8 +14,8 @@ export const ProxyAPI = (() => {
 			const _get = (
 				endpoint: string,
 				config?: {
-					expiredTime?: number
-					renewTime?: number
+					expiredTime?: number | 'infinite'
+					renewTime?: number | 'infinite'
 					cacheKey?: string
 					enableStore?: boolean
 					storeInDevice?: 'mobile' | 'tablet' | 'desktop'

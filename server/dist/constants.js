@@ -15,22 +15,21 @@ var _InitEnv = require('./utils/InitEnv')
 
 const pagesPath = _InitEnv.PROCESS_ENV.IS_SERVER
 	? (() => {
-			if (_serverconfig2.default.crawl.cache.path) {
-				if (_fs2.default.existsSync(_serverconfig2.default.crawl.cache.path))
-					return _serverconfig2.default.crawl.cache.path
-				else {
+			let root = '/tmp'
+			if (_serverconfig2.default.rootCache) {
+				if (_fs2.default.existsSync(_serverconfig2.default.rootCache)) {
+					root = _serverconfig2.default.rootCache
+				} else {
 					try {
-						_fs2.default.mkdirSync(_serverconfig2.default.crawl.cache.path)
-
-						return _serverconfig2.default.crawl.cache.path
+						_fs2.default.mkdirSync(_serverconfig2.default.rootCache)
+						root = _serverconfig2.default.rootCache
 					} catch (err) {
 						_ConsoleHandler2.default.error(err.message)
 					}
 				}
 			}
 
-			const tmpPath = '/tmp'
-			if (_fs2.default.existsSync(tmpPath)) return tmpPath + '/pages'
+			if (_fs2.default.existsSync(root)) return root + '/pages'
 
 			return _path2.default.resolve(
 				__dirname,
@@ -45,8 +44,21 @@ exports.pagesPath = pagesPath
 
 const dataPath = _InitEnv.PROCESS_ENV.IS_SERVER
 	? (() => {
-			const tmpPath = '/tmp'
-			if (_fs2.default.existsSync(tmpPath)) return tmpPath + '/data'
+			let root = '/tmp'
+			if (_serverconfig2.default.rootCache) {
+				if (_fs2.default.existsSync(_serverconfig2.default.rootCache)) {
+					root = _serverconfig2.default.rootCache
+				} else {
+					try {
+						_fs2.default.mkdirSync(_serverconfig2.default.rootCache)
+						root = _serverconfig2.default.rootCache
+					} catch (err) {
+						_ConsoleHandler2.default.error(err.message)
+					}
+				}
+			}
+
+			if (_fs2.default.existsSync(root)) return root + '/data'
 
 			return _path2.default.resolve(__dirname, './api/utils/CacheManager/data')
 	  })()
@@ -55,8 +67,21 @@ exports.dataPath = dataPath
 
 const storePath = _InitEnv.PROCESS_ENV.IS_SERVER
 	? (() => {
-			const tmpPath = '/tmp'
-			if (_fs2.default.existsSync(tmpPath)) return tmpPath + '/store'
+			let root = '/tmp'
+			if (_serverconfig2.default.rootCache) {
+				if (_fs2.default.existsSync(_serverconfig2.default.rootCache)) {
+					root = _serverconfig2.default.rootCache
+				} else {
+					try {
+						_fs2.default.mkdirSync(_serverconfig2.default.rootCache)
+						root = _serverconfig2.default.rootCache
+					} catch (err) {
+						_ConsoleHandler2.default.error(err.message)
+					}
+				}
+			}
+
+			if (_fs2.default.existsSync(root)) return root + '/store'
 
 			return _path2.default.resolve(__dirname, './api/utils/CacheManager/store')
 	  })()

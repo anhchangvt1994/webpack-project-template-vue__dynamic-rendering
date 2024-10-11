@@ -40,6 +40,7 @@ var _WorkerManager = require('../../utils/WorkerManager')
 var _WorkerManager2 = _interopRequireDefault(_WorkerManager)
 
 var _constants3 = require('../constants')
+var _InitEnv = require('../../utils/InitEnv')
 const { parentPort, isMainThread } = require('worker_threads')
 
 const workerManager = (() => {
@@ -401,6 +402,8 @@ function BrowserManager() {
 }
 
 exports.default = () => {
+	if (_InitEnv.ENV_MODE === 'development') return
+
 	if (browserManager) return browserManager
 
 	browserManager = BrowserManager()

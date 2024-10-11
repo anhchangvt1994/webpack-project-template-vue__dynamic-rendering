@@ -138,6 +138,10 @@ const puppeteerSSRService = (async () => {
 				})
 		}
 		_app.get('/*', async function (res, req) {
+			if (req.getUrl().startsWith('/api')) {
+				return res.writeStatus('404').end('Not Found!', true)
+			}
+
 			DetectStaticMiddle(res, req)
 
 			// NOTE - Check if static will send static file

@@ -70,6 +70,7 @@ const defineServerConfig = (options) => {
 
 				const serverCrawlConfigShorten = {
 					enable: serverConfig[key].enable,
+					speed: serverConfig[key].speed,
 					content: serverConfig[key].content,
 					optimize: serverConfig[key].optimize,
 					compress: serverConfig[key].compress,

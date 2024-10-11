@@ -1,6 +1,4 @@
-import path from 'path'
 import { defineServerConfig } from './utils/ServerConfigHandler'
-import { PROCESS_ENV } from './utils/InitEnv'
 
 const ServerConfig = defineServerConfig({
 	crawl: {
@@ -10,19 +8,7 @@ const ServerConfig = defineServerConfig({
 			'/login': {
 				enable: false,
 			},
-			'/': {
-				cache: {
-					time: 'infinite',
-				},
-			},
 		},
-
-		// cache: {
-		// 	enable: true,
-		// 	path: PROCESS_ENV.IS_SERVER
-		// 		? path.resolve(__dirname, '../../../cache')
-		// 		: '',
-		// },
 	},
 	api: {
 		list: {

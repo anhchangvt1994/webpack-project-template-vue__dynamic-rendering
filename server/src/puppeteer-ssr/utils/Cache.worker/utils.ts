@@ -1,14 +1,10 @@
+import crypto from 'crypto'
 import fs from 'fs'
-import Console from '../../../utils/ConsoleHandler'
-import { pagesPath } from '../../../constants'
 import path from 'path'
 import { brotliCompressSync } from 'zlib'
+import { pagesPath } from '../../../constants'
+import Console from '../../../utils/ConsoleHandler'
 import { ISSRResult } from '../../types'
-import crypto from 'crypto'
-import {
-	// decryptCrawlerKeyCache,
-	encryptCrawlerKeyCache,
-} from '../../../utils/CryptoHandler'
 
 export interface ICacheSetParams {
 	html: string
@@ -28,6 +24,7 @@ export type IFileInfo =
 if (!fs.existsSync(pagesPath)) {
 	try {
 		fs.mkdirSync(pagesPath)
+		fs.mkdirSync(`${pagesPath}/info`)
 	} catch (err) {
 		Console.error(err)
 	}
@@ -149,7 +146,17 @@ export const get = async (
 		Console.log(`Create file ${file}`)
 
 		try {
-			fs.writeFileSync(file, '')
+			await Promise.all([
+				fs.writeFileSync(file, ''),
+				fs.writeFileSync(
+					`${pagesPath}/info/${key}.txt`,
+					url
+						.replace('/?', '?')
+						.replace(regexKeyConverterWithoutLocaleInfo, '')
+						.replace(/,"os":"([^&]*)"/, '')
+						.replace(/(\?|\&)$/, '')
+				),
+			])
 			Console.log(`File ${key}.br has been created.`)
 
 			const curTime = new Date()
@@ -304,7 +311,7 @@ export const renew = async (url) => {
 	return hasRenew
 } // renew
 
-export const remove = (url: string) => {
+export const remove = async (url: string) => {
 	if (!url) return Console.log('Url can not empty!')
 	const key = getKey(url)
 
@@ -324,7 +331,10 @@ export const remove = (url: string) => {
 	if (!curFile) return
 
 	try {
-		fs.unlinkSync(curFile)
+		await Promise.all([
+			fs.unlinkSync(curFile),
+			fs.unlinkSync(`${pagesPath}/info/${key}.txt`),
+		])
 	} catch (err) {
 		console.error(err)
 		throw err

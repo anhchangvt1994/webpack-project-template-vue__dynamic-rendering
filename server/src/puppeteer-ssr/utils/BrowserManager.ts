@@ -19,6 +19,7 @@ import {
 	defaultBrowserOptions,
 	puppeteer,
 } from '../constants'
+import { ENV_MODE } from '../../utils/InitEnv'
 const { parentPort, isMainThread } = require('worker_threads')
 
 export interface IBrowser {
@@ -361,6 +362,8 @@ function BrowserManager(): IBrowser | undefined {
 }
 
 export default () => {
+	if (ENV_MODE === 'development') return
+
 	if (browserManager) return browserManager
 
 	browserManager = BrowserManager()

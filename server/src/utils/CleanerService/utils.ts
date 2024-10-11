@@ -17,7 +17,6 @@ import { getStore, setStore } from '../../store'
 import Console from '../ConsoleHandler'
 import { PROCESS_ENV } from '../InitEnv'
 import WorkerManager from '../WorkerManager'
-import ServerConfig from '../../server.config'
 
 const { isMainThread } = require('worker_threads')
 
@@ -26,7 +25,7 @@ const workerManager = (() => {
 	return WorkerManager.init(
 		path.resolve(
 			__dirname,
-			`./FollowResource.worker/index.${resourceExtension}`
+			`../FollowResource.worker/index.${resourceExtension}`
 		),
 		{
 			minWorkers: 1,
@@ -43,6 +42,7 @@ const workerManager = (() => {
 
 export const cleanBrowsers = (() => {
 	let executablePath: string
+	let isFirstClean = true
 	return async (expiredTime = PROCESS_ENV.RESET_RESOURCE ? 0 : 1) => {
 		if (!isMainThread || process.env.DISABLE_INTERNAL_CRAWLER || !workerManager)
 			return
@@ -92,8 +92,11 @@ export const cleanBrowsers = (() => {
 				cleanBrowsers(5)
 			}, 300000)
 
-		if (process.env.MODE === 'development') cleanBrowsers?.(0)
-		else cleanBrowsers?.(360)
+		if (isFirstClean) {
+			isFirstClean = false
+			if (process.env.MODE === 'development') cleanBrowsers?.(0)
+			else cleanBrowsers?.(60)
+		}
 	}
 })() // cleanBrowsers
 

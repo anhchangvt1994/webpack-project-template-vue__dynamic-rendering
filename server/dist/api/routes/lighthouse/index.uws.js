@@ -38,9 +38,21 @@ var _utils = require('../../utils/FetchManager/utils')
 var _worker = require('./worker')
 var _InitEnv = require('../../../utils/InitEnv')
 var _constants = require('./constants')
+var _serverconfig = require('../../../server.config')
+var _serverconfig2 = _interopRequireDefault(_serverconfig)
 
-const limitRequest = 2
+const limitRequest = _serverconfig2.default.crawl.limit
 let totalRequests = 0
+const resetTotalRequestTimeout = (() => {
+	let timeout
+
+	return () => {
+		if (timeout) clearTimeout(timeout)
+		timeout = setTimeout(() => {
+			totalRequests = 0
+		}, 50000)
+	}
+})()
 
 const apiLighthouse = (() => {
 	let _app
@@ -52,6 +64,7 @@ const apiLighthouse = (() => {
 				return
 			}
 
+			resetTotalRequestTimeout()
 			totalRequests++
 
 			res.onAborted(() => {

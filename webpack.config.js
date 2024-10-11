@@ -158,7 +158,7 @@ module.exports = async (env, arg) => {
 				experimentalUseImportModule: true,
 			}),
 			new VueLoaderPlugin(),
-			require('unplugin-auto-import/webpack')({
+			require('unplugin-auto-import/webpack').default({
 				// targets to transform
 				include: [
 					/\.[tj]sx?$/, // .ts, .tsx, .js, .jsx

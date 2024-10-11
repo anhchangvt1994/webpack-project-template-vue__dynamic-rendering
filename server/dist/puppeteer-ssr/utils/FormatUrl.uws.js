@@ -122,7 +122,9 @@ const getUrl = (res, req) => {
 	const pathname = res.urlForCrawler
 
 	return (
-		req.getQuery('urlTesting') ||
+		(_InitEnv.PROCESS_ENV.ENABLE_URL_TESTING
+			? req.getQuery('urlTesting')
+			: '') ||
 		req.getQuery('url') ||
 		_InitEnv.PROCESS_ENV.BASE_URL + pathname
 	).trim()

@@ -31,21 +31,21 @@ function _optionalChain(ops) {
 	}
 	return value
 }
+var _crypto = require('crypto')
+var _crypto2 = _interopRequireDefault(_crypto)
 var _fs = require('fs')
 var _fs2 = _interopRequireDefault(_fs)
-var _ConsoleHandler = require('../../../utils/ConsoleHandler')
-var _ConsoleHandler2 = _interopRequireDefault(_ConsoleHandler)
-var _constants = require('../../../constants')
 var _path = require('path')
 var _path2 = _interopRequireDefault(_path)
 var _zlib = require('zlib')
-
-var _crypto = require('crypto')
-var _crypto2 = _interopRequireDefault(_crypto)
+var _constants = require('../../../constants')
+var _ConsoleHandler = require('../../../utils/ConsoleHandler')
+var _ConsoleHandler2 = _interopRequireDefault(_ConsoleHandler)
 
 if (!_fs2.default.existsSync(_constants.pagesPath)) {
 	try {
 		_fs2.default.mkdirSync(_constants.pagesPath)
+		_fs2.default.mkdirSync(`${_constants.pagesPath}/info`)
 	} catch (err) {
 		_ConsoleHandler2.default.error(err)
 	}
@@ -171,7 +171,17 @@ const get = async (url, options) => {
 		_ConsoleHandler2.default.log(`Create file ${file}`)
 
 		try {
-			_fs2.default.writeFileSync(file, '')
+			await Promise.all([
+				_fs2.default.writeFileSync(file, ''),
+				_fs2.default.writeFileSync(
+					`${_constants.pagesPath}/info/${key}.txt`,
+					url
+						.replace('/?', '?')
+						.replace(exports.regexKeyConverterWithoutLocaleInfo, '')
+						.replace(/,"os":"([^&]*)"/, '')
+						.replace(/(\?|\&)$/, '')
+				),
+			])
 			_ConsoleHandler2.default.log(`File ${key}.br has been created.`)
 
 			const curTime = new Date()
@@ -344,7 +354,7 @@ const renew = async (url) => {
 }
 exports.renew = renew // renew
 
-const remove = (url) => {
+const remove = async (url) => {
 	if (!url) return _ConsoleHandler2.default.log('Url can not empty!')
 	const key = exports.getKey.call(void 0, url)
 
@@ -364,7 +374,10 @@ const remove = (url) => {
 	if (!curFile) return
 
 	try {
-		_fs2.default.unlinkSync(curFile)
+		await Promise.all([
+			_fs2.default.unlinkSync(curFile),
+			_fs2.default.unlinkSync(`${_constants.pagesPath}/info/${key}.txt`),
+		])
 	} catch (err) {
 		console.error(err)
 		throw err
